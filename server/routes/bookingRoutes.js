@@ -1,22 +1,39 @@
 const express = require('express');
 const router = express.Router();
 
-// We will import controller functions and middleware here
-// const { createBooking, getUserBookings } = require('../controllers/bookingController');
-// const authMiddleware = require('../middleware/AuthMiddleware');
+// Import the controller functions that contain the logic for each route.
+// This was the missing piece causing the error.
+const { 
+    createBooking, 
+    getUserBookings, 
+    cancelBooking 
+} = require('../controllers/bookingController');
 
-// Example Route: Create a new booking
-// router.post('/', authMiddleware, createBooking);
+// Import the authentication middleware to protect all booking routes.
+const { authMiddleware } = require('../middleware/AuthMiddleware');
 
-// Example Route: Get all bookings for the logged-in user
-// router.get('/', authMiddleware, getUserBookings);
+/**
+ * @route   POST /api/bookings
+ * @desc    Create a new booking
+ * @access  Private
+ * This route is protected by authMiddleware. A user must be logged in to create a booking.
+ */
+router.post('/', authMiddleware, createBooking);
+
+/**
+ * @route   GET /api/bookings
+ * @desc    Get all bookings for the logged-in user
+ * @access  Private
+ */
+router.get('/', authMiddleware, getUserBookings);
+
+/**
+ * @route   DELETE /api/bookings/:id
+ * @desc    Cancel a specific booking
+ * @access  Private
+ */
+router.delete('/:id', authMiddleware, cancelBooking);
 
 
-// For now, let's add a simple placeholder route
-router.get('/', (req, res) => {
-    res.json({ message: "Booking route is working" });
-});
-
-
-// This line is crucial for the file to work
+// Export the router so it can be used by the main server.js file.
 module.exports = router;

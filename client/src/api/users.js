@@ -10,13 +10,13 @@
  * @throws {Error} If the API call fails or returns an error.
  */
 export const getUserProfile = async () => {
-    // const token = localStorage.getItem('token'); // In a real app, you'd get the auth token
+    const token = localStorage.getItem('token'); // In a real app, you'd get the auth token
 
     const response = await fetch('/api/users/profile', {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json',
-            // 'Authorization': `Bearer ${token}` // Send token for protected routes
+            'Authorization': `Bearer ${token}` // Send token for protected routes
         },
     });
 
@@ -35,13 +35,13 @@ export const getUserProfile = async () => {
  * @throws {Error} If the API call fails or returns an error.
  */
 export const updateUserProfile = async (profileData) => {
-    // const token = localStorage.getItem('token');
+    const token = localStorage.getItem('token');
 
     const response = await fetch('/api/users/profile', {
         method: 'PUT',
         headers: {
             'Content-Type': 'application/json',
-            // 'Authorization': `Bearer ${token}`
+            'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify(profileData),
     });
@@ -61,13 +61,13 @@ export const updateUserProfile = async (profileData) => {
  * @throws {Error} If the API call fails or returns an error.
  */
 export const getAllUsers = async () => {
-    // const token = localStorage.getItem('token');
+    const token = localStorage.getItem('token');
 
     const response = await fetch('/api/users', {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json',
-            // 'Authorization': `Bearer ${token}`
+            'Authorization': `Bearer ${token}`
         },
     });
 
