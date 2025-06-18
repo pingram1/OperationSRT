@@ -2,13 +2,13 @@ import React from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
     BarChart2, Briefcase, BookOpen, Settings, Users, UserCheck, 
-    LogOut, ChevronDown, Bell, Calendar as CalendarIcon, Trophy
+    LogOut, ChevronDown, Bell, Calendar as CalendarIcon, Trophy,
+    LineChart, UserPlus, Megaphone, Edit3, CreditCard, Sliders
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext.jsx';
 
 /**
  * The main sidebar component for navigation.
- * It uses the `useLocation` hook to highlight the currently active link.
  */
 const Sidebar = () => {
     const location = useLocation();
@@ -21,14 +21,27 @@ const Sidebar = () => {
     };
 
     // This is the single source of truth for all navigation items.
-    // We've added "Classroom", "Appointments", and "Challenges" with their roles.
     const navItems = [
+        // General Routes
         { path: '/dashboard', label: 'Dashboard', icon: BarChart2, roles: ['student', 'parent', 'tutor', 'admin'] },
         { path: '/classroom', label: 'Classroom', icon: Briefcase, roles: ['student', 'tutor'] },
         { path: '/appointments', label: 'Appointments', icon: CalendarIcon, roles: ['student', 'parent', 'tutor', 'admin'] },
         { path: '/challenges', label: 'Challenges', icon: Trophy, roles: ['student', 'tutor'] },
+        { path: '/resources', label: 'Resources', icon: BookOpen, roles: ['student', 'tutor', 'admin'] },
+        
+        // Parent-Specific Route
         { path: '/parent-portal', label: 'Parent Portal', icon: Users, roles: ['parent'] },
-        { path: '/admin-panel', label: 'Admin Panel', icon: UserCheck, roles: ['admin'] },
+        
+        // --- NEW ADMIN-SPECIFIC ROUTES ---
+        { path: '/admin-panel', label: 'Admin Overview', icon: UserCheck, roles: ['admin'] },
+        { path: '/analytics', label: 'Analytics', icon: LineChart, roles: ['admin'] },
+        { path: '/tutor-management', label: 'Tutor Management', icon: UserPlus, roles: ['admin'] },
+        { path: '/announcements', label: 'Announcements', icon: Megaphone, roles: ['admin'] },
+        { path: '/content-management', label: 'Content', icon: Edit3, roles: ['admin'] },
+        { path: '/financials', label: 'Financials', icon: CreditCard, roles: ['admin'] },
+        { path: '/system-config', label: 'System Config', icon: Sliders, roles: ['admin'] },
+        
+        // General Settings Route
         { path: '/settings', label: 'Settings', icon: Settings, roles: ['student', 'parent', 'tutor', 'admin'] },
     ];
 
@@ -40,7 +53,7 @@ const Sidebar = () => {
             <div className="p-6 text-center border-b">
                 <h1 className="text-2xl font-bold text-gray-800">StartRight</h1>
             </div>
-            <nav className="flex-grow p-4">
+            <nav className="flex-grow p-4 overflow-y-auto">
                 <ul>
                     {visibleNavItems.map(item => (
                         <li key={item.path}>
@@ -52,8 +65,8 @@ const Sidebar = () => {
                                         : 'text-gray-600 hover:bg-gray-100'
                                 }`}
                             >
-                                <item.icon className="w-5 h-5 mr-3" />
-                                <span className="font-medium">{item.label}</span>
+                                <item.icon className="w-5 h-5 mr-3 flex-shrink-0" />
+                                <span className="font-medium text-sm">{item.label}</span>
                             </Link>
                         </li>
                     ))}
@@ -69,15 +82,10 @@ const Sidebar = () => {
     );
 };
 
-/**
- * The top header component of the application.
- */
 const Header = ({ user }) => (
     <header className="flex justify-end items-center py-4 px-8 border-b bg-white w-full">
         <div className="flex items-center space-x-4">
-            <button className="p-2 rounded-full hover:bg-gray-200">
-                <Bell className="w-6 h-6 text-gray-600" />
-            </button>
+            <button className="p-2 rounded-full hover:bg-gray-200"><Bell className="w-6 h-6 text-gray-600" /></button>
             <div className="flex items-center space-x-2">
                 <img src={user.avatar} alt="User Avatar" className="w-10 h-10 rounded-full" />
                 <span className="font-semibold text-gray-700">{user.name}</span>
@@ -87,15 +95,9 @@ const Header = ({ user }) => (
     </header>
 );
 
-/**
- * This is the main layout component that wraps your protected pages.
- */
 export default function MainLayout() {
     const { user } = useAuth();
-    
-    if (!user) {
-        return null; 
-    }
+    if (!user) { return null; }
 
     return (
         <div className="min-h-screen bg-gray-100 font-sans flex">
@@ -103,7 +105,6 @@ export default function MainLayout() {
             <div className="flex-1 flex flex-col ml-64">
                 <Header user={user} />
                 <main className="flex-1 p-8">
-                    {/* The Outlet renders the currently active page (e.g., Dashboard, Settings) */}
                     <Outlet />
                 </main>
             </div>
