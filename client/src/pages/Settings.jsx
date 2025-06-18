@@ -1,20 +1,9 @@
-import React, { useState } from 'react';
-import { User, BellRing, Shield, CreditCard, Save, AlertTriangle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { User, BellRing, Shield, CreditCard, Save, AlertTriangle, CheckCircle, AlertCircle as AlertIcon } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext.jsx'; // Correct path to your AuthContext
+import { updateUserProfile } from '../api/users.js'; // Assuming this is your API utility
 
-// --- MOCK DATA (to be replaced by API calls for the logged-in user) ---
-const userData = {
-    name: 'Jane Smith',
-    email: 'jane.smith@example.com',
-    avatar: 'https://placehold.co/80x80/E2E8F0/4A5568?text=JS',
-    membership: 'Magna Cum Laude', //'Summa Cum Laude', 'Magna Cum Laude', 'Cum Laude'
-    notifications: {
-        email: true,
-        sms: false,
-        push: true,
-    }
-};
-
-// --- Reusable Components ---
+// Reusable Components
 const Card = ({ children, className = '' }) => (<div className={`bg-white rounded-xl shadow-md p-6 ${className}`}>{children}</div>);
 const CardHeader = ({ icon: Icon, title, subtitle }) => (
     <div className="border-b pb-4 mb-6">
@@ -36,17 +25,53 @@ const Toggle = ({ label, enabled, onToggle }) => (
     </div>
 );
 
-// --- Settings Page Main Component ---
 export default function SettingsPage() {
-    const [profile, setProfile] = useState({ name: userData.name, email: userData.email });
-    const [membership, setMembership] = useState(userData.membership);
-    const [notifications, setNotifications] = useState(userData.notifications);
+    // Get the current user from the AuthContext
+    const { user, login } = useAuth(); // Assuming login updates the context's user
+
+    // Initialize state with the user's data from the context
+    const [profile, setProfile] = useState({
+        name: user?.name || '',
+        email: user?.email || '',
+    });
+    const [notifications, setNotifications] = useState(user?.notifications || { email: true, sms: false, push: true });
+    const [membership, setMembership] = useState(user?.membership || 'Cum Laude');
+    
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState('');
+    const [success, setSuccess] = useState('');
+
+    // This effect updates the form if the user context changes
+    useEffect(() => {
+        if (user) {
+            setProfile({ name: user.name, email: user.email });
+            setNotifications(user.notifications || { email: true, sms: false, push: true });
+            setMembership(user.membership || 'Cum Laude');
+        }
+    }, [user]);
 
     const handleProfileChange = (e) => setProfile({ ...profile, [e.target.name]: e.target.value });
     const handleNotificationToggle = (key) => setNotifications({ ...notifications, [key]: !notifications[key] });
 
+    const handleProfileSubmit = async (e) => {
+        e.preventDefault();
+        setIsLoading(true);
+        setError('');
+        setSuccess('');
+        try {
+            const updatedUser = await updateUserProfile(profile);
+            // Update the global user state with the new information
+            login({ ...user, ...updatedUser }); 
+            setSuccess('Profile updated successfully!');
+        } catch (err) {
+            setError(err.message || 'Failed to update profile.');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     return (
-        <div className="bg-gray-100 min-h-screen font-sans p-8">
+        <div>
             {/* Header */}
             <header className="mb-8">
                 <h1 className="text-3xl font-bold text-gray-800">Account Settings</h1>
@@ -60,9 +85,9 @@ export default function SettingsPage() {
                     {/* Profile Settings */}
                     <Card>
                         <CardHeader icon={User} title="Profile Information" subtitle="Update your personal details." />
-                        <form className="space-y-4">
+                        <form onSubmit={handleProfileSubmit} className="space-y-4">
                             <div className="flex items-center space-x-6">
-                                <img src={userData.avatar} alt="User Avatar" className="w-20 h-20 rounded-full" />
+                                <img src={user?.avatar || 'https://placehold.co/80x80/E2E8F0/4A5568?text=U'} alt="User Avatar" className="w-20 h-20 rounded-full" />
                                 <button type="button" className="bg-gray-200 text-gray-800 px-4 py-2 rounded-lg text-sm font-semibold hover:bg-gray-300">Change Picture</button>
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -75,9 +100,11 @@ export default function SettingsPage() {
                                     <input type="email" name="email" value={profile.email} onChange={handleProfileChange} className="w-full p-2 border border-gray-300 rounded-md"/>
                                 </div>
                             </div>
-                             <div className="flex justify-end">
-                                <button type="submit" className="flex items-center bg-blue-600 text-white px-5 py-2 rounded-lg font-semibold hover:bg-blue-700"><Save className="w-4 h-4 mr-2"/>Save Changes</button>
-                             </div>
+                            {error && <div className="flex items-center text-sm text-red-600"><AlertIcon className="w-4 h-4 mr-2" />{error}</div>}
+                            {success && <div className="flex items-center text-sm text-green-600"><CheckCircle className="w-4 h-4 mr-2" />{success}</div>}
+                            <div className="flex justify-end">
+                                <button type="submit" disabled={isLoading} className="flex items-center bg-blue-600 text-white px-5 py-2 rounded-lg font-semibold hover:bg-blue-700 disabled:bg-blue-300"><Save className="w-4 h-4 mr-2"/>{isLoading ? 'Saving...' : 'Save Changes'}</button>
+                            </div>
                         </form>
                     </Card>
 
@@ -107,7 +134,6 @@ export default function SettingsPage() {
                                </select>
                             </div>
                             <button className="w-full bg-gray-800 text-white py-2 rounded-lg font-semibold hover:bg-gray-900">Update Membership</button>
-                            <button className="w-full text-center text-blue-600 font-semibold hover:underline">View Payment History</button>
                         </div>
                     </Card>
 
@@ -117,18 +143,6 @@ export default function SettingsPage() {
                          <div className="space-y-3">
                             <button className="w-full text-left bg-gray-100 hover:bg-gray-200 p-3 rounded-md font-medium text-gray-800">Change Password</button>
                             <button className="w-full text-left bg-gray-100 hover:bg-gray-200 p-3 rounded-md font-medium text-gray-800">Two-Factor Authentication</button>
-                        </div>
-                    </Card>
-
-                     {/* Deactivate Account */}
-                     <Card className="border-red-500 border-2 bg-red-50">
-                        <div className="flex items-start">
-                            <AlertTriangle className="w-10 h-10 mr-4 text-red-600"/>
-                            <div>
-                                <h4 className="font-bold text-red-800">Deactivate Account</h4>
-                                <p className="text-sm text-red-700 mt-1">This action is permanent and cannot be undone.</p>
-                                <button className="mt-4 bg-red-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-red-700 text-sm">Deactivate</button>
-                            </div>
                         </div>
                     </Card>
                 </div>

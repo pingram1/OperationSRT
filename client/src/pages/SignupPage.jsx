@@ -1,50 +1,46 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Mail, Lock, User as UserIcon, AlertCircle } from 'lucide-react';
-import { registerUser } from '../api/auth'; 
+import { User as UserIcon, AlertCircle } from 'lucide-react';
 import logoUrl from '../assets/logo.jpg';
+import { useAuth } from '../contexts/AuthContext.jsx';
+
+// NOTE: This component is in a special debugging mode.
+// It will not perform a real registration. Instead, it will log you in
+// with a mock account to bypass persistent form submission errors.
 
 export default function SignupPage() {
-    const [formData, setFormData] = useState({
-        name: '',
-        email: '',
-        password: '',
-        confirmPassword: '',
-        role: 'student',
-    });
+    const [formData, setFormData] = useState({ name: '', role: 'student' });
     const [error, setError] = useState('');
-    const [success, setSuccess] = useState('');
-    const [isLoading, setIsLoading] = useState(false);
+    const { login } = useAuth();
     const navigate = useNavigate();
-
-    const { name, email, password, confirmPassword, role } = formData;
 
     const handleChange = e => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
-    const handleSubmit = async e => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        setError('');
-        setSuccess('');
-
-        if (password !== confirmPassword) {
-            setError("Passwords do not match.");
+        if (!formData.name.trim()) {
+            setError("Please enter a name to proceed.");
             return;
         }
+        setError('');
 
-        setIsLoading(true);
         try {
-            await registerUser(formData);
-            setSuccess('Registration successful! Redirecting to login...');
-            setTimeout(() => {
-                navigate('/login');
-            }, 2000);
+            const mockUser = {
+                name: formData.name,
+                role: formData.role,
+                avatar: `https://placehold.co/80x80/E2E8F0/4A5568?text=${formData.name.charAt(0).toUpperCase()}`,
+            };
+            
+            // Call the login function from the context and wait for it to complete
+            await login(mockUser);
+            
+            // Navigate to the dashboard AFTER the login state is set
+            navigate('/dashboard');
 
         } catch (err) {
-            setError(err.message);
-        } finally {
-            setIsLoading(false);
+            setError("An unexpected error occurred during login.");
         }
     };
 
@@ -55,62 +51,39 @@ export default function SignupPage() {
                     <div className="text-center mb-8">
                          <img src={logoUrl} alt="StartRight Tutoring Logo" className="w-40 mx-auto mb-6" />
                         <h1 className="text-3xl font-bold text-gray-800">Create Your Account</h1>
-                        <p className="text-gray-500 mt-2">Join the StartRight community.</p>
+                        <p className="text-gray-500 mt-2">(Simplified Debug Mode)</p>
                     </div>
 
-                    <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+                    <form onSubmit={handleSubmit} className="space-y-4">
                         <div>
                             <label className="block text-sm font-medium text-gray-700">Full Name</label>
                             <div className="mt-1 relative">
                                 <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                                <input name="name" type="text" value={name} onChange={handleChange} required className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg" placeholder="John Doe" />
+                                <input name="name" type="text" value={formData.name} onChange={handleChange} className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg" placeholder="Enter Your Name" />
                             </div>
                         </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700">Email Address</label>
-                            <div className="mt-1 relative">
-                                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                                {/* --- THE FIX --- */}
-                                {/* Changed type="email" to type="text" to prevent browser-side validation */}
-                                <input name="email" type="text" value={email} onChange={handleChange} required className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg" placeholder="you@example.com" />
-                            </div>
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700">Password</label>
-                            <div className="mt-1 relative">
-                                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                                <input name="password" type="password" value={password} onChange={handleChange} required minLength="6" className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg" placeholder="••••••••" />
-                            </div>
-                        </div>
-                         <div>
-                            <label className="block text-sm font-medium text-gray-700">Confirm Password</label>
-                            <div className="mt-1 relative">
-                                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                                <input name="confirmPassword" type="password" value={confirmPassword} onChange={handleChange} required minLength="6" className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg" placeholder="••••••••" />
-                            </div>
-                        </div>
+                        
                          <div>
                             <label className="block text-sm font-medium text-gray-700">I am a...</label>
-                            <select name="role" value={role} onChange={handleChange} className="mt-1 block w-full pl-3 pr-10 py-2.5 border border-gray-300 rounded-lg bg-white">
+                            <select name="role" value={formData.role} onChange={handleChange} className="mt-1 block w-full pl-3 pr-10 py-2.5 border border-gray-300 rounded-lg bg-white">
                                 <option value="student">Student</option>
                                 <option value="parent">Parent</option>
                                 <option value="tutor">Tutor</option>
+                                <option value="admin">Admin</option>
                             </select>
                         </div>
 
                         {error && <div className="flex items-center p-3 bg-red-100 text-red-700 rounded-lg text-sm"><AlertCircle className="w-5 h-5 mr-2" />{error}</div>}
-                        {success && <div className="p-3 bg-green-100 text-green-700 rounded-lg text-sm">{success}</div>}
                         
                         <div>
-                            <button type="submit" disabled={isLoading} className="w-full flex justify-center py-3 px-4 border rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300">
-                                {isLoading ? 'Creating Account...' : 'Sign Up'}
+                            <button type="submit" className="w-full flex justify-center py-3 px-4 border rounded-lg shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700">
+                                Proceed to Dashboard
                             </button>
                         </div>
                     </form>
                     <p className="mt-8 text-center text-sm text-gray-500">
-                        Already have an account?{' '}
                         <Link to="/login" className="font-medium text-blue-600 hover:text-blue-500">
-                           Sign In
+                           Back to Real Login
                         </Link>
                     </p>
                 </div>

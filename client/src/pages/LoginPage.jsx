@@ -4,6 +4,9 @@ import { Mail, Lock, AlertCircle, CheckCircle } from 'lucide-react';
 import { loginUser } from '../api/auth'; 
 import logoUrl from '../assets/logo.jpg';
 
+// Import the new reusable Button component
+import Button from '../components/common/Button.jsx';
+
 export default function LoginPage({ onLoginSuccess }) {
     const [formData, setFormData] = useState({ email: '', password: '' });
     const [error, setError] = useState('');
@@ -87,9 +90,15 @@ export default function LoginPage({ onLoginSuccess }) {
                         )}
 
                         <div>
-                            <button type="submit" disabled={isLoading} className="w-full flex justify-center py-3 px-4 border rounded-lg text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300">
-                                {isLoading ? 'Signing In...' : 'Sign In'}
-                            </button>
+                            {/* --- THE CHANGE --- */}
+                            {/* The old button is replaced with the new reusable Button component. */}
+                            <Button 
+                                type="submit" 
+                                isLoading={isLoading}
+                                className="w-full"
+                            >
+                                Sign In
+                            </Button>
                         </div>
                     </form>
                     

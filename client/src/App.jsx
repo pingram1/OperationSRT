@@ -1,60 +1,58 @@
-import React, { useState } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import React from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
+import { useAuth } from './contexts/AuthContext.jsx';
 
 // Import Page and Layout Components
 import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
-import MainLayout from './components/layout/MainLayout'; // New layout component
+import MainLayout from './components/layout/MainLayout';
 import Dashboard from './pages/Dashboard';
 import SettingsPage from './pages/Settings';
 import ClassroomPage from './pages/Classroom';
 import AppointmentPage from './pages/AppointmentPage';
 import ParentPortal from './pages/ParentPortal';
+// --- NEW IMPORTS ---
+import ResourcesPage from './pages/ResourcesPage';
+import ChallengesPage from './pages/ChallengesPage';
 
-// This component protects routes that require a user to be logged in.
-const ProtectedRoute = ({ user, children }) => {
-    if (!user) {
+
+const ProtectedRoute = ({ children }) => {
+    const { isAuthenticated } = useAuth();
+    if (!isAuthenticated) {
         return <Navigate to="/login" replace />;
     }
     return children;
 };
 
 export default function App() {
-    const [user, setUser] = useState(null);
+  return (
+    <Routes>
+        {/* --- Public Routes --- */}
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/signup" element={<SignupPage />} />
 
-    const handleLogin = (userData) => {
-        setUser(userData);
-    };
+        {/* --- Default Route --- */}
+        <Route path="/" element={<Navigate to="/dashboard" />} />
 
-    const handleLogout = () => {
-        setUser(null);
-    };
-
-    return (
-        <BrowserRouter>
-            <Routes>
-                {/* --- Public Routes --- */}
-                <Route path="/login" element={<LoginPage onLoginSuccess={handleLogin} />} />
-                <Route path="/signup" element={<SignupPage />} />
-
-                {/* --- Protected Routes (Rendered inside MainLayout) --- */}
-                <Route
-                    path="/"
-                    element={
-                        <ProtectedRoute user={user}>
-                            <MainLayout user={user} onLogout={handleLogout} />
-                        </ProtectedRoute>
-                    }
-                >
-                    {/* The default protected route is the dashboard */}
-                    <Route index element={<Navigate to="/dashboard" replace />} />
-                    <Route path="dashboard" element={<Dashboard user={user} />} />
-                    <Route path="settings" element={<SettingsPage />} />
-                    <Route path="classroom" element={<ClassroomPage />} />
-                    <Route path="appointments" element={<AppointmentPage />} />
-                    <Route path="parent-portal" element={<ParentPortal />} />
-                </Route>
-            </Routes>
-        </BrowserRouter>
-    );
+        {/* --- Protected Routes --- */}
+        <Route 
+            path="/*" 
+            element={
+                <ProtectedRoute>
+                    <MainLayout />
+                </ProtectedRoute>
+            }
+        >
+            {/* These routes will render inside MainLayout's <Outlet /> */}
+            <Route path="dashboard" element={<Dashboard />} />
+            <Route path="settings" element={<SettingsPage />} />
+            <Route path="classroom" element={<ClassroomPage />} />
+            <Route path="appointments" element={<AppointmentPage />} />
+            <Route path="parent-portal" element={<ParentPortal />} />
+            {/* --- NEW ROUTES --- */}
+            <Route path="resources" element={<ResourcesPage />} />
+            <Route path="challenges" element={<ChallengesPage />} />
+        </Route>
+    </Routes>
+  );
 }

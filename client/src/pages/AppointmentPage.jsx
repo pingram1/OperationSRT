@@ -2,60 +2,33 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, ArrowLeft, Check, Star, BookCopy, Calendar, User, ClipboardCheck, Sparkles } from 'lucide-react';
 
+// --- Import the separate booking step components ---
+import ServiceSelectionStep from '../components/booking/ServiceSelectionStep.jsx';
+import ScheduleStep from '../components/booking/ScheduleStep.jsx';
+import BookingProgressTracker from '../components/booking/BookingProgressTracker.jsx';
+
+
 // --- MOCK DATA (to be replaced by API calls) ---
 const membershipTiers = [
     { name: 'Summa Cum Laude', subtitle: 'Long-Term Member', price: '$139.99/mo', features: ['Enhanced AI-driven learning plans', 'Exclusive access to premium content', 'Special member-only webinars', 'Personalized progress tracking'], current: false },
     { name: 'Magna Cum Laude', subtitle: 'Active Member', price: '$35/session', features: ['Access to personalized resources', 'Interactive study guides', 'Priority scheduling for follow-ups'], current: true },
     { name: 'Cum Laude', subtitle: 'Basic Access User', price: 'Free', features: ['Basic learning models', 'Limited use of AI assistants', 'Preview access to platform features'], current: false },
 ];
-const services = [
-    { id: 'solo', name: 'Solo Session (1-week plan)', price: 35, duration: 60 },
-    { id: 'group', name: 'Group Sessions (3-4 students)', price: 124.99, duration: 90 },
-    { id: 'consult', name: 'Consultation', price: 0, duration: 30 },
-];
 const tutors = [ {id: 'davis', name: 'Mr. Davis'}, {id: 'chen', name: 'Ms. Chen'}, {id: 'ford', name: 'Mr. Ford'} ];
 
 // --- Reusable Components ---
 const Card = ({ children, className = '' }) => (<div className={`bg-white rounded-xl shadow-md p-6 ${className}`}>{children}</div>);
-const ProgressTracker = ({ currentStep }) => {
-    const steps = ['Service', 'Details', 'Schedule', 'Tutor', 'Confirm'];
-    return ( <div className="flex justify-between items-center mb-8">{steps.map((step, index) => (
-        <React.Fragment key={step}>
-            <div className="flex flex-col items-center text-center">
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 ${index + 1 <= currentStep ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-500'}`}>
-                    {index + 1 < currentStep ? <Check /> : <span>{index + 1}</span>}
-                </div>
-                <p className={`mt-2 text-sm font-semibold ${index + 1 <= currentStep ? 'text-blue-600' : 'text-gray-500'}`}>{step}</p>
-            </div>
-            {index < steps.length - 1 && <div className={`flex-1 h-1 mx-2 ${index + 1 < currentStep ? 'bg-blue-600' : 'bg-gray-200'}`}></div>}
-        </React.Fragment>
-    ))}</div>);
-};
 
-// --- Sub-components for each booking step ---
-const ServiceSelectionStep = ({ onSelect, onNext, bookingDetails }) => (
-    <div><h2 className="text-2xl font-bold text-center mb-6">1. Select Your Service</h2><div className="grid grid-cols-1 md:grid-cols-3 gap-6">{services.map(service => (
-        <div key={service.id} onClick={() => onSelect('service', service)} className={`p-6 border-2 rounded-lg cursor-pointer transition-all ${bookingDetails.service?.id === service.id ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-blue-400'}`}>
-            <h3 className="font-bold text-lg">{service.name}</h3>
-            <p className="text-2xl font-bold my-2">${service.price.toFixed(2)}</p>
-            <p className="text-sm text-gray-500">{service.duration} minutes</p>
-        </div>
-    ))}</div><div className="text-right mt-8"><button onClick={onNext} disabled={!bookingDetails.service} className="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 disabled:bg-gray-300">Next <ArrowRight className="inline w-4 h-4" /></button></div></div>
-);
+// --- Sub-components for each booking step (except the imported ones) ---
+
 const SubjectAndGoalsStep = ({ onNext, onBack, onFormChange, bookingDetails }) => (
      <div><h2 className="text-2xl font-bold text-center mb-6">2. Subject & Learning Goals</h2><div className="space-y-4"><select name="subject" value={bookingDetails.subject || ''} onChange={onFormChange} className="w-full p-3 border rounded-lg"><option value="" disabled>Select a Subject</option><option>Algebra</option><option>Chemistry</option><option>English</option><option>History</option></select><textarea name="goals" value={bookingDetails.goals || ''} onChange={onFormChange} placeholder="What would you like to focus on in this session?" className="w-full p-3 border rounded-lg h-32"></textarea></div><div className="flex justify-between mt-8"><button onClick={onBack} className="bg-gray-200 text-gray-800 px-6 py-2 rounded-lg font-semibold hover:bg-gray-300"><ArrowLeft className="inline w-4 h-4" /> Back</button><button onClick={onNext} disabled={!bookingDetails.subject || !bookingDetails.goals} className="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 disabled:bg-gray-300">Next <ArrowRight className="inline w-4 h-4" /></button></div></div>
 );
-const ScheduleStep = ({ onSelect, onNext, onBack, bookingDetails }) => {
-    // Basic calendar logic for demonstration
-    const [date, setDate] = useState(new Date());
-    const daysInMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
-    const firstDayOfMonth = new Date(date.getFullYear(), date.getMonth(), 1).getDay();
-    const availableTimes = ['09:00 AM', '11:00 AM', '02:00 PM', '04:00 PM'];
-    return (<div><h2 className="text-2xl font-bold text-center mb-6">3. Choose a Date & Time</h2><div className="md:flex gap-6"><div className="flex-1 mb-6 md:mb-0"><div className="flex justify-between items-center mb-4"><button onClick={() => setDate(new Date(date.setMonth(date.getMonth() - 1)))}>&larr;</button><h3 className="font-semibold">{date.toLocaleString('default', { month: 'long', year: 'numeric' })}</h3><button onClick={() => setDate(new Date(date.setMonth(date.getMonth() + 1)))}>&rarr;</button></div><div className="grid grid-cols-7 gap-1 text-center text-sm"><div className="font-semibold">S</div><div className="font-semibold">M</div><div className="font-semibold">T</div><div className="font-semibold">W</div><div className="font-semibold">T</div><div className="font-semibold">F</div><div className="font-semibold">S</div>{Array.from({ length: firstDayOfMonth }).map((_, i) => <div key={`empty-${i}`}></div>)}{Array.from({ length: daysInMonth }).map((_, day) => <div key={day} onClick={() => onSelect('date', new Date(date.setDate(day + 1)))} className={`p-2 rounded-full cursor-pointer ${bookingDetails.date?.getDate() === day + 1 ? 'bg-blue-600 text-white' : 'hover:bg-gray-200'}`}>{day + 1}</div>)}</div></div><div className="flex-1">{bookingDetails.date ? <div className="space-y-2">{availableTimes.map(time => <button key={time} onClick={() => onSelect('time', time)} className={`w-full p-3 border rounded-lg ${bookingDetails.time === time ? 'bg-blue-600 text-white' : 'hover:bg-gray-100'}`}>{time}</button>)}</div> : <p className="text-center text-gray-500">Please select a date.</p>}</div></div><div className="flex justify-between mt-8"><button onClick={onBack} className="bg-gray-200 text-gray-800 px-6 py-2 rounded-lg font-semibold hover:bg-gray-300"><ArrowLeft className="inline w-4 h-4" /> Back</button><button onClick={onNext} disabled={!bookingDetails.time} className="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 disabled:bg-gray-300">Next <ArrowRight className="inline w-4 h-4" /></button></div></div>);
-};
+
 const TutorPreferenceStep = ({ onSelect, onNext, onBack, bookingDetails }) => (
     <div><h2 className="text-2xl font-bold text-center mb-6">4. Select a Tutor</h2><div className="space-y-3">{tutors.map(tutor => <div key={tutor.id} onClick={()=>onSelect('tutor', tutor)} className={`flex items-center p-4 border-2 rounded-lg cursor-pointer ${bookingDetails.tutor?.id === tutor.id ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}><img src={`https://placehold.co/40x40/E2E8F0/4A5568?text=${tutor.name.charAt(0)}`} className="rounded-full mr-4" alt=""/><p className="font-semibold">{tutor.name}</p></div>)}<div onClick={()=>onSelect('tutor', {id: 'any', name: 'Any Available'})} className={`flex items-center p-4 border-2 rounded-lg cursor-pointer ${bookingDetails.tutor?.id === 'any' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}><Sparkles className="w-10 h-10 text-yellow-500 mr-4" /><p className="font-semibold">No Preference (assign best available)</p></div></div><div className="flex justify-between mt-8"><button onClick={onBack} className="bg-gray-200 text-gray-800 px-6 py-2 rounded-lg font-semibold hover:bg-gray-300"><ArrowLeft className="inline w-4 h-4" /> Back</button><button onClick={onNext} disabled={!bookingDetails.tutor} className="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 disabled:bg-gray-300">Next <ArrowRight className="inline w-4 h-4" /></button></div></div>
 );
+
 const ReviewAndConfirmStep = ({ onBack, bookingDetails }) => {
     const { service, subject, goals, date, time, tutor } = bookingDetails;
     return(<div><h2 className="text-2xl font-bold text-center mb-6">5. Review & Confirm</h2><div className="bg-gray-50 p-6 rounded-lg space-y-4"><div><p className="text-sm text-gray-500">SERVICE</p><p className="font-bold text-lg">{service?.name}</p></div><hr/><div><p className="text-sm text-gray-500">DETAILS</p><p className="font-semibold">{subject}</p><p className="text-sm text-gray-600 mt-1">{goals}</p></div><hr/><div><p className="text-sm text-gray-500">WHEN</p><p className="font-semibold">{date?.toDateString()} at {time}</p></div><hr/><div><p className="text-sm text-gray-500">TUTOR</p><p className="font-semibold">{tutor?.name}</p></div></div><div className="flex justify-between mt-8"><button onClick={onBack} className="bg-gray-200 text-gray-800 px-6 py-2 rounded-lg font-semibold hover:bg-gray-300"><ArrowLeft className="inline w-4 h-4" /> Back</button><button className="bg-green-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-green-700 text-lg">Confirm & Book for ${service?.price.toFixed(2)}</button></div></div>)
@@ -63,7 +36,7 @@ const ReviewAndConfirmStep = ({ onBack, bookingDetails }) => {
 
 // --- Appointments Page Main Component ---
 export default function AppointmentPage() {
-    const [activeTab, setActiveTab] = useState('booking'); // 'booking' or 'membership'
+    const [activeTab, setActiveTab] = useState('booking');
     const [currentStep, setCurrentStep] = useState(1);
     const [bookingDetails, setBookingDetails] = useState({});
 
@@ -93,7 +66,11 @@ export default function AppointmentPage() {
             </div></div>
 
             {activeTab === 'booking' && (
-                <Card className="max-w-4xl mx-auto"><ProgressTracker currentStep={currentStep} /><hr className="my-8" />{renderBookingStep()}</Card>
+                <Card className="max-w-4xl mx-auto">
+                    <BookingProgressTracker currentStep={currentStep} />
+                    <hr className="my-8" />
+                    {renderBookingStep()}
+                </Card>
             )}
 
             {activeTab === 'membership' && (
