@@ -1,95 +1,49 @@
 /**
- * This file centralizes all API calls to the Google Gemini API.
- * It provides a reusable function to handle different types of requests.
+ * This file centralizes all calls to our application's secure AI proxy endpoint.
  */
+import { getSecureToken } from './authStorage'; // Assuming you have secure token handling
 
 /**
- * A flexible function to call the Google Gemini API.
- * * @param {string} prompt - The prompt to send to the Gemini model.
- * @param {string} responseType - The expected format of the response. Use 'text' for plain text
- * or 'json' for a structured JSON object.
- * @returns {Promise<object|string>} The parsed JSON object or text string from the API.
- * @throws {Error} If the API call fails or returns an error message.
+ * A secure function to call our backend's Gemini API proxy.
+ * @param {string} prompt - The prompt to send to the Gemini model.
+ * @param {string} responseType - The expected format ('text' or 'json').
+ * @returns {Promise<object|string>} The processed content from the AI.
+ * @throws {Error} If the API call fails.
  */
-export const callGeminiApi = async (prompt, responseType = 'text') => {
-    // In a production app, this API key should be stored securely in an environment variable
-    // and the call should ideally be proxied through your own backend to protect the key.
-    const apiKey = ""; // Left blank as per instructions
-
-    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
-
-    // --- Construct the request payload ---
-    const payload = {
-        contents: [{
-            role: "user",
-            parts: [{
-                text: prompt
-            }]
-        }],
-    };
-
-    // If a structured JSON response is required, add the generationConfig to the payload.
-    // This schema is designed for the "practice questions" feature.
-    if (responseType === 'json') {
-        payload.generationConfig = {
-            responseMimeType: "application/json",
-            responseSchema: {
-                type: "OBJECT",
-                properties: {
-                    questions: {
-                        type: "ARRAY",
-                        items: {
-                            type: "OBJECT",
-                            properties: {
-                                question_text: { type: "STRING" },
-                                options: { type: "ARRAY", items: { type: "STRING" } },
-                                correct_answer: { type: "STRING" },
-                                explanation: { type: "STRING" }
-                            },
-                             required: ["question_text", "options", "correct_answer", "explanation"]
-                        }
-                    }
-                },
-                required: ["questions"]
-            }
-        };
-    }
-
+export const callSecureAiProxy = async (prompt, responseType = 'text') => {
     try {
-        const response = await fetch(apiUrl, {
+        const token = getSecureToken(); // Get the user's auth token
+
+        const response = await fetch('/api/ai/generate', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}` // Send the auth token for verification
             },
-            body: JSON.stringify(payload)
+            body: JSON.stringify({ prompt, responseType }),
         });
 
         if (!response.ok) {
             const errorData = await response.json();
-            throw new Error(errorData.error?.message || 'Gemini API call failed.');
+            throw new Error(errorData.message || 'AI request failed.');
         }
 
         const result = await response.json();
-
-        // --- Process the response ---
+        
+        // The structure of the Gemini response is nested, so we extract the useful part.
         if (result.candidates && result.candidates[0].content && result.candidates[0].content.parts.length > 0) {
             const responseText = result.candidates[0].content.parts[0].text;
             
             if (responseType === 'json') {
-                // The API returns the JSON as a string, so it must be parsed.
                 return JSON.parse(responseText);
             }
-            
-            // For 'text' responses, return the string directly.
             return responseText;
-
         } else {
-            // Handle cases where the response structure is unexpected.
-            throw new Error("Invalid response structure from Gemini API.");
+            throw new Error("Invalid response structure from the AI service.");
         }
+
     } catch (error) {
-        console.error("Gemini API call error:", error);
-        // Re-throw the error so the calling component can catch it and update the UI.
-        throw new Error("There was an issue communicating with the AI assistant.");
+        console.error("Secure AI Proxy Error:", error);
+        throw error; // Re-throw the error for the component to handle
     }
 };

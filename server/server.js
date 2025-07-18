@@ -18,6 +18,7 @@ app.use(express.json());
 app.use('/api/auth', require('./routes/AuthRoutes'));
 app.use('/api/users', require('./routes/UserRoutes'));
 app.use('/api/auth', require('./routes/bookingRoutes'));
+app.use('/api/ai', require('./routes/aiRoutes')); 
 // Add other routes for bookings, etc.
 
 const PORT = process.env.PORT || 5000;
