@@ -1,15 +1,7 @@
-import React, { useState, useMemo } from 'react';
-import { BookCopy, Video, FileText, Search, ChevronRight } from 'lucide-react';
-
-// --- MOCK DATA (to be replaced by API calls) ---
-const resourcesData = [
-    { id: 1, type: 'video', title: 'Mastering the Quadratic Formula', subject: 'Algebra', duration: '15:30 min', description: 'A deep dive into how and when to use the quadratic formula to solve complex equations.' },
-    { id: 2, type: 'article', title: 'The Causes of the Civil War', subject: 'History', duration: '12 min read', description: 'An in-depth article exploring the primary social, economic, and political factors.' },
-    { id: 3, type: 'guide', title: 'Lab Safety Procedures', subject: 'Chemistry', duration: 'Quick Guide', description: 'A printable guide covering essential safety protocols for all lab experiments.' },
-    { id: 4, type: 'video', title: 'Shakespearean Sonnets Explained', subject: 'English', duration: '18:00 min', description: 'Learn the structure, rhythm, and themes of Shakespeare\'s most famous sonnets.' },
-    { id: 5, type: 'article', title: 'Introduction to Photosynthesis', subject: 'Biology', duration: '10 min read', description: 'Understand the fundamental process of how plants create energy from sunlight.' },
-    { id: 6, type: 'guide', title: 'MLA Citation Guide', subject: 'English', duration: 'Quick Guide', description: 'A quick reference for properly citing sources in MLA format for your essays.' },
-];
+import React, { useState, useMemo, useEffect } from 'react';
+import { BookCopy, Video, FileText, Search, ChevronRight, File } from 'lucide-react';
+import { getAllResources } from '../api/resources';
+import { getSecureToken } from '../api/authStorage';
 
 // --- Reusable Components ---
 const Card = ({ children, className = '' }) => (<div className={`bg-white rounded-xl shadow-md p-6 transition-all hover:shadow-lg hover:scale-[1.02] ${className}`}>{children}</div>);
@@ -18,34 +10,117 @@ const Card = ({ children, className = '' }) => (<div className={`bg-white rounde
 export default function ResourcesPage() {
     const [activeTab, setActiveTab] = useState('all');
     const [searchTerm, setSearchTerm] = useState('');
+    const [resources, setResources] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+    useEffect(() => {
+        fetchResources();
+    }, [activeTab]);
+
+    const fetchResources = async () => {
+        try {
+            setIsLoading(true);
+            setError(null);
+            const filters = activeTab !== 'all' ? { type: activeTab } : {};
+            const data = await getAllResources(filters);
+            setResources(data || []);
+        } catch (err) {
+            console.error('Failed to fetch resources:', err);
+            setError(err.message || 'Failed to load resources');
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     const filteredResources = useMemo(() => {
-        return resourcesData.filter(r => {
-            const matchesTab = activeTab === 'all' || r.type === activeTab;
-            const matchesSearch = r.title.toLowerCase().includes(searchTerm.toLowerCase()) || r.subject.toLowerCase().includes(searchTerm.toLowerCase());
-            return matchesTab && matchesSearch;
+        if (!resources || resources.length === 0) return [];
+        return resources.filter(r => {
+            const matchesSearch = 
+                (r.title && r.title.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                (r.subject && r.subject.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                (r.description && r.description.toLowerCase().includes(searchTerm.toLowerCase()));
+            return matchesSearch;
         });
-    }, [activeTab, searchTerm]);
+    }, [resources, searchTerm]);
 
     const ResourceCard = ({ resource }) => {
         const typeDetails = {
             video: { icon: Video, color: 'text-red-500' },
             article: { icon: FileText, color: 'text-blue-500' },
             guide: { icon: BookCopy, color: 'text-green-500' },
+            pdf: { icon: File, color: 'text-purple-500' },
+            document: { icon: File, color: 'text-indigo-500' },
         };
-        const DetailsIcon = typeDetails[resource.type].icon;
+        const DetailsIcon = typeDetails[resource.type]?.icon || FileText;
+        const iconColor = typeDetails[resource.type]?.color || 'text-gray-500';
+
+        const handleOpenResource = async () => {
+            if ((resource.type === 'pdf' || resource.type === 'document') && (resource.pdfPath || resource.documentPath) && resource._id) {
+                // Open PDF in new tab using the authenticated endpoint
+                try {
+                    const token = getSecureToken();
+                    if (!token) {
+                        alert('Please log in to view this PDF.');
+                        return;
+                    }
+                    
+                    // Use the same proxy pattern as other API calls
+                    const docUrl = resource.documentPath
+                        ? `/api/resources/${resource._id}/document`
+                        : `/api/resources/${resource._id}/pdf`;
+                    
+                    // Add authorization header by fetching and opening blob
+                    const response = await fetch(docUrl, {
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+                    
+                    if (response.ok) {
+                        const blob = await response.blob();
+                        const url = window.URL.createObjectURL(blob);
+                        const link = document.createElement('a');
+                        link.href = url;
+                        link.target = '_blank';
+                        link.rel = 'noopener noreferrer';
+                        link.click();
+                        // Clean up the object URL after a short delay
+                        setTimeout(() => window.URL.revokeObjectURL(url), 100);
+                    } else {
+                        const errorData = await response.json().catch(() => ({ message: 'Failed to load PDF' }));
+                        throw new Error(errorData.message || 'Failed to load PDF');
+                    }
+                } catch (error) {
+                    console.error('Error opening PDF:', error);
+                    alert(`Failed to open PDF: ${error.message || 'Please try again.'}`);
+                }
+            } else if (resource.url) {
+                // Open URL
+                window.open(resource.url, '_blank');
+            } else if (resource.content) {
+                // Show content in modal or new page
+                // For now, just alert - can be enhanced later
+                alert('Resource content view coming soon!');
+            }
+        };
 
         return (
             <Card className="flex flex-col">
                 <div className="flex-grow">
-                    <DetailsIcon className={`w-8 h-8 mb-3 ${typeDetails[resource.type].color}`} />
+                    <DetailsIcon className={`w-8 h-8 mb-3 ${iconColor}`} />
                     <h3 className="text-xl font-bold text-gray-800 mb-1">{resource.title}</h3>
                     <p className="text-sm font-semibold text-gray-500 mb-3">{resource.subject}</p>
                     <p className="text-gray-600 text-sm mb-4">{resource.description}</p>
                 </div>
                 <div className="flex justify-between items-center mt-4 pt-4 border-t">
-                    <span className="text-sm font-semibold text-gray-500">{resource.duration}</span>
-                    <button className="flex items-center text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg">
+                    <span className="text-sm font-semibold text-gray-500">
+                        {resource.duration || resource.guideType || 'Resource'}
+                    </span>
+                    <button 
+                        onClick={handleOpenResource}
+                        className="flex items-center text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg transition-colors"
+                    >
                         Open <ChevronRight className="w-4 h-4 ml-1" />
                     </button>
                 </div>
@@ -78,20 +153,36 @@ export default function ResourcesPage() {
                     <button onClick={() => setActiveTab('video')} className={`px-4 py-1.5 rounded-md text-sm font-semibold ${activeTab === 'video' ? 'bg-white text-blue-600 shadow' : 'text-gray-600'}`}>Videos</button>
                     <button onClick={() => setActiveTab('article')} className={`px-4 py-1.5 rounded-md text-sm font-semibold ${activeTab === 'article' ? 'bg-white text-blue-600 shadow' : 'text-gray-600'}`}>Articles</button>
                     <button onClick={() => setActiveTab('guide')} className={`px-4 py-1.5 rounded-md text-sm font-semibold ${activeTab === 'guide' ? 'bg-white text-blue-600 shadow' : 'text-gray-600'}`}>Guides</button>
+                    <button onClick={() => setActiveTab('pdf')} className={`px-4 py-1.5 rounded-md text-sm font-semibold ${activeTab === 'pdf' ? 'bg-white text-blue-600 shadow' : 'text-gray-600'}`}>PDFs</button>
                 </div>
             </div>
 
+            {/* Error Message */}
+            {error && (
+                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                    {error}
+                </div>
+            )}
+
             {/* Resources Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredResources.length > 0 ? (
-                    filteredResources.map(resource => <ResourceCard key={resource.id} resource={resource} />)
-                ) : (
-                    <div className="col-span-full text-center py-16 text-gray-500">
-                        <p className="font-semibold">No resources found.</p>
-                        <p>Try adjusting your search or filters.</p>
-                    </div>
-                )}
-            </div>
+            {isLoading ? (
+                <div className="text-center py-16">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+                    <p className="mt-4 text-gray-600">Loading resources...</p>
+                </div>
+            ) : filteredResources.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {filteredResources.map(resource => (
+                        <ResourceCard key={resource._id || resource.id} resource={resource} />
+                    ))}
+                </div>
+            ) : (
+                <div className="col-span-full text-center py-16 text-gray-500">
+                    <p className="font-semibold">No resources found.</p>
+                    <p>Try adjusting your search or filters.</p>
+                </div>
+            )}
         </div>
     );
 }
+

@@ -7,11 +7,11 @@ import { Check } from 'lucide-react';
  * @param {number} props.currentStep - The current active step (1-based index).
  * @param {string[]} [props.steps] - An array of strings representing the step labels.
  */
-export default function BookingProgressTracker({ currentStep = 1, steps }) {
+export default function BookingProgressTracker({ currentStep = 1, totalSteps = 5, steps }) {
     
     // Default steps if none are provided
     const defaultSteps = ['Service', 'Details', 'Schedule', 'Tutor', 'Confirm'];
-    const stepLabels = steps || defaultSteps;
+    const stepLabels = steps || defaultSteps.slice(0, totalSteps);
 
     return (
         <div className="flex items-center w-full">

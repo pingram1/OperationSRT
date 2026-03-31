@@ -1,0 +1,44 @@
+# Local / beta stack: SPA (Nginx) + API + MongoDB.
+# 1. Copy .env.example to server/.env and set secrets (include FRONTEND_URL=http://localhost:8080 when using this compose file).
+# 2. docker compose up --build
+#
+# Web UI: http://localhost:8080  · API direct: http://localhost:3001
+
+services:
+  mongo:
+    image: mongo:7
+    restart: unless-stopped
+    volumes:
+      - mongo_data:/data/db
+    ports:
+      - "27017:27017"
+
+  api:
+    build:
+      context: ./server
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    env_file:
+      - path: ./server/.env
+        required: false
+    environment:
+      MONGO_URI: ${MONGO_URI:-mongodb://mongo:27017/startright}
+    depends_on:
+      - mongo
+    # Add a named volume or bind mount here if uploads must survive container recreation.
+
+  web:
+    build:
+      context: ./client
+      args:
+        VITE_API_URL: ""
+        VITE_SENTRY_DSN: ${VITE_SENTRY_DSN:-}
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    depends_on:
+      - api
+
+volumes:
+  mongo_data:

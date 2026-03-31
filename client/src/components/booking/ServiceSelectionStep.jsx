@@ -3,8 +3,8 @@ import { ArrowRight } from 'lucide-react';
 
 // Mock data for the services offered. In a real app, this would come from an API.
 const services = [
-    { id: 'solo', name: 'Solo Session (1-week plan)', price: 35, duration: 60 },
-    { id: 'group', name: 'Group Sessions (3-4 students)', price: 124.99, duration: 90 },
+    { id: 'solo', name: 'Solo Session (1-week plan)', price: 65, duration: 60 },
+    { id: 'group', name: 'Group Sessions (3-4 students)', price: 229.99, duration: 90 },
     { id: 'consult', name: 'Consultation', price: 0, duration: 30 },
 ];
 

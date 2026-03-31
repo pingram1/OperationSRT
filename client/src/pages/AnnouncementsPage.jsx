@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Megaphone, Users, Trash2, Send } from 'lucide-react';
+import { createAnnouncement, getAllAnnouncements, deleteAnnouncement } from '../api/announcements';
 
 // --- Reusable Components (assuming they are in their own files) ---
 const Card = ({ children, className = '' }) => (<div className={`bg-white rounded-xl shadow-md p-6 ${className}`}>{children}</div>);
@@ -10,48 +11,119 @@ const Button = ({ children, variant = 'primary', Icon, isLoading = false, classN
     return (<button className={`${baseStyles} ${variantStyles[variant]} ${disabledStyles} ${className}`} disabled={isLoading} {...rest}>{Icon && <Icon className="w-5 h-5 mr-2 -ml-1" />}{children}</button>);
 };
 
-// --- MOCK DATA (to be replaced by API calls) ---
-const initialAnnouncements = [
-    { id: 3, title: "Summer Tutoring Schedule", audience: "All Users", date: "2025-06-15", message: "Please note that our summer schedule begins next month. Check the appointments page for updated availability." },
-    { id: 2, title: "New Resource Added: Algebra Videos", audience: "Students", date: "2025-06-10", message: "A new series of videos covering advanced algebra topics has been added to the Resources page." },
-    { id: 1, title: "Welcome to StartRight!", audience: "All Users", date: "2025-06-01", message: "Welcome to the new StartRight Learning Hub! We're excited to have you." },
-];
+// Helper function to convert UI audience format to API format
+const audienceToApiFormat = (audience) => {
+    const mapping = {
+        'All Users': 'all',
+        'Students': 'students',
+        'Parents': 'parents',
+        'Tutors': 'tutors',
+        'Admin': 'admin'
+    };
+    return mapping[audience] || 'all';
+};
+
+// Helper function to convert API audience format to UI format
+const audienceToUIFormat = (audience) => {
+    const mapping = {
+        'all': 'All Users',
+        'students': 'Students',
+        'parents': 'Parents',
+        'tutors': 'Tutors',
+        'admin': 'Admin'
+    };
+    return mapping[audience] || 'All Users';
+};
+
+// Helper function to format date
+const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toISOString().split('T')[0];
+};
 
 // --- Announcements Page Main Component ---
 export default function AnnouncementsPage() {
-    const [announcements, setAnnouncements] = useState(initialAnnouncements);
+    const [announcements, setAnnouncements] = useState([]);
     const [newAnnouncement, setNewAnnouncement] = useState({ title: '', message: '', audience: 'All Users' });
     const [isLoading, setIsLoading] = useState(false);
+    const [isLoadingAnnouncements, setIsLoadingAnnouncements] = useState(true);
+    const [error, setError] = useState(null);
+
+    // Fetch announcements on component mount
+    useEffect(() => {
+        fetchAnnouncements();
+    }, []);
+
+    const fetchAnnouncements = async () => {
+        try {
+            setIsLoadingAnnouncements(true);
+            setError(null);
+            const data = await getAllAnnouncements();
+            setAnnouncements(data);
+        } catch (err) {
+            console.error('Failed to fetch announcements:', err);
+            setError(err.message || 'Failed to load announcements');
+        } finally {
+            setIsLoadingAnnouncements(false);
+        }
+    };
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
         setNewAnnouncement(prev => ({ ...prev, [name]: value }));
     };
 
-    const handleSendAnnouncement = (e) => {
+    const handleSendAnnouncement = async (e) => {
         e.preventDefault();
         if (!newAnnouncement.title || !newAnnouncement.message) {
             alert("Please fill out both title and message.");
             return;
         }
         
-        setIsLoading(true);
-        // Simulate API call
-        setTimeout(() => {
-            const announcementToSend = {
-                id: announcements.length + 1,
-                date: new Date().toISOString().split('T')[0],
-                ...newAnnouncement
-            };
-            setAnnouncements([announcementToSend, ...announcements]);
+        try {
+            setIsLoading(true);
+            setError(null);
+            
+            // Convert audience format for API
+            const apiAudience = audienceToApiFormat(newAnnouncement.audience);
+            
+            const response = await createAnnouncement({
+                title: newAnnouncement.title,
+                message: newAnnouncement.message,
+                audience: apiAudience
+            });
+            
+            // Refresh announcements list
+            await fetchAnnouncements();
+            
+            // Reset form
             setNewAnnouncement({ title: '', message: '', audience: 'All Users' });
+            
+            // Show success message
+            alert(`Announcement sent successfully to ${response.usersNotified} users!`);
+        } catch (err) {
+            console.error('Failed to create announcement:', err);
+            setError(err.message || 'Failed to send announcement');
+            alert(`Error: ${err.message || 'Failed to send announcement'}`);
+        } finally {
             setIsLoading(false);
-        }, 1000);
+        }
     };
 
-    const handleDelete = (id) => {
-        if (window.confirm("Are you sure you want to delete this announcement?")) {
-            setAnnouncements(announcements.filter(a => a.id !== id));
+    const handleDelete = async (id) => {
+        if (!window.confirm("Are you sure you want to delete this announcement?")) {
+            return;
+        }
+        
+        try {
+            setError(null);
+            await deleteAnnouncement(id);
+            // Refresh announcements list
+            await fetchAnnouncements();
+        } catch (err) {
+            console.error('Failed to delete announcement:', err);
+            setError(err.message || 'Failed to delete announcement');
+            alert(`Error: ${err.message || 'Failed to delete announcement'}`);
         }
     };
 
@@ -97,23 +169,43 @@ export default function AnnouncementsPage() {
                 <div className="lg:col-span-2">
                     <Card>
                         <h2 className="text-xl font-semibold text-gray-800 mb-4">Sent Announcements</h2>
-                        <div className="space-y-4">
-                            {announcements.map(announcement => (
-                                <div key={announcement.id} className="bg-gray-50 p-4 rounded-lg flex justify-between items-start">
-                                    <div>
-                                        <p className="font-bold text-gray-800">{announcement.title}</p>
-                                        <p className="text-sm text-gray-600 mt-1">{announcement.message}</p>
-                                        <div className="flex items-center text-xs text-gray-500 mt-2">
-                                            <Users className="w-4 h-4 mr-1.5"/>
-                                            Sent to <span className="font-semibold mx-1">{announcement.audience}</span> on {announcement.date}
+                        {error && (
+                            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                                {error}
+                            </div>
+                        )}
+                        {isLoadingAnnouncements ? (
+                            <div className="flex items-center justify-center py-8">
+                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                                <span className="ml-3 text-gray-600">Loading announcements...</span>
+                            </div>
+                        ) : announcements.length === 0 ? (
+                            <div className="text-center py-8 text-gray-500">
+                                <p>No announcements yet. Create your first announcement!</p>
+                            </div>
+                        ) : (
+                            <div className="space-y-4">
+                                {announcements.map(announcement => (
+                                    <div key={announcement._id} className="bg-gray-50 p-4 rounded-lg flex justify-between items-start">
+                                        <div className="flex-1">
+                                            <p className="font-bold text-gray-800">{announcement.title}</p>
+                                            <p className="text-sm text-gray-600 mt-1">{announcement.message}</p>
+                                            <div className="flex items-center text-xs text-gray-500 mt-2">
+                                                <Users className="w-4 h-4 mr-1.5"/>
+                                                Sent to <span className="font-semibold mx-1">{audienceToUIFormat(announcement.audience)}</span> on {formatDate(announcement.createdAt)}
+                                            </div>
                                         </div>
+                                        <button 
+                                            onClick={() => handleDelete(announcement._id)} 
+                                            className="p-2 text-gray-400 hover:text-red-500 flex-shrink-0 transition-colors"
+                                            title="Delete announcement"
+                                        >
+                                            <Trash2 className="w-5 h-5"/>
+                                        </button>
                                     </div>
-                                    <button onClick={() => handleDelete(announcement.id)} className="p-2 text-gray-400 hover:text-red-500 flex-shrink-0">
-                                        <Trash2 className="w-5 h-5"/>
-                                    </button>
-                                </div>
-                            ))}
-                        </div>
+                                ))}
+                            </div>
+                        )}
                     </Card>
                 </div>
             </div>

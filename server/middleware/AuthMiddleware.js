@@ -39,12 +39,20 @@ const authMiddleware = (req, res, next) => {
 
 /**
  * Optional: A middleware to restrict access to certain roles (e.g., 'admin').
+ * Super admins have unrestricted access to ALL routes - nothing is restricted from them.
  * @param  {...string} roles - The roles that are allowed to access the route.
  */
 const authorize = (...roles) => {
     return (req, res, next) => {
-        if (!roles.includes(req.user.role)) {
-            return res.status(403).json({ message: `User role ${req.user.role} is not authorized to access this route` });
+        const userRole = req.user.role;
+        
+        // Super admin has unrestricted access to ALL routes - nothing is restricted
+        if (userRole === 'super_admin') {
+            return next();
+        }
+        
+        if (!roles.includes(userRole)) {
+            return res.status(403).json({ message: `User role ${userRole} is not authorized to access this route` });
         }
         next();
     };
