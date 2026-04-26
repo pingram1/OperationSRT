@@ -3,9 +3,10 @@ import { getSecureToken } from './authStorage';
 const API_BASE_URL = '/api/payments';
 
 /**
- * Create a payment intent for a booking
+ * Create a payment intent for a booking.
+ * Amount is determined server-side from the booking record (never trust client).
  */
-export const createPaymentIntent = async (bookingId, amount, currency = 'USD') => {
+export const createPaymentIntent = async (bookingId, currency = 'USD') => {
     try {
         const token = getSecureToken();
         const response = await fetch(`${API_BASE_URL}/create-intent`, {
@@ -16,7 +17,6 @@ export const createPaymentIntent = async (bookingId, amount, currency = 'USD') =
             },
             body: JSON.stringify({
                 bookingId,
-                amount,
                 currency,
             }),
         });

@@ -1,6 +1,118 @@
 const MembershipPlan = require('../models/MembershipPlan');
 const User = require('../models/User');
 const Booking = require('../models/Booking');
+const logger = require('../utils/logger');
+
+/**
+ * @returns {string|null} error message, or null if valid
+ */
+function validateSessionConfigForPlan(plan, sessionConfiguration) {
+    if (plan.name !== 'Summa Cum Laude') {
+        return null;
+    }
+    if (!sessionConfiguration) {
+        return 'Session configuration required for Summa Cum Laude plan';
+    }
+    const { sessionsPerWeek, sessionDuration, additionalOption } = sessionConfiguration;
+    if (!sessionsPerWeek || !sessionDuration) {
+        return 'Session configuration required for Summa Cum Laude plan';
+    }
+    const baseConfig = plan.sessionConfig;
+    if (!baseConfig) {
+        return 'Invalid plan configuration';
+    }
+    const isValidBase = sessionsPerWeek === baseConfig.baseSessionsPerWeek
+        && sessionDuration === baseConfig.baseSessionDuration;
+    const isValidAdditional = (plan.sessionConfig.additionalSessionOptions || []).some(
+        (opt) => opt.sessionsPerWeek === sessionsPerWeek
+            && opt.sessionDuration === sessionDuration
+            && (additionalOption ? opt.label === additionalOption : true)
+    );
+    if (!isValidBase && !isValidAdditional) {
+        return 'Invalid session configuration for this plan';
+    }
+    return null;
+}
+
+/**
+ * @param {import('mongoose').Document} targetUser
+ */
+async function writeMembershipDataToUser(targetUser, plan, sessionConfiguration) {
+    let endDate = null;
+    if (plan.priceType === 'monthly') {
+        endDate = new Date();
+        endDate.setMonth(endDate.getMonth() + 1);
+    }
+
+    const membershipData = {
+        plan: plan.name,
+        planId: plan._id,
+        startDate: new Date(),
+        endDate,
+        status: 'active',
+        sessionConfiguration: sessionConfiguration || null,
+    };
+
+    targetUser.membership = membershipData;
+    await targetUser.save();
+
+    if (targetUser.role === 'parent' && targetUser.children && targetUser.children.length > 0) {
+        await User.updateMany(
+            { _id: { $in: targetUser.children } },
+            { $set: { membership: membershipData } }
+        );
+    } else if (targetUser.role === 'student') {
+        const parents = await User.find({
+            role: 'parent',
+            children: targetUser._id,
+        });
+        if (parents.length > 0) {
+            await User.updateMany(
+                { _id: { $in: parents.map((p) => p._id) } },
+                { $set: { membership: membershipData } }
+            );
+        }
+    }
+}
+
+/**
+ * Idempotent: activate membership for a student after a successful Stripe charge for a membership booking.
+ * @param {import('mongoose').Document} booking
+ */
+const applyMembershipAfterPayment = async (booking) => {
+    if (booking.paymentPurpose !== 'membership' || !booking.membershipPlanId) {
+        return { applied: false, reason: 'not_membership' };
+    }
+    if (booking.membershipActivationComplete) {
+        return { applied: false, reason: 'already_applied' };
+    }
+
+    const plan = await MembershipPlan.findById(booking.membershipPlanId);
+    if (!plan || !plan.isActive) {
+        logger.error('applyMembershipAfterPayment: plan missing or inactive', { bookingId: booking._id });
+        return { applied: false, reason: 'invalid_plan' };
+    }
+
+    const sc = booking.membershipSessionConfiguration;
+    const configErr = validateSessionConfigForPlan(plan, sc);
+    if (configErr) {
+        logger.error('applyMembershipAfterPayment: bad session config', { bookingId: booking._id, configErr });
+        return { applied: false, reason: 'invalid_session_config' };
+    }
+
+    const targetUser = await User.findById(booking.student);
+    if (!targetUser || targetUser.role !== 'student') {
+        logger.error('applyMembershipAfterPayment: invalid student on booking', { bookingId: booking._id });
+        return { applied: false, reason: 'invalid_student' };
+    }
+
+    await writeMembershipDataToUser(targetUser, plan, sc);
+
+    booking.membershipActivationComplete = true;
+    await booking.save();
+
+    return { applied: true };
+};
 
 /**
  * @desc    Get all available membership plans
@@ -145,34 +257,17 @@ const selectPlan = async (req, res) => {
         if (!plan || !plan.isActive) {
             return res.status(404).json({ message: 'Membership plan not found or inactive' });
         }
+
+        const isFreeOnly = plan.priceType === 'free' || (Number(plan.price) || 0) === 0;
+        if (!isFreeOnly) {
+            return res.status(400).json({
+                message: 'This plan requires successful payment. Complete checkout to activate it.',
+            });
+        }
         
-        // Validate session configuration for Summa Cum Laude
-        if (plan.name === 'Summa Cum Laude' && sessionConfiguration) {
-            const { sessionsPerWeek, sessionDuration, additionalOption } = sessionConfiguration;
-            
-            // Validate base configuration
-            if (!sessionsPerWeek || !sessionDuration) {
-                return res.status(400).json({ 
-                    message: 'Session configuration required for Summa Cum Laude plan' 
-                });
-            }
-            
-            // Validate against plan options
-            const baseConfig = plan.sessionConfig;
-            const isValidBase = sessionsPerWeek === baseConfig.baseSessionsPerWeek && 
-                              sessionDuration === baseConfig.baseSessionDuration;
-            
-            const isValidAdditional = plan.sessionConfig.additionalSessionOptions.some(
-                opt => opt.sessionsPerWeek === sessionsPerWeek && 
-                       opt.sessionDuration === sessionDuration &&
-                       (additionalOption ? opt.label === additionalOption : true)
-            );
-            
-            if (!isValidBase && !isValidAdditional) {
-                return res.status(400).json({ 
-                    message: 'Invalid session configuration for this plan' 
-                });
-            }
+        const configErr = validateSessionConfigForPlan(plan, sessionConfiguration);
+        if (configErr) {
+            return res.status(400).json({ message: configErr });
         }
         
         // Determine which user to update
@@ -185,7 +280,11 @@ const selectPlan = async (req, res) => {
         if (req.user.role === 'parent' && studentId) {
             // Verify the student is linked to this parent
             const parent = targetUser;
-            if (!parent.children || !parent.children.includes(studentId)) {
+            const sid = String(studentId);
+            const isChild = (parent.children || []).some(
+                (c) => (c._id || c).toString() === sid
+            );
+            if (!isChild) {
                 return res.status(403).json({ message: 'Not authorized to change membership for this student' });
             }
             
@@ -199,49 +298,7 @@ const selectPlan = async (req, res) => {
             }
         }
         
-        // Calculate end date (for monthly plans, add 1 month)
-        let endDate = null;
-        if (plan.priceType === 'monthly') {
-            endDate = new Date();
-            endDate.setMonth(endDate.getMonth() + 1);
-        }
-        
-        const membershipData = {
-            plan: plan.name,
-            planId: plan._id,
-            startDate: new Date(),
-            endDate: endDate,
-            status: 'active',
-            sessionConfiguration: sessionConfiguration || null,
-        };
-        
-        // Update target user's membership
-        targetUser.membership = membershipData;
-        await targetUser.save();
-        
-        // Sync membership with linked accounts
-        if (targetUser.role === 'parent' && targetUser.children && targetUser.children.length > 0) {
-            // If parent is selecting plan, sync to all linked children
-            await User.updateMany(
-                { _id: { $in: targetUser.children } },
-                { $set: { membership: membershipData } }
-            );
-            console.log(`[selectPlan] Synced membership to ${targetUser.children.length} linked children for parent ${targetUser._id}`);
-        } else if (targetUser.role === 'student') {
-            // If student is selecting plan (or parent selected for student), sync to linked parent(s)
-            const parents = await User.find({
-                role: 'parent',
-                children: targetUser._id
-            });
-            
-            if (parents.length > 0) {
-                await User.updateMany(
-                    { _id: { $in: parents.map(p => p._id) } },
-                    { $set: { membership: membershipData } }
-                );
-                console.log(`[selectPlan] Synced membership to ${parents.length} linked parent(s) for student ${targetUser._id}`);
-            }
-        }
+        await writeMembershipDataToUser(targetUser, plan, sessionConfiguration);
         
         // Return membership info with plan details (return the target user's membership)
         const updatedUser = await User.findById(targetUser._id)
@@ -355,5 +412,7 @@ module.exports = {
     getRemainingSessions,
     selectPlan,
     initializePlans,
+    applyMembershipAfterPayment,
+    validateSessionConfigForPlan,
 };
 

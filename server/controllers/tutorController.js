@@ -186,7 +186,7 @@ const getTutorStats = async (req, res) => {
 const approveTutor = async (req, res) => {
     try {
         const user = await User.findById(req.user.id);
-        if (!user || user.role !== 'admin') {
+        if (!user || (user.role !== 'admin' && user.role !== 'super_admin')) {
             return res.status(403).json({ message: 'Only administrators can approve tutors' });
         }
         
@@ -236,7 +236,7 @@ const approveTutor = async (req, res) => {
 const denyTutor = async (req, res) => {
     try {
         const user = await User.findById(req.user.id);
-        if (!user || user.role !== 'admin') {
+        if (!user || (user.role !== 'admin' && user.role !== 'super_admin')) {
             return res.status(403).json({ message: 'Only administrators can deny tutors' });
         }
         
@@ -354,7 +354,7 @@ const updateTutor = async (req, res) => {
 const createTutor = async (req, res) => {
     try {
         const user = await User.findById(req.user.id);
-        if (!user || user.role !== 'admin') {
+        if (!user || (user.role !== 'admin' && user.role !== 'super_admin')) {
             return res.status(403).json({ message: 'Only administrators can create tutor accounts' });
         }
 

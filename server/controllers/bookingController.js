@@ -7,6 +7,9 @@ const { createRoom } = require('../services/wherebyService');
 const { createNoShowNotifications, createSessionRequestedNotification } = require('../services/bookingNotificationService');
 const logger = require('../utils/logger');
 const { creditTutoringSession } = require('../services/scholarshipService');
+const MembershipPlan = require('../models/MembershipPlan');
+const { computeMembershipTotalUsd } = require('../utils/membershipPrice');
+const { validateSessionConfigForPlan } = require('./membershipController');
 
 /**
  * @desc    Create a new booking
@@ -14,11 +17,84 @@ const { creditTutoringSession } = require('../services/scholarshipService');
  * @access  Private
  */
 const createBooking = async (req, res) => {
-    const { student, tutor, subject, gradeLevel, goals, sessionDate, duration, serviceType, sessionType = 'in-person', price } = req.body;
+    const {
+        student,
+        tutor,
+        subject,
+        gradeLevel,
+        goals,
+        sessionDate,
+        duration,
+        serviceType,
+        sessionType = 'in-person',
+        price,
+        paymentPurpose: rawPaymentPurpose,
+        membershipPlanId,
+        membershipSessionConfiguration,
+    } = req.body;
 
     try {
         // The person making the booking is the logged-in user
         const user = req.user.id;
+        const userRole = req.user.role;
+        const requestedStudentId = student ? student.toString() : null;
+
+        if (!requestedStudentId) {
+            return res.status(400).json({ message: 'Student ID is required' });
+        }
+
+        // RBAC: Students can only book for themselves
+        if (userRole === 'student' && requestedStudentId !== user.toString()) {
+            return res.status(403).json({ message: 'Students can only create bookings for themselves' });
+        }
+
+        // RBAC: Parents can only book for children linked to their account
+        if (userRole === 'parent') {
+            const parentUser = await User.findById(user).select('children');
+            if (!parentUser) {
+                return res.status(404).json({ message: 'Parent user not found' });
+            }
+
+            const childIds = (parentUser.children || []).map((child) => (child._id || child).toString());
+            if (!childIds.includes(requestedStudentId)) {
+                return res.status(403).json({ message: 'You are not authorized to create bookings for this student' });
+            }
+        }
+
+        // RBAC: Admin and super_admin bypass student ownership checks
+        if (userRole !== 'student' && userRole !== 'parent' && userRole !== 'admin' && userRole !== 'super_admin') {
+            return res.status(403).json({ message: 'You are not authorized to create bookings' });
+        }
+
+        const paymentPurpose = rawPaymentPurpose === 'membership' ? 'membership' : 'session';
+        let resolvedPrice = null;
+        let resolvedMembershipPlanId = null;
+        let resolvedMembershipSessionConfiguration = null;
+
+        if (paymentPurpose === 'membership') {
+            if (!membershipPlanId) {
+                return res.status(400).json({ message: 'membershipPlanId is required for membership bookings' });
+            }
+            const mPlan = await MembershipPlan.findById(membershipPlanId);
+            if (!mPlan || !mPlan.isActive) {
+                return res.status(400).json({ message: 'Invalid or inactive membership plan' });
+            }
+            const cfgErr = validateSessionConfigForPlan(mPlan, membershipSessionConfiguration);
+            if (cfgErr) {
+                return res.status(400).json({ message: cfgErr });
+            }
+            resolvedPrice = computeMembershipTotalUsd(mPlan, membershipSessionConfiguration);
+            resolvedMembershipPlanId = mPlan._id;
+            resolvedMembershipSessionConfiguration = membershipSessionConfiguration || null;
+        } else {
+            const raw = price != null ? Number(price) : NaN;
+            if (Number.isFinite(raw) && raw >= 0) {
+                resolvedPrice = Math.round(raw * 100) / 100;
+            } else {
+                const servicePrices = { solo: 65, group: 229.99, consult: 0 };
+                resolvedPrice = servicePrices[serviceType] ?? 65;
+            }
+        }
         
         logger.info('Creating booking', { student, user });
 
@@ -208,6 +284,11 @@ const createBooking = async (req, res) => {
             duration,
             serviceType,
             sessionType,
+            price: resolvedPrice,
+            paymentPurpose,
+            membershipPlanId: resolvedMembershipPlanId,
+            membershipSessionConfiguration: resolvedMembershipSessionConfiguration,
+            membershipActivationComplete: false,
             status: 'scheduled',
             tutorAcceptanceStatus: assignedTutor ? 'pending' : null,
             wherebyRoom: wherebyRoomInfo ? {
@@ -222,7 +303,7 @@ const createBooking = async (req, res) => {
         // If student cannot make payments and there's a parent, set up payment request
         if (!canMakePayments && parentForPayment && serviceType !== 'consult') {
             // Calculate price if not provided (fallback to service type defaults)
-            let sessionPrice = price;
+            let sessionPrice = resolvedPrice;
             if (!sessionPrice || sessionPrice === 0) {
                 // Default prices based on service type
                 const servicePrices = {

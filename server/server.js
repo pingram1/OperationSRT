@@ -12,6 +12,8 @@ const { startBookingExpiryJob } = require('./jobs/bookingExpiryCron');
 const { validateEnvironment, parseFrontendOrigins } = require('./utils/envValidator');
 const { initSentry } = require('./utils/sentry');
 const errorHandler = require('./middleware/errorHandler');
+const { handleWebhook } = require('./controllers/paymentController');
+const { pdfResourceRouter, uploadsRouter } = require('./routes/fileRoutes');
 
 // Load environment variables
 dotenv.config();
@@ -121,15 +123,15 @@ const apiLimiter = rateLimit({
   },
 });
 
+// Stripe webhook must be mounted BEFORE global JSON parsing
+app.post('/api/payments/webhook', express.raw({ type: 'application/json' }), handleWebhook);
+
 // This allows your server to accept JSON data in requests
-// Note: Stripe webhook route needs raw body, so we handle that in paymentRoutes
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Serve static PDF files from uploads directory
-app.use('/api/resources/pdf', express.static(path.join(__dirname, 'uploads', 'pdfs')));
-// Serve static badge images from uploads directory
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+// Uploaded content is served through authenticated, path-traversal-safe routes below.
+// Both /api/resources/pdf and /uploads now require a valid Bearer token.
 
 // Request logging middleware
 app.use((req, res, next) => {
@@ -152,7 +154,11 @@ app.use('/api', (req, res, next) => {
   apiLimiter(req, res, next);
 });
 
+app.use('/api/resources/pdf', pdfResourceRouter);
+app.use('/uploads', uploadsRouter);
+
 app.use('/api/users', require('./routes/UserRoutes'));
+app.use('/api/schools', require('./routes/schoolRoutes'));
 app.use('/api/memberships', require('./routes/MembershipRoutes'));
 app.use('/api/bookings', require('./routes/bookingRoutes'));
 app.use('/api/challenges', require('./routes/challengeRoutes'));

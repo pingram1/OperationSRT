@@ -34,6 +34,7 @@ const ContentManagementPage = lazy(() => import('./pages/ContentManagement.jsx')
 const FinancialsPage = lazy(() => import('./pages/FinancialBMPage.jsx'));
 const SystemConfigPage = lazy(() => import('./pages/SystemConfig.jsx'));
 const MatchAnalysisPage = lazy(() => import('./pages/MatchAnalysisPage.jsx'));
+const SchoolsAdminPage = lazy(() => import('./pages/SchoolsAdminPage.jsx'));
 const VideoCallPage = lazy(() => import('./pages/VideoCallPage.jsx'));
 const StudentBillingHistory = lazy(() => import('./pages/StudentBillingHistory.jsx'));
 
@@ -127,6 +128,7 @@ export default function App() {
             <Route path="financials" element={<FinancialsPage />} />
             <Route path="system-config" element={<SystemConfigPage />} />
             <Route path="match-analysis" element={<MatchAnalysisPage />} />
+            <Route path="schools-admin" element={<SchoolsAdminPage />} />
         </Route>
       </Routes>
     </Suspense>

@@ -147,7 +147,7 @@ export default function PaymentStep({ plan, sessionConfiguration, bookingDetails
             try {
                 setIsLoading(true);
                 setError(null);
-                const paymentIntentData = await createPaymentIntent(bookingId, totalPrice, 'USD');
+                const paymentIntentData = await createPaymentIntent(bookingId, 'USD');
                 setClientSecret(paymentIntentData.clientSecret);
             } catch (err) {
                 console.error('Failed to initialize payment:', err);

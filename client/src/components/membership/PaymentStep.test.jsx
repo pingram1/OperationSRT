@@ -73,7 +73,7 @@ describe('PaymentStep (payment smoke)', () => {
       expect(screen.getByTestId('stripe-elements')).toBeInTheDocument();
     });
 
-    expect(createPaymentIntent).toHaveBeenCalledWith('booking_smoke_1', 49, 'USD');
+    expect(createPaymentIntent).toHaveBeenCalledWith('booking_smoke_1', 'USD');
     expect(screen.getByRole('button', { name: /complete purchase/i })).toBeInTheDocument();
   });
 

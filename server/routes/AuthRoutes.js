@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 
 // Import the controller functions that contain the logic for each route.
-const { registerUser, registerEmployee, loginUser, getLoggedInUser, refreshToken } = require('../controllers/authController');
+const { registerUser, registerEmployee, registerWithCode, loginUser, getLoggedInUser, refreshToken } = require('../controllers/authController');
 
 // Import the authentication middleware to protect routes.
 const { authMiddleware } = require('../middleware/AuthMiddleware');
@@ -32,6 +32,13 @@ router.post('/login', loginUser);
  * If an admin exists, only admins can create new admin accounts.
  */
 router.post('/register-employee', registerEmployee);
+
+/**
+ * @route   POST /api/auth/register-with-code
+ * @desc    Register a student linked to a school via the school's registrationCode
+ * @access  Public
+ */
+router.post('/register-with-code', registerWithCode);
 
 /**
  * @route   GET /api/auth/user

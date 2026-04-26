@@ -6,7 +6,7 @@ const logger = require('./logger');
 
 const requiredEnvVars = {
   critical: ['MONGO_URI', 'JWT_SECRET'],
-  important: ['STRIPE_SECRET_KEY', 'STRIPE_PUBLISHABLE_KEY'],
+  important: ['STRIPE_SECRET_KEY', 'STRIPE_PUBLISHABLE_KEY', 'STRIPE_WEBHOOK_SECRET'],
   optional: [
     'FRONTEND_URL', // required in production; optional in dev (CORS falls back to localhost)
     'WHEREBY_API',
@@ -25,6 +25,7 @@ const productionRequired = [
   'JWT_SECRET',
   'STRIPE_SECRET_KEY',
   'STRIPE_PUBLISHABLE_KEY',
+  'STRIPE_WEBHOOK_SECRET',
   'FRONTEND_URL',
   'EMAIL_HOST',
   'EMAIL_USER',

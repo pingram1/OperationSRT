@@ -42,7 +42,7 @@ VITE_STRIPE_PUBLISHABLE_KEY=pk_test_...  # Your Stripe publishable key
 
 ### Frontend
 1. **Payment API** (`client/src/api/payments.js`)
-   - `createPaymentIntent(bookingId, amount, currency)`
+   - `createPaymentIntent(bookingId, currency)` — amount comes from the booking on the server (client cannot set it)
    - `confirmPayment(paymentIntentId, bookingId)`
    - `getPaymentStatus(bookingId)`
 

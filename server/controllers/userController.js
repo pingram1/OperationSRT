@@ -1,4 +1,6 @@
 const User = require('../models/User');
+const School = require('../models/School');
+const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const path = require('path');
 const fs = require('fs').promises;
@@ -216,7 +218,8 @@ const getAllUsers = async (req, res) => {
     try {
         const users = await User.find({})
             .select('-password')
-            .populate('children', 'name email avatar role'); // Populate children for parent users
+            .populate('children', 'name email avatar role')
+            .populate('schoolId', 'name district status');
         console.log(`[getAllUsers] Found ${users.length} users`);
         res.json(users);
     } catch (err) {
@@ -258,7 +261,7 @@ const getTutors = async (req, res) => {
 const updateUser = async (req, res) => {
     try {
         const { id } = req.params;
-        const { name, email, role, password, avatar, tutorInfo } = req.body;
+        const { name, email, role, password, avatar, tutorInfo, schoolId } = req.body;
 
         const user = await User.findById(id);
 
@@ -277,12 +280,12 @@ const updateUser = async (req, res) => {
             user.email = email.toLowerCase().trim();
         }
         if (role) {
-            const validRoles = ['student', 'parent', 'tutor', 'admin', 'super_admin'];
+            const validRoles = ['student', 'parent', 'tutor', 'admin', 'super_admin', 'school_admin'];
             if (validRoles.includes(role)) {
-                // Only allow admin or super_admin to change roles to admin or super_admin
-                if ((role === 'admin' || role === 'super_admin') && 
+                // Only allow admin or super_admin to change elevated institutional/admin roles
+                if ((role === 'admin' || role === 'super_admin' || role === 'school_admin') &&
                     req.user.role !== 'admin' && req.user.role !== 'super_admin') {
-                    return res.status(403).json({ message: 'Only admins can assign admin or super_admin roles' });
+                    return res.status(403).json({ message: 'Only admins can assign admin, super_admin, or school_admin roles' });
                 }
                 user.role = role;
                 
@@ -293,6 +296,20 @@ const updateUser = async (req, res) => {
                         subjects: []
                     };
                 }
+            }
+        }
+        if (schoolId !== undefined) {
+            if (schoolId === null || schoolId === '') {
+                user.schoolId = null;
+            } else {
+                if (!mongoose.Types.ObjectId.isValid(schoolId)) {
+                    return res.status(400).json({ message: 'Invalid schoolId' });
+                }
+                const school = await School.findById(schoolId);
+                if (!school) {
+                    return res.status(400).json({ message: 'Invalid schoolId' });
+                }
+                user.schoolId = school._id;
             }
         }
         if (avatar !== undefined) user.avatar = avatar;

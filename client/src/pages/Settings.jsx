@@ -7,6 +7,7 @@ import { getSubjects } from '../api/systemConfig.js';
 import { getMyAvailability, updateMyAvailability } from '../api/availability.js';
 import { getSecureToken } from '../api/authStorage.js';
 import { getAllMembershipPlans, getCurrentMembership } from '../api/memberships.js';
+import { AuthenticatedImage } from '../components/common/AuthenticatedImage.jsx';
 
 // Reusable Components
 const Card = ({ children, className = '' }) => (
@@ -2102,13 +2103,10 @@ export default function SettingsPage() {
                                         {user.certificationBadges.map((badge, index) => (
                                             <div key={index} className="border border-gray-200 rounded-lg p-4 bg-white">
                                                 <div className="flex items-start gap-4">
-                                                    <img 
-                                                        src={badge.imageUrl.startsWith('http') ? badge.imageUrl : badge.imageUrl} 
+                                                    <AuthenticatedImage
+                                                        src={badge.imageUrl}
                                                         alt={badge.name}
                                                         className="w-20 h-20 object-contain rounded border border-gray-200"
-                                                        onError={(e) => {
-                                                            e.target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="80" height="80"%3E%3Crect width="80" height="80" fill="%23f3f4f6"/%3E%3Ctext x="50%25" y="50%25" text-anchor="middle" dy=".3em" fill="%239ca3af" font-size="12"%3EBadge%3C/text%3E%3C/svg%3E';
-                                                        }}
                                                     />
                                                     <div className="flex-1">
                                                         <h5 className="font-semibold text-gray-800">{badge.name}</h5>

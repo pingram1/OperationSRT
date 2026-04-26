@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowRight, ArrowLeft, Check, Star, BookCopy, Calendar, User, ClipboardCheck, Sparkles, AlertCircle, Users, Video, MapPin } from 'lucide-react';
+import { ArrowRight, ArrowLeft, Check, CheckCircle, Star, BookCopy, Calendar, User, ClipboardCheck, Sparkles, AlertCircle, Users, Video, MapPin } from 'lucide-react';
 
 // --- Import the separate booking step components ---
 import ServiceSelectionStep from '../components/booking/ServiceSelectionStep.jsx';
@@ -925,15 +925,8 @@ export default function AppointmentPage() {
                 tutorId = membershipBookingDetails.tutor._id || membershipBookingDetails.tutor.id;
             }
 
-            // Determine service type and price based on plan
-            let serviceType = 'solo';
-            let price = selectedPlan.price || 65;
-            if (selectedPlan.priceType === 'per_session') {
-                price = selectedPlan.price;
-            } else if (selectedPlan.priceType === 'monthly') {
-                // For monthly plans, use the base price
-                price = selectedPlan.price;
-            }
+            // Determine service type; price is computed on the server from plan + session configuration
+            const serviceType = 'solo';
 
             // Create booking data
             const bookingData = {
@@ -946,7 +939,9 @@ export default function AppointmentPage() {
                 duration: sessionConfiguration?.sessionDuration || 60,
                 serviceType: serviceType,
                 sessionType: membershipBookingDetails.sessionType || 'virtual',
-                price: price,
+                paymentPurpose: 'membership',
+                membershipPlanId: selectedPlan._id,
+                membershipSessionConfiguration: sessionConfiguration || null,
             };
 
             const booking = await createBooking(bookingData);
@@ -1033,11 +1028,7 @@ export default function AppointmentPage() {
             setIsProcessingMembership(true);
             setMembershipError('');
 
-            // Determine if parent is selecting for a child
-            const targetStudentId = (user?.role === 'parent' && selectedChildId) ? selectedChildId : null;
-
-            // Select the membership plan on the backend
-            await selectMembershipPlan(selectedPlan._id, sessionConfiguration, targetStudentId);
+            // Membership is activated server-side after Stripe reports success (webhook or confirm); do not call select here.
 
             // Update local state
             setMembershipFlowStep('complete');

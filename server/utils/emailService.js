@@ -137,8 +137,132 @@ This is an automated message. Please do not reply to this email.
     }
 };
 
+/**
+ * Send pilot-student welcome email asking them to set a password (after roster upload).
+ * @param {string} studentEmail
+ * @param {string} studentName
+ * @param {Object} options
+ * @param {string} [options.temporaryPassword] - Optional temporary password to include.
+ * @param {string} [options.schoolName]        - Optional school name for context.
+ * @param {string} [options.loginUrl]          - Login/onboarding URL.
+ * @returns {Promise<boolean>} - True if email was sent, false if logged only.
+ */
+const sendPilotStudentWelcomeEmail = async (studentEmail, studentName, options = {}) => {
+    const {
+        temporaryPassword,
+        schoolName,
+        loginUrl = 'http://localhost:5173/login',
+    } = options;
+
+    try {
+        const transporter = createTransporter();
+
+        const schoolLine = schoolName
+            ? `Your account has been created as part of the <strong>${schoolName}</strong> pilot program with StartRight Tutoring.`
+            : 'Your account has been created as part of a school pilot program with StartRight Tutoring.';
+
+        const credentialsBlock = temporaryPassword
+            ? `
+                <div class="credentials">
+                    <p><strong>Your temporary login:</strong></p>
+                    <p><strong>Email:</strong> ${studentEmail}</p>
+                    <p><strong>Temporary Password:</strong> <span class="password">${temporaryPassword}</span></p>
+                    <p>Please log in and set a new password right away.</p>
+                </div>
+            `
+            : `
+                <p>Please use the link below to set a password for your new account.</p>
+            `;
+
+        const subject = 'Welcome to StartRight Tutoring — Set Up Your Account';
+
+        const emailContent = {
+            from: `"StartRight Tutoring" <${process.env.EMAIL_FROM || process.env.EMAIL_USER || 'noreply@startrighttutoring.com'}>`,
+            to: studentEmail,
+            subject,
+            html: `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="utf-8">
+                    <style>
+                        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+                        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+                        .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
+                        .button { display: inline-block; padding: 12px 30px; background: #667eea; color: white; text-decoration: none; border-radius: 5px; margin: 20px 0; }
+                        .credentials { background: #fff; padding: 20px; border-radius: 5px; border-left: 4px solid #667eea; margin: 20px 0; }
+                        .password { font-family: monospace; font-size: 18px; font-weight: bold; color: #667eea; }
+                        .footer { text-align: center; margin-top: 30px; color: #666; font-size: 12px; }
+                    </style>
+                </head>
+                <body>
+                    <div class="container">
+                        <div class="header">
+                            <h1>Welcome to StartRight Tutoring!</h1>
+                        </div>
+                        <div class="content">
+                            <p>Hello ${studentName || 'there'},</p>
+                            <p>${schoolLine}</p>
+                            ${credentialsBlock}
+                            <div style="text-align: center;">
+                                <a href="${loginUrl}" class="button">Set Up My Account</a>
+                            </div>
+                            <p>If you did not expect this email, you can safely ignore it.</p>
+                            <p>Best regards,<br>The StartRight Tutoring Team</p>
+                        </div>
+                        <div class="footer">
+                            <p>This is an automated message. Please do not reply to this email.</p>
+                        </div>
+                    </div>
+                </body>
+                </html>
+            `,
+            text: `
+Welcome to StartRight Tutoring!
+
+Hello ${studentName || 'there'},
+
+${schoolName
+    ? `Your account has been created as part of the ${schoolName} pilot program with StartRight Tutoring.`
+    : 'Your account has been created as part of a school pilot program with StartRight Tutoring.'}
+
+${temporaryPassword
+    ? `Email: ${studentEmail}\nTemporary Password: ${temporaryPassword}\nPlease log in and set a new password right away.`
+    : 'Please use the link below to set a password for your new account.'}
+
+Set up your account: ${loginUrl}
+
+If you did not expect this email, you can safely ignore it.
+
+Best regards,
+The StartRight Tutoring Team
+
+---
+This is an automated message. Please do not reply to this email.
+            `,
+        };
+
+        if (transporter) {
+            const info = await transporter.sendMail(emailContent);
+            console.log(`[emailService] Pilot welcome email sent to ${studentEmail}:`, info.messageId);
+            return true;
+        }
+
+        console.log('[emailService] Email not configured. Pilot welcome that would be sent:');
+        console.log('To:', studentEmail);
+        console.log('Subject:', emailContent.subject);
+        console.log('Body:', emailContent.text);
+        return false;
+    } catch (error) {
+        console.error('[emailService] Error sending pilot welcome email:', error);
+        return false;
+    }
+};
+
 module.exports = {
     sendTutorAccountEmail,
+    sendPilotStudentWelcomeEmail,
 };
 
 

@@ -237,6 +237,42 @@ const BookingSchema = new Schema({
     },
 
     /**
+     * Session or membership charge amount (USD) set at booking creation (server-validated for membership).
+     */
+    price: {
+        type: Number,
+        default: null,
+    },
+
+    /**
+     * Whether this booking record is for membership checkout vs a standard session.
+     */
+    paymentPurpose: {
+        type: String,
+        enum: ['session', 'membership'],
+        default: 'session',
+    },
+
+    membershipPlanId: {
+        type: Schema.Types.ObjectId,
+        ref: 'MembershipPlan',
+        default: null,
+    },
+
+    membershipSessionConfiguration: {
+        type: Schema.Types.Mixed,
+        default: null,
+    },
+
+    /**
+     * Set true after membership benefits are applied following successful payment (idempotency).
+     */
+    membershipActivationComplete: {
+        type: Boolean,
+        default: false,
+    },
+
+    /**
      * Session notes written by the tutor after the session.
      * Contains information about what was covered, progress made, and recommendations.
      */

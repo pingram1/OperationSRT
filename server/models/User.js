@@ -125,8 +125,13 @@ const UserSchema = new Schema({
     },
     role: {
         type: String,
-        enum: ['student', 'parent', 'tutor', 'admin', 'super_admin'],
+        enum: ['student', 'parent', 'tutor', 'admin', 'super_admin', 'school_admin'],
         default: 'student',
+    },
+    schoolId: {
+        type: Schema.Types.ObjectId,
+        ref: 'School',
+        default: null,
     },
     // For super_admin: allow them to function as a tutor
     availableAsTutor: {

@@ -82,6 +82,46 @@ export const loginUser = async (email, password) => {
 };
 
 /**
+ * Sends a "register with school registration code" request.
+ * Public endpoint. Returns the newly-created student plus a JWT.
+ * @param {object} userData - { name, email, password, registrationCode }
+ * @returns {Promise<object>} Server response containing token, user, and school metadata.
+ * @throws {Error} If the API call fails or returns an error.
+ */
+export const registerWithCode = async (userData) => {
+    try {
+        const { confirmPassword, ...apiData } = userData || {};
+
+        const response = await fetch('/api/auth/register-with-code', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(apiData),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({
+                message: 'Registration failed. Please try again.',
+            }));
+
+            if (response.status === 503) {
+                throw new Error(errorData.message || 'Database unavailable. Please contact support.');
+            }
+
+            const err = new Error(errorData.message || 'Failed to register');
+            err.status = response.status;
+            throw err;
+        }
+
+        return response.json();
+    } catch (error) {
+        if (error instanceof Error) {
+            throw error;
+        }
+        throw new Error('Network error. Please check your connection.');
+    }
+};
+
+/**
  * Sends an employee registration request to the server.
  * @param {object} userData - The employee's data (name, email, password, role).
  * @param {string} token - Optional auth token (required if creating admin when one already exists).

@@ -1,4 +1,5 @@
 const User = require('../models/User');
+const School = require('../models/School');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { createParentLinkRequestFromSignup } = require('./parentLinkController');
@@ -460,11 +461,92 @@ const refreshToken = async (req, res) => {
     }
 };
 
-// Make sure all functions are exported
+/**
+ * @desc    Register a student via a school pilot registration code
+ * @route   POST /api/auth/register-with-code
+ * @access  Public
+ */
+const registerWithCode = async (req, res) => {
+    const { name, email, password, registrationCode } = req.body;
+
+    try {
+        if (!name || !email || !password || !registrationCode) {
+            return res.status(400).json({
+                message: 'name, email, password, and registrationCode are required',
+            });
+        }
+
+        if (password.length < 8) {
+            return res.status(400).json({ message: 'Password must be at least 8 characters long' });
+        }
+        const hasLetter = /[a-zA-Z]/.test(password);
+        const hasNumber = /[0-9]/.test(password);
+        if (!hasLetter || !hasNumber) {
+            return res.status(400).json({ message: 'Password must contain both letters and numbers' });
+        }
+
+        const normalizedCode = String(registrationCode).trim().toUpperCase();
+        const school = await School.findOne({ registrationCode: normalizedCode });
+        if (!school) {
+            return res.status(400).json({ message: 'Invalid school registration code' });
+        }
+
+        const normalizedEmail = email.trim().toLowerCase();
+        const existing = await User.findOne({ email: normalizedEmail });
+        if (existing) {
+            return res.status(400).json({ message: 'An account with this email already exists' });
+        }
+
+        const salt = await bcrypt.genSalt(10);
+        const hashed = await bcrypt.hash(password, salt);
+
+        const user = await User.create({
+            name: name.trim(),
+            email: normalizedEmail,
+            password: hashed,
+            role: 'student',
+            schoolId: school._id,
+        });
+
+        const payload = { user: { id: user.id, role: user.role } };
+        jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '5h' }, (err, token) => {
+            if (err) {
+                logger.error('register-with-code token signing error', { error: err.message });
+                return res.status(500).json({ message: 'Server error during registration' });
+            }
+            return res.status(201).json({
+                token,
+                user: {
+                    id: user.id,
+                    name: user.name,
+                    email: user.email,
+                    role: user.role,
+                    schoolId: user.schoolId,
+                },
+                school: {
+                    id: school._id,
+                    name: school.name,
+                    status: school.status,
+                },
+            });
+        });
+    } catch (err) {
+        logger.error('registerWithCode error', { error: err.message });
+        if (err.code === 11000) {
+            return res.status(400).json({ message: 'An account with this email already exists' });
+        }
+        const errorMessage = process.env.NODE_ENV === 'production'
+            ? 'Server error during registration'
+            : err.message || 'Server error during registration';
+        return res.status(500).json({ message: errorMessage });
+    }
+};
+
 module.exports = {
     refreshToken,
     registerUser,
     registerEmployee,
+    registerWithCode,
     loginUser,
     getLoggedInUser,
 };

@@ -34,6 +34,10 @@ const stripeMock = {
   },
 };
 
+function StripeMock() {
+  return stripeMock;
+}
+
 const BookingMock = {
   findById: vi.fn().mockImplementation(() => createBookingChain(null)),
 };
@@ -46,10 +50,15 @@ const MockTransaction = function (attrs) {
 };
 MockTransaction.findOne = vi.fn();
 
-mock('stripe', () => stripeMock);
+mock('stripe', StripeMock);
 mock('../models/Booking', BookingMock);
 mock('../models/User', UserMock);
 mock('../models/Transaction', MockTransaction);
+mock('../models/ProcessedStripeEvent', { create: vi.fn().mockResolvedValue({}) });
+
+mock('./membershipController', {
+  applyMembershipAfterPayment: vi.fn().mockResolvedValue({ applied: false }),
+});
 
 const Booking = require('../models/Booking');
 const User = require('../models/User');
@@ -74,7 +83,7 @@ describe('PaymentController', () => {
 
   describe('createPaymentIntent - defensive edge cases', () => {
     it('returns 404 when booking does not exist', async () => {
-      req.body = { bookingId: '507f1f77bcf86cd799439011', amount: 65 };
+      req.body = { bookingId: '507f1f77bcf86cd799439011' };
       Booking.findById.mockImplementation(() => createBookingChain(null));
 
       await createPaymentIntent(req, res);
@@ -85,13 +94,15 @@ describe('PaymentController', () => {
     });
 
     it('returns 403 when user is not authorized to pay for booking', async () => {
-      req.body = { bookingId: '507f1f77bcf86cd799439011', amount: 65 };
+      req.body = { bookingId: '507f1f77bcf86cd799439011' };
       req.user = { id: 'other-user', role: 'student' };
       const mockBooking = {
         _id: '507f1f77bcf86cd799439011',
         user: { _id: 'owner-id' },
         student: { _id: 'student-id' },
         customerPayment: null,
+        price: 65,
+        serviceType: 'solo',
       };
       Booking.findById.mockImplementation(() => createBookingChain(mockBooking));
 
@@ -104,13 +115,15 @@ describe('PaymentController', () => {
     });
 
     it('returns 400 when booking is already paid', async () => {
-      req.body = { bookingId: '507f1f77bcf86cd799439011', amount: 65 };
+      req.body = { bookingId: '507f1f77bcf86cd799439011' };
       req.user.id = 'owner-id';
       const mockBooking = {
         _id: '507f1f77bcf86cd799439011',
         user: { _id: 'owner-id' },
         student: { _id: 'student-id' },
         customerPayment: { status: 'paid' },
+        price: 65,
+        serviceType: 'solo',
       };
       Booking.findById.mockImplementation(() => createBookingChain(mockBooking));
 
@@ -123,15 +136,16 @@ describe('PaymentController', () => {
     });
 
     it('does not leak error details in 500 response', async () => {
-      req.body = { bookingId: '507f1f77bcf86cd799439011', amount: 65 };
+      req.body = { bookingId: '507f1f77bcf86cd799439011' };
       req.user.id = 'owner-id';
       const mockBooking = {
         _id: '507f1f77bcf86cd799439011',
         user: { _id: 'owner-id', name: 'Owner', email: 'owner@test.com' },
         student: { _id: 'student-id', name: 'Student', email: 'student@test.com' },
         subject: 'Math',
-        serviceType: 'tutoring',
+        serviceType: 'solo',
         tutor: null,
+        price: 65,
         customerPayment: null,
         save: vi.fn().mockResolvedValue(true),
       };

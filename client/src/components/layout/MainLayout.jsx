@@ -4,7 +4,7 @@ import {
     BarChart2, Briefcase, BookOpen, Settings, Users, UserCheck, 
     LogOut, ChevronDown, Bell, Calendar as CalendarIcon, Trophy,
     LineChart, UserPlus, Megaphone, Edit3, CreditCard, Sliders, DollarSign, FileText,
-    X, Brain, Wallet
+    X, Brain, Wallet, School as SchoolIcon
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext.jsx';
 import { getUserAnnouncements } from '../../api/announcements.js';
@@ -57,6 +57,7 @@ const Sidebar = () => {
         { path: '/financials', label: 'Financials', icon: CreditCard, roles: ['admin', 'super_admin'] },
         { path: '/system-config', label: 'System Config', icon: Sliders, roles: ['admin', 'super_admin'] },
         { path: '/match-analysis', label: 'Match Analysis', icon: Brain, roles: ['admin', 'super_admin'] },
+        { path: '/schools-admin', label: 'School Pilots', icon: SchoolIcon, roles: ['admin', 'super_admin'] },
         
         // General Settings Route
         { path: '/settings', label: 'Settings', icon: Settings, roles: ['student', 'parent', 'tutor', 'admin', 'super_admin'] },
