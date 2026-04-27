@@ -21,6 +21,7 @@ const { captureServerException } = require('../utils/sentry');
  * `stack`. These are NEVER included in production.
  */
 const errorHandler = (err, req, res, next) => {
+  const requestId = req.requestId;
   logger.error('Error occurred:', {
     message: err.message,
     stack: process.env.NODE_ENV === 'development' ? err.stack : undefined,
@@ -28,6 +29,7 @@ const errorHandler = (err, req, res, next) => {
     method: req.method,
     ip: req.ip,
     userId: req.user?.id,
+    requestId,
   });
 
   let statusCode = err.statusCode || err.status || 500;
@@ -79,6 +81,10 @@ const errorHandler = (err, req, res, next) => {
     success: false,
     message: shouldExposeDetails ? message : 'An error occurred',
   };
+
+  if (requestId) {
+    errorResponse.requestId = requestId;
+  }
 
   if (code) {
     errorResponse.code = code;

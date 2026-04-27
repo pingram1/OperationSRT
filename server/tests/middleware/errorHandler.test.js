@@ -174,4 +174,29 @@ describe('errorHandler', () => {
       );
     });
   });
+
+  describe('requestId propagation', () => {
+    it('echoes req.requestId in the canonical envelope', () => {
+      process.env.NODE_ENV = 'production';
+      req.requestId = 'abc-123-def';
+      const err = new Error('boom');
+      err.statusCode = 500;
+
+      errorHandler(err, req, res, next);
+
+      expect(res.json.mock.calls[0][0]).toMatchObject({
+        success: false,
+        requestId: 'abc-123-def',
+      });
+    });
+
+    it('omits requestId when none is set on the request', () => {
+      const err = new Error('Validation failed');
+      err.name = 'ValidationError';
+
+      errorHandler(err, req, res, next);
+
+      expect(res.json.mock.calls[0][0]).not.toHaveProperty('requestId');
+    });
+  });
 });

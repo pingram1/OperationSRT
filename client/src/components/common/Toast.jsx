@@ -126,6 +126,20 @@ export function ToastProvider({ children }) {
         error: (message, opts) => show({ ...opts, kind: 'error', message }),
         info: (message, opts) => show({ ...opts, kind: 'info', message }),
         warning: (message, opts) => show({ ...opts, kind: 'warning', message }),
+        /**
+         * Render a server-side error consistently. For 5xx responses with
+         * a request id, the id is appended so the user can quote it to
+         * support. Falls back to the supplied default when the error is
+         * a generic Error/network failure.
+         */
+        fromError: (err, opts = {}) => {
+            const fallback = opts.fallback || 'Something went wrong. Please try again.';
+            if (!err) {
+                return show({ ...opts, kind: 'error', message: fallback });
+            }
+            const message = err.displayMessage || err.message || fallback;
+            return show({ ...opts, kind: 'error', message });
+        },
     }), [show, dismiss]);
 
     return (

@@ -2,19 +2,33 @@ import { getSecureToken, clearSecureToken } from './authStorage';
 
 /**
  * A custom error class to provide more detail on API-related failures.
+ *
+ * Carries the canonical server error envelope so callers can branch on
+ * `code`, render field-level `errors`, or quote `requestId` to support.
  */
 export class ApiError extends Error {
-  constructor(message, status, sessionExpired = false) {
+  constructor(message, status, options = {}) {
     super(message);
     this.name = 'ApiError';
     this.status = status;
-    this.sessionExpired = sessionExpired;
+    this.sessionExpired = Boolean(options.sessionExpired);
+    if (options.code) this.code = options.code;
+    if (options.errors) this.errors = options.errors;
+    if (options.requestId) this.requestId = options.requestId;
+  }
+
+  /**
+   * A short, user-safe display string. For 5xx errors we append the
+   * request id so users can quote it to support.
+   */
+  get displayMessage() {
+    if (this.status >= 500 && this.requestId) {
+      return `${this.message} (Request ID: ${this.requestId})`;
+    }
+    return this.message;
   }
 }
 
-/**
- * Get the base API URL
- */
 const getApiBaseUrl = () => {
   // In development, Vite proxy handles /api routes
   // In production, use environment variable or default to relative path
@@ -32,21 +46,20 @@ const getApiBaseUrl = () => {
 export async function apiRequest(endpoint, options = {}, requireAuth = true) {
   try {
     const token = getSecureToken();
-    
+
     if (requireAuth && !token) {
       throw new ApiError('Authentication required. Please log in.', 401);
     }
-    
+
     // Check if body is FormData - if so, don't set Content-Type (browser will set it with boundary)
     const isFormData = options.body instanceof FormData;
-    
+
     const defaultHeaders = {};
-    
-    // Only set Content-Type for non-FormData requests
+
     if (!isFormData) {
       defaultHeaders['Content-Type'] = 'application/json';
     }
-    
+
     if (token && requireAuth) {
       defaultHeaders['Authorization'] = `Bearer ${token}`;
     }
@@ -55,36 +68,40 @@ export async function apiRequest(endpoint, options = {}, requireAuth = true) {
       ...options,
       headers: {
         ...defaultHeaders,
-        ...options.headers
-      }
+        ...options.headers,
+      },
     };
 
-    // Build full URL
     const baseUrl = getApiBaseUrl();
     const fullUrl = endpoint.startsWith('http') ? endpoint : `${baseUrl}${endpoint}`;
 
     const response = await fetch(fullUrl, config);
+    const requestId = response.headers.get('x-request-id') || undefined;
 
     if (!response.ok) {
       let errorMessage = 'Request failed';
+      let code;
+      let errors;
+      let envelopeRequestId;
       let sessionExpired = false;
       try {
         const errorData = await response.json();
         errorMessage = errorData.message || errorMessage;
-        // Token expired or invalid - clear it and notify app
+        code = errorData.code;
+        errors = errorData.errors;
+        envelopeRequestId = errorData.requestId;
         if (response.status === 401 && (errorMessage?.toLowerCase().includes('token') || errorMessage?.toLowerCase().includes('not valid'))) {
           clearSecureToken();
           sessionExpired = true;
           errorMessage = 'Your session has expired. Please log in again.';
           window.dispatchEvent(new CustomEvent('sessionExpired'));
         }
-      } catch (parseError) {
-        // If response is not JSON, try to get text
+      } catch (_parseError) {
         try {
           const text = await response.text();
           errorMessage = text || errorMessage;
-        } catch (textError) {
-          // fall through to switch
+        } catch (_textError) {
+          // fall through to switch below
         }
         if (!sessionExpired && response.status === 401) {
           clearSecureToken();
@@ -110,7 +127,12 @@ export async function apiRequest(endpoint, options = {}, requireAuth = true) {
           }
         }
       }
-      throw new ApiError(errorMessage || 'Request failed', response.status, sessionExpired);
+      throw new ApiError(errorMessage || 'Request failed', response.status, {
+        sessionExpired,
+        code,
+        errors,
+        requestId: envelopeRequestId || requestId,
+      });
     }
 
     return response.json();
@@ -118,13 +140,9 @@ export async function apiRequest(endpoint, options = {}, requireAuth = true) {
     if (error instanceof ApiError) {
       throw error;
     }
-    // Network errors (connection refused, etc.)
     if (error.message && (error.message.includes('Failed to fetch') || error.message.includes('NetworkError'))) {
       throw new Error('Network error. Please check your connection and ensure the server is running.');
     }
-    // Catches network failures, CORS issues, etc.
     throw new Error('A network error occurred. Please check your connection.');
   }
 }
-
-

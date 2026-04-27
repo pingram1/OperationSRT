@@ -12,6 +12,8 @@ const { startBookingExpiryJob } = require('./jobs/bookingExpiryCron');
 const { validateEnvironment, parseFrontendOrigins } = require('./utils/envValidator');
 const { initSentry } = require('./utils/sentry');
 const errorHandler = require('./middleware/errorHandler');
+const { requestIdMiddleware } = require('./middleware/requestId');
+const requestLogger = require('./middleware/requestLogger');
 const { handleWebhook } = require('./controllers/paymentController');
 const { pdfResourceRouter, uploadsRouter } = require('./routes/fileRoutes');
 
@@ -38,6 +40,10 @@ const app = express();
 // spoofing if not trusted) and ineffective. The hop count must match your
 // actual deployment topology; bump it if you add another reverse proxy.
 app.set('trust proxy', Number(process.env.TRUST_PROXY_HOPS || 1));
+
+// Per-request correlation id (sets req.requestId + X-Request-Id header).
+// Must run before logging / error handling so every line carries the id.
+app.use(requestIdMiddleware);
 
 // Security headers
 app.use(helmet({
@@ -74,7 +80,8 @@ app.use((req, res, next) => {
   const origin = req.headers.origin;
 
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, X-Request-Id');
+  res.header('Access-Control-Expose-Headers', 'X-Request-Id');
   res.header('Access-Control-Allow-Credentials', 'true');
 
   if (isProduction) {
@@ -140,11 +147,8 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 // Uploaded content is served through authenticated, path-traversal-safe routes below.
 // Both /api/resources/pdf and /uploads now require a valid Bearer token.
 
-// Request logging middleware
-app.use((req, res, next) => {
-  logger.info(`${req.method} ${req.path}`, { ip: req.ip, userAgent: req.get('user-agent') });
-  next();
-});
+// Structured access log (status + duration + requestId)
+app.use(requestLogger);
 
 // --- Define Your API Routes ---
 // Apply rate limiting to auth routes
@@ -191,13 +195,19 @@ app.get('/health', require('./routes/healthRoutes'));
 
 // 404 handler for API routes (must be after all other routes)
 app.use((req, res) => {
-  if (req.path.startsWith('/api/')) {
-    logger.warn(`API route not found: ${req.method} ${req.originalUrl}`, { ip: req.ip });
-    res.status(404).json({ message: `API endpoint not found: ${req.method} ${req.originalUrl}` });
-  } else {
-    // For non-API routes, just return 404
-    res.status(404).json({ message: 'Route not found' });
+  const isApi = req.path.startsWith('/api/');
+  if (isApi) {
+    logger.warn(`API route not found: ${req.method} ${req.originalUrl}`, {
+      ip: req.ip,
+      requestId: req.requestId,
+    });
   }
+  res.status(404).json({
+    success: false,
+    message: isApi ? `API endpoint not found: ${req.method} ${req.originalUrl}` : 'Route not found',
+    code: 'NOT_FOUND',
+    ...(req.requestId ? { requestId: req.requestId } : {}),
+  });
 });
 
 // Error handler middleware (must be last)
