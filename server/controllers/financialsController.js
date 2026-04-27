@@ -2,6 +2,7 @@ const Transaction = require('../models/Transaction');
 const Booking = require('../models/Booking');
 const User = require('../models/User');
 const MembershipPlan = require('../models/MembershipPlan');
+const { safeRegexFilter } = require('../utils/safeRegex');
 
 /**
  * @desc    Get financial statistics
@@ -156,7 +157,7 @@ const getFinancialStats = async (req, res) => {
         });
     } catch (error) {
         console.error('[getFinancialStats] Error:', error);
-        res.status(500).json({ message: 'Server error while fetching financial stats', error: error.message });
+        res.status(500).json({ message: 'Server error while fetching financial stats' });
     }
 };
 
@@ -220,7 +221,7 @@ const getRevenueTrend = async (req, res) => {
         res.json(revenueData);
     } catch (error) {
         console.error('[getRevenueTrend] Error:', error);
-        res.status(500).json({ message: 'Server error while fetching revenue trend', error: error.message });
+        res.status(500).json({ message: 'Server error while fetching revenue trend' });
     }
 };
 
@@ -254,20 +255,23 @@ const getTransactions = async (req, res) => {
             }
         } else if (user && (user.role === 'admin' || user.role === 'super_admin')) {
             // Admin can see all transactions
-        // If search term provided, search by user name or transaction ID
-        if (search) {
+        // If search term provided, search by user name or transaction ID.
+        // Escape user input so regex metacharacters (e.g. .* and (a+)+) cannot
+        // inject arbitrary regex semantics or trigger catastrophic backtracking.
+        const searchFilter = safeRegexFilter(search);
+        if (searchFilter) {
             const users = await User.find({
                 $or: [
-                    { name: { $regex: search, $options: 'i' } },
-                    { email: { $regex: search, $options: 'i' } }
+                    { name: searchFilter },
+                    { email: searchFilter }
                 ]
             }).select('_id');
-            
+
             const userIds = users.map(u => u._id);
-            
+
             query = {
                 $or: [
-                    { transactionId: { $regex: search, $options: 'i' } },
+                    { transactionId: searchFilter },
                     { user: { $in: userIds } }
                 ]
             };
@@ -305,7 +309,7 @@ const getTransactions = async (req, res) => {
         res.json(formattedTransactions);
     } catch (error) {
         console.error('[getTransactions] Error:', error);
-        res.status(500).json({ message: 'Server error while fetching transactions', error: error.message });
+        res.status(500).json({ message: 'Server error while fetching transactions' });
     }
 };
 
@@ -347,7 +351,7 @@ const createTransaction = async (req, res) => {
         res.status(201).json(savedTransaction);
     } catch (error) {
         console.error('[createTransaction] Error:', error);
-        res.status(500).json({ message: 'Server error while creating transaction', error: error.message });
+        res.status(500).json({ message: 'Server error while creating transaction' });
     }
 };
 

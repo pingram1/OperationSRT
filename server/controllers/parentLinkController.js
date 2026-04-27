@@ -66,7 +66,7 @@ const sendParentLinkRequest = async (req, res) => {
         });
     } catch (err) {
         console.error('[sendParentLinkRequest] Error:', err.message);
-        res.status(500).json({ message: 'Server error while sending link request', error: err.message });
+        res.status(500).json({ message: 'Server error while sending link request' });
     }
 };
 
@@ -105,7 +105,7 @@ const getParentLinkRequests = async (req, res) => {
         res.json({ requests });
     } catch (err) {
         console.error('[getParentLinkRequests] Error:', err.message);
-        res.status(500).json({ message: 'Server error while fetching link requests', error: err.message });
+        res.status(500).json({ message: 'Server error while fetching link requests' });
     }
 };
 
@@ -171,7 +171,7 @@ const acceptParentLinkRequest = async (req, res) => {
         });
     } catch (err) {
         console.error('[acceptParentLinkRequest] Error:', err.message);
-        res.status(500).json({ message: 'Server error while accepting link request', error: err.message });
+        res.status(500).json({ message: 'Server error while accepting link request' });
     }
 };
 
@@ -218,7 +218,7 @@ const rejectParentLinkRequest = async (req, res) => {
         });
     } catch (err) {
         console.error('[rejectParentLinkRequest] Error:', err.message);
-        res.status(500).json({ message: 'Server error while rejecting link request', error: err.message });
+        res.status(500).json({ message: 'Server error while rejecting link request' });
     }
 };
 
@@ -265,7 +265,7 @@ const cancelParentLinkRequest = async (req, res) => {
         });
     } catch (err) {
         console.error('[cancelParentLinkRequest] Error:', err.message);
-        res.status(500).json({ message: 'Server error while cancelling link request', error: err.message });
+        res.status(500).json({ message: 'Server error while cancelling link request' });
     }
 };
 

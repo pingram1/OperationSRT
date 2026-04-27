@@ -25,7 +25,7 @@ const getNotifications = async (req, res) => {
         res.json({ notifications, unreadCount });
     } catch (error) {
         logger.error('[getNotifications] Error:', error);
-        res.status(500).json({ message: 'Server error while fetching notifications', error: error.message });
+        res.status(500).json({ message: 'Server error while fetching notifications' });
     }
 };
 
@@ -51,7 +51,7 @@ const markAsRead = async (req, res) => {
         res.json({ notification });
     } catch (error) {
         logger.error('[markAsRead] Error:', error);
-        res.status(500).json({ message: 'Server error', error: error.message });
+        res.status(500).json({ message: 'Server error' });
     }
 };
 
@@ -70,7 +70,7 @@ const markAllAsRead = async (req, res) => {
         res.json({ message: 'All notifications marked as read' });
     } catch (error) {
         logger.error('[markAllAsRead] Error:', error);
-        res.status(500).json({ message: 'Server error', error: error.message });
+        res.status(500).json({ message: 'Server error' });
     }
 };
 

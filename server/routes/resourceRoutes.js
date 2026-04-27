@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { authMiddleware, authorize } = require('../middleware/AuthMiddleware');
-const { uploadDocument, handleUploadError } = require('../middleware/uploadMiddleware');
+const { uploadDocument, handleUploadError, verifyUploadedFileContent } = require('../middleware/uploadMiddleware');
 const {
     createResource,
     createResourceWithDocument,
@@ -62,7 +62,7 @@ router.post('/generate-mla-pdf', authMiddleware, authorize('admin'), generateMLA
  * @desc    Create a resource with uploaded document (PDF, DOCX, Pages, etc.)
  * @access  Private (Admin only)
  */
-router.post('/upload', authMiddleware, authorize('admin'), uploadDocument.single('document'), handleUploadError, createResourceWithDocument);
+router.post('/upload', authMiddleware, authorize('admin'), uploadDocument.single('document'), handleUploadError, verifyUploadedFileContent, createResourceWithDocument);
 
 /**
  * @route   POST /api/resources

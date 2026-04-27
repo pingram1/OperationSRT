@@ -449,7 +449,7 @@ const createTutor = async (req, res) => {
         if (err.code === 11000) {
             return res.status(400).json({ message: 'An account with this email already exists' });
         }
-        res.status(500).json({ message: 'Server error while creating tutor account', error: err.message });
+        res.status(500).json({ message: 'Server error while creating tutor account' });
     }
 };
 
@@ -504,7 +504,7 @@ const getTutorStudents = async (req, res) => {
         res.json(studentsWithStats);
     } catch (err) {
         console.error('[getTutorStudents] Error:', err.message);
-        res.status(500).json({ message: 'Server error while fetching tutor students', error: err.message });
+        res.status(500).json({ message: 'Server error while fetching tutor students' });
     }
 };
 
@@ -577,7 +577,7 @@ const getTutorDashboardStats = async (req, res) => {
         res.json(stats);
     } catch (err) {
         console.error('[getTutorDashboardStats] Error:', err.message);
-        res.status(500).json({ message: 'Server error while fetching tutor stats', error: err.message });
+        res.status(500).json({ message: 'Server error while fetching tutor stats' });
     }
 };
 

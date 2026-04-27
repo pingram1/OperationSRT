@@ -205,7 +205,7 @@ const updateUserProfile = async (req, res) => {
         if (err.code === 11000) {
             return res.status(400).json({ message: 'Email already in use' });
         }
-        res.status(500).json({ message: 'Server error while updating profile', error: err.message });
+        res.status(500).json({ message: 'Server error while updating profile' });
     }
 };
 
@@ -342,7 +342,7 @@ const updateUser = async (req, res) => {
         res.json(userResponse);
     } catch (error) {
         console.error('[updateUser] Error:', error);
-        res.status(500).json({ message: 'Server error while updating user', error: error.message });
+        res.status(500).json({ message: 'Server error while updating user' });
     }
 };
 
@@ -372,7 +372,7 @@ const deleteUser = async (req, res) => {
         res.json({ message: 'User deleted successfully' });
     } catch (error) {
         console.error('[deleteUser] Error:', error);
-        res.status(500).json({ message: 'Server error while deleting user', error: error.message });
+        res.status(500).json({ message: 'Server error while deleting user' });
     }
 };
 
@@ -420,7 +420,7 @@ const updatePassword = async (req, res) => {
 
     } catch (error) {
         console.error('[updatePassword] Error:', error);
-        res.status(500).json({ message: 'Server error while updating password', error: error.message });
+        res.status(500).json({ message: 'Server error while updating password' });
     }
 };
 
@@ -450,7 +450,7 @@ const enableTwoFactor = async (req, res) => {
 
     } catch (error) {
         console.error('[enableTwoFactor] Error:', error);
-        res.status(500).json({ message: 'Server error while enabling 2FA', error: error.message });
+        res.status(500).json({ message: 'Server error while enabling 2FA' });
     }
 };
 
@@ -479,7 +479,7 @@ const disableTwoFactor = async (req, res) => {
 
     } catch (error) {
         console.error('[disableTwoFactor] Error:', error);
-        res.status(500).json({ message: 'Server error while disabling 2FA', error: error.message });
+        res.status(500).json({ message: 'Server error while disabling 2FA' });
     }
 };
 
@@ -531,7 +531,7 @@ const linkChildToParent = async (req, res) => {
 
     } catch (error) {
         console.error('[linkChildToParent] Error:', error);
-        res.status(500).json({ message: 'Server error while linking child to parent', error: error.message });
+        res.status(500).json({ message: 'Server error while linking child to parent' });
     }
 };
 
@@ -574,7 +574,7 @@ const unlinkChildFromParent = async (req, res) => {
 
     } catch (error) {
         console.error('[unlinkChildFromParent] Error:', error);
-        res.status(500).json({ message: 'Server error while unlinking child from parent', error: error.message });
+        res.status(500).json({ message: 'Server error while unlinking child from parent' });
     }
 };
 
@@ -593,7 +593,7 @@ const getStudents = async (req, res) => {
         res.json(students);
     } catch (err) {
         console.error('Error in getStudents:', err.message);
-        res.status(500).json({ message: 'Server error while fetching students', error: err.message });
+        res.status(500).json({ message: 'Server error while fetching students' });
     }
 };
 
@@ -650,7 +650,7 @@ const updateStudentPaymentPermission = async (req, res) => {
 
     } catch (error) {
         console.error('[updateStudentPaymentPermission] Error:', error);
-        res.status(500).json({ message: 'Server error while updating payment permission', error: error.message });
+        res.status(500).json({ message: 'Server error while updating payment permission' });
     }
 };
 
@@ -724,7 +724,7 @@ const uploadCertificationBadge = async (req, res) => {
                 console.error('Error deleting file:', err);
             }
         }
-        res.status(500).json({ message: 'Server error while uploading badge', error: error.message });
+        res.status(500).json({ message: 'Server error while uploading badge' });
     }
 };
 
@@ -775,7 +775,7 @@ const deleteCertificationBadge = async (req, res) => {
         });
     } catch (error) {
         console.error('[deleteCertificationBadge] Error:', error);
-        res.status(500).json({ message: 'Server error while deleting badge', error: error.message });
+        res.status(500).json({ message: 'Server error while deleting badge' });
     }
 };
 
@@ -845,7 +845,7 @@ const updateCertificationBadge = async (req, res) => {
                 console.error('Error deleting file:', err);
             }
         }
-        res.status(500).json({ message: 'Server error while updating badge', error: error.message });
+        res.status(500).json({ message: 'Server error while updating badge' });
     }
 };
 

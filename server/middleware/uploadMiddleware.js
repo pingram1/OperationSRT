@@ -1,6 +1,8 @@
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs').promises;
+const { expectKindForExt, verifyMagicBytes } = require('../utils/fileMagic');
+const logger = require('../utils/logger');
 
 // Allowed file types
 const ALLOWED_FILE_TYPES = {
@@ -183,11 +185,58 @@ const uploadDocument = multer({
     fileFilter: documentFileFilter,
 });
 
+/**
+ * Post-upload middleware that verifies the saved file's *content* matches
+ * its declared extension by reading magic bytes. Multer's fileFilter only
+ * inspects client-supplied MIME/extension; this closes the gap so a file
+ * named `.png` whose bytes are actually a PE binary is rejected and deleted.
+ *
+ * Use after a multer `.single(...)` / `.array(...)` middleware:
+ *
+ *   router.post('/upload', auth, uploadDocument.single('file'),
+ *               verifyUploadedFileContent, controller.handler);
+ *
+ * If validation fails the file is unlinked from disk and a 400 is returned.
+ * If req.file is missing (no upload), the middleware is a no-op.
+ */
+async function verifyUploadedFileContent(req, res, next) {
+    const files = req.files
+        ? (Array.isArray(req.files) ? req.files : Object.values(req.files).flat())
+        : (req.file ? [req.file] : []);
+    if (files.length === 0) return next();
+
+    for (const file of files) {
+        const ext = path.extname(file.originalname || '').toLowerCase();
+        const expected = expectKindForExt(ext);
+        if (!expected) {
+            await fs.unlink(file.path).catch(() => {});
+            return res.status(400).json({ message: `Unsupported file extension: ${ext || '(none)'}` });
+        }
+        try {
+            await verifyMagicBytes(file.path, expected);
+        } catch (err) {
+            await fs.unlink(file.path).catch(() => {});
+            logger.warn('Upload rejected: magic-byte mismatch', {
+                originalname: file.originalname,
+                declaredMimetype: file.mimetype,
+                ext,
+                expected,
+                code: err.code,
+            });
+            return res.status(err.statusCode || 400).json({
+                message: 'Uploaded file content does not match its declared type',
+            });
+        }
+    }
+    next();
+}
+
 module.exports = {
     upload,
     uploadBadge,
     uploadDocument,
     handleUploadError,
+    verifyUploadedFileContent,
     MAX_FILE_SIZE,
     ALLOWED_FILE_TYPES,
     ALLOWED_DOCUMENT_TYPES,

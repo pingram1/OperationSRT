@@ -44,8 +44,7 @@ const createBookingRoom = async (req, res) => {
     } catch (error) {
         console.error('[wherebyController] Error creating room:', error);
         res.status(500).json({ 
-            message: 'Failed to create video room',
-            error: error.message 
+            message: 'Failed to create video room' 
         });
     }
 };
@@ -74,8 +73,7 @@ const getRoomInfo = async (req, res) => {
     } catch (error) {
         console.error('[wherebyController] Error fetching room:', error);
         res.status(500).json({ 
-            message: 'Failed to fetch room information',
-            error: error.message 
+            message: 'Failed to fetch room information' 
         });
     }
 };

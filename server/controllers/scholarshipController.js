@@ -155,7 +155,11 @@ const postPayoutRequest = async (req, res) => {
     } catch (err) {
         const code = err.statusCode || 500;
         if (code >= 500) logger.error('[scholarship] postPayoutRequest', { error: err.message });
-        res.status(code).json({ message: err.message || 'Server error' });
+        // Only surface err.message for 4xx (these are deliberately-typed errors
+        // with safe, user-meaningful messages). 5xx paths return a generic
+        // string so we never leak unexpected internals.
+        const safeMessage = code < 500 ? (err.message || 'Bad request') : 'Server error';
+        res.status(code).json({ message: safeMessage });
     }
 };
 
@@ -214,7 +218,8 @@ const adminRejectPayout = async (req, res) => {
     } catch (err) {
         const code = err.statusCode || 500;
         if (code >= 500) logger.error('[scholarship] adminRejectPayout', { error: err.message });
-        res.status(code).json({ message: err.message || 'Server error' });
+        const safeMessage = code < 500 ? (err.message || 'Bad request') : 'Server error';
+        res.status(code).json({ message: safeMessage });
     }
 };
 

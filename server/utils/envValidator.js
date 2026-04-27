@@ -9,6 +9,7 @@ const requiredEnvVars = {
   important: ['STRIPE_SECRET_KEY', 'STRIPE_PUBLISHABLE_KEY', 'STRIPE_WEBHOOK_SECRET'],
   optional: [
     'FRONTEND_URL', // required in production; optional in dev (CORS falls back to localhost)
+    'JWT_REFRESH_SECRET', // independent of JWT_SECRET; falls back to JWT_SECRET+'_refresh'
     'WHEREBY_API',
     'GOOGLE_CLIENT_ID',
     'GOOGLE_CLIENT_SECRET',
@@ -128,6 +129,18 @@ function validateEnvironment() {
     logger.error('JWT_SECRET must be at least 32 characters in production');
     console.error('\n❌ ERROR: JWT_SECRET must be at least 32 characters in production.\n');
     process.exit(1);
+  }
+
+  // Refresh secret defaults to JWT_SECRET+'_refresh' if unset, but production
+  // deployments should set an independent secret so a JWT_SECRET leak does
+  // not also expose refresh-token forgery. Warn (don't exit) to avoid
+  // breaking existing deployments mid-rotation.
+  if (!process.env.JWT_REFRESH_SECRET) {
+    logger.warn('JWT_REFRESH_SECRET not set in production; falling back to JWT_SECRET+"_refresh". Set JWT_REFRESH_SECRET to an independent value.');
+  } else if (process.env.JWT_REFRESH_SECRET === process.env.JWT_SECRET) {
+    logger.warn('JWT_REFRESH_SECRET is identical to JWT_SECRET; use distinct secrets so a leak of one does not compromise the other.');
+  } else if (process.env.JWT_REFRESH_SECRET.length < 32) {
+    logger.warn('JWT_REFRESH_SECRET should be at least 32 characters.');
   }
 
   const mongo = process.env.MONGO_URI;

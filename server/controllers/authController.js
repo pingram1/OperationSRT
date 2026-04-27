@@ -6,6 +6,17 @@ const { createParentLinkRequestFromSignup } = require('./parentLinkController');
 const logger = require('../utils/logger');
 
 /**
+ * Returns the refresh-token signing secret. Prefers the dedicated
+ * JWT_REFRESH_SECRET env var when set; otherwise falls back to the legacy
+ * derivation (`JWT_SECRET + '_refresh'`) so existing refresh tokens issued
+ * before the migration continue to verify. New deployments should set
+ * JWT_REFRESH_SECRET independently of JWT_SECRET.
+ */
+function getRefreshSecret() {
+    return process.env.JWT_REFRESH_SECRET || `${process.env.JWT_SECRET}_refresh`;
+}
+
+/**
  * @desc    Register a new user (CLIENT PORTAL - Students and Parents only)
  * @route   POST /api/auth/register
  * @access  Public
@@ -218,7 +229,7 @@ const loginUser = async (req, res) => {
                 const refreshTokenPayload = { userId: user.id };
                 const refreshToken = jwt.sign(
                     refreshTokenPayload,
-                    process.env.JWT_SECRET + '_refresh', // Different secret for refresh tokens
+                    getRefreshSecret(),
                     { expiresIn: '7d' }
                 );
                 
@@ -425,7 +436,7 @@ const refreshToken = async (req, res) => {
         // Verify refresh token
         let decoded;
         try {
-            decoded = jwt.verify(refreshToken, process.env.JWT_SECRET + '_refresh');
+            decoded = jwt.verify(refreshToken, getRefreshSecret());
         } catch (err) {
             return res.status(401).json({ message: 'Invalid or expired refresh token' });
         }

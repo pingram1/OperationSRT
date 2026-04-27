@@ -51,7 +51,7 @@ const getTimeSlots = async (req, res) => {
         res.json({ availableSlots, date: selectedDate.toISOString() });
     } catch (err) {
         console.error('[getTimeSlots] Error:', err.message);
-        res.status(500).json({ message: 'Server error while fetching available time slots', error: err.message });
+        res.status(500).json({ message: 'Server error while fetching available time slots' });
     }
 };
 
@@ -74,7 +74,7 @@ const getTutorAvailabilitySchedule = async (req, res) => {
         res.json(availability);
     } catch (err) {
         console.error('[getTutorAvailabilitySchedule] Error:', err.message);
-        res.status(500).json({ message: 'Server error while fetching tutor availability', error: err.message });
+        res.status(500).json({ message: 'Server error while fetching tutor availability' });
     }
 };
 
@@ -99,7 +99,7 @@ const getMyAvailability = async (req, res) => {
         });
     } catch (err) {
         console.error('[getMyAvailability] Error:', err.message);
-        res.status(500).json({ message: 'Server error while fetching availability', error: err.message });
+        res.status(500).json({ message: 'Server error while fetching availability' });
     }
 };
 
@@ -145,7 +145,7 @@ const updateMyAvailability = async (req, res) => {
         });
     } catch (err) {
         console.error('[updateMyAvailability] Error:', err.message);
-        res.status(500).json({ message: 'Server error while updating availability', error: err.message });
+        res.status(500).json({ message: 'Server error while updating availability' });
     }
 };
 

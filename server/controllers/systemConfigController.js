@@ -11,7 +11,7 @@ const getSystemConfig = async (req, res) => {
         res.json(config);
     } catch (error) {
         console.error('[getSystemConfig] Error:', error);
-        res.status(500).json({ message: 'Server error while fetching system config', error: error.message });
+        res.status(500).json({ message: 'Server error while fetching system config' });
     }
 };
 
@@ -83,7 +83,7 @@ const updateSystemConfig = async (req, res) => {
         res.json(updatedConfig);
     } catch (error) {
         console.error('[updateSystemConfig] Error:', error);
-        res.status(500).json({ message: 'Server error while updating system config', error: error.message });
+        res.status(500).json({ message: 'Server error while updating system config' });
     }
 };
 
@@ -101,7 +101,7 @@ const getTutorSchedule = async (req, res) => {
         });
     } catch (error) {
         console.error('[getTutorSchedule] Error:', error);
-        res.status(500).json({ message: 'Server error while fetching tutor schedule', error: error.message });
+        res.status(500).json({ message: 'Server error while fetching tutor schedule' });
     }
 };
 
@@ -118,7 +118,7 @@ const getSubjects = async (req, res) => {
         });
     } catch (error) {
         console.error('[getSubjects] Error:', error);
-        res.status(500).json({ message: 'Server error while fetching subjects', error: error.message });
+        res.status(500).json({ message: 'Server error while fetching subjects' });
     }
 };
 

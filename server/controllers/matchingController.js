@@ -209,7 +209,7 @@ const findTutorMatches = async (req, res) => {
         res.json({ tutors: formattedMatches });
     } catch (err) {
         console.error('[findTutorMatches] Error:', err.message);
-        res.status(500).json({ message: 'Server error while finding tutor matches', error: err.message });
+        res.status(500).json({ message: 'Server error while finding tutor matches' });
     }
 };
 
@@ -342,7 +342,7 @@ const getCompatibilityAnalysis = async (req, res) => {
         });
     } catch (err) {
         console.error('[getCompatibilityAnalysis] Error:', err.message);
-        res.status(500).json({ message: 'Server error while calculating compatibility', error: err.message });
+        res.status(500).json({ message: 'Server error while calculating compatibility' });
     }
 };
 
@@ -461,7 +461,7 @@ const recordMatchFeedback = async (req, res) => {
         });
     } catch (err) {
         console.error('[recordMatchFeedback] Error:', err.message);
-        res.status(500).json({ message: 'Server error while recording feedback', error: err.message });
+        res.status(500).json({ message: 'Server error while recording feedback' });
     }
 };
 
@@ -518,7 +518,7 @@ const getMatchingAnalytics = async (req, res) => {
         });
     } catch (err) {
         console.error('[getMatchingAnalytics] Error:', err.message);
-        res.status(500).json({ message: 'Server error while fetching analytics', error: err.message });
+        res.status(500).json({ message: 'Server error while fetching analytics' });
     }
 };
 
@@ -565,7 +565,7 @@ const optimizeMatchingWeights = async (req, res) => {
         });
     } catch (err) {
         console.error('[optimizeMatchingWeights] Error:', err.message);
-        res.status(500).json({ message: 'Server error while optimizing weights', error: err.message });
+        res.status(500).json({ message: 'Server error while optimizing weights' });
     }
 };
 

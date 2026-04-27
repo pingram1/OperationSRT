@@ -45,7 +45,7 @@ const createResource = async (req, res) => {
         res.status(201).json(savedResource);
     } catch (error) {
         console.error('[createResource] Error:', error);
-        res.status(500).json({ message: 'Server error while creating resource', error: error.message });
+        res.status(500).json({ message: 'Server error while creating resource' });
     }
 };
 
@@ -69,7 +69,7 @@ const getAllResources = async (req, res) => {
         res.json(resources);
     } catch (error) {
         console.error('[getAllResources] Error:', error);
-        res.status(500).json({ message: 'Server error while fetching resources', error: error.message });
+        res.status(500).json({ message: 'Server error while fetching resources' });
     }
 };
 
@@ -87,7 +87,7 @@ const getAllResourcesAdmin = async (req, res) => {
         res.json(resources);
     } catch (error) {
         console.error('[getAllResourcesAdmin] Error:', error);
-        res.status(500).json({ message: 'Server error while fetching resources', error: error.message });
+        res.status(500).json({ message: 'Server error while fetching resources' });
     }
 };
 
@@ -110,7 +110,7 @@ const getResourceById = async (req, res) => {
         res.json(resource);
     } catch (error) {
         console.error('[getResourceById] Error:', error);
-        res.status(500).json({ message: 'Server error while fetching resource', error: error.message });
+        res.status(500).json({ message: 'Server error while fetching resource' });
     }
 };
 
@@ -153,7 +153,7 @@ const updateResource = async (req, res) => {
         res.json(updatedResource);
     } catch (error) {
         console.error('[updateResource] Error:', error);
-        res.status(500).json({ message: 'Server error while updating resource', error: error.message });
+        res.status(500).json({ message: 'Server error while updating resource' });
     }
 };
 
@@ -197,7 +197,7 @@ const deleteResource = async (req, res) => {
         res.json({ message: 'Resource deleted successfully' });
     } catch (error) {
         console.error('[deleteResource] Error:', error);
-        res.status(500).json({ message: 'Server error while deleting resource', error: error.message });
+        res.status(500).json({ message: 'Server error while deleting resource' });
     }
 };
 
@@ -236,7 +236,7 @@ const getResourcePDF = async (req, res) => {
         res.send(pdfBuffer);
     } catch (error) {
         console.error('[getResourcePDF] Error:', error);
-        res.status(500).json({ message: 'Server error while fetching PDF', error: error.message });
+        res.status(500).json({ message: 'Server error while fetching PDF' });
     }
 };
 
@@ -297,7 +297,7 @@ const generateMLAPDFResource = async (req, res) => {
         });
     } catch (error) {
         console.error('[generateMLAPDFResource] Error:', error);
-        res.status(500).json({ message: 'Server error while generating MLA PDF', error: error.message });
+        res.status(500).json({ message: 'Server error while generating MLA PDF' });
     }
 };
 
@@ -340,7 +340,7 @@ const createResourceWithDocument = async (req, res) => {
         res.status(201).json(savedResource);
     } catch (error) {
         console.error('[createResourceWithDocument] Error:', error);
-        res.status(500).json({ message: 'Server error while creating resource', error: error.message });
+        res.status(500).json({ message: 'Server error while creating resource' });
     }
 };
 
@@ -394,7 +394,7 @@ const getResourceDocument = async (req, res) => {
         res.send(buffer);
     } catch (error) {
         console.error('[getResourceDocument] Error:', error);
-        res.status(500).json({ message: 'Server error while fetching document', error: error.message });
+        res.status(500).json({ message: 'Server error while fetching document' });
     }
 };
 

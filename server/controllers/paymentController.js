@@ -160,7 +160,7 @@ const createPaymentIntent = async (req, res) => {
         });
     } catch (err) {
         logger.error('createPaymentIntent', { message: err.message });
-        return res.status(500).json({ message: 'Failed to create payment intent', error: err.message });
+        return res.status(500).json({ message: 'Failed to create payment intent' });
     }
 };
 
@@ -262,7 +262,7 @@ const confirmPayment = async (req, res) => {
         });
     } catch (err) {
         logger.error('confirmPayment', { message: err.message });
-        return res.status(500).json({ message: 'Failed to confirm payment', error: err.message });
+        return res.status(500).json({ message: 'Failed to confirm payment' });
     }
 };
 
@@ -470,7 +470,7 @@ const getPaymentStatus = async (req, res) => {
         });
     } catch (err) {
         logger.error('getPaymentStatus', { message: err.message });
-        return res.status(500).json({ message: 'Failed to get payment status', error: err.message });
+        return res.status(500).json({ message: 'Failed to get payment status' });
     }
 };
 

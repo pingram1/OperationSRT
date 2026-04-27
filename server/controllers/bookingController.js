@@ -352,7 +352,7 @@ const createBooking = async (req, res) => {
 
     } catch (err) {
         logger.error('Error creating booking', { error: err.message, stack: err.stack });
-        res.status(500).json({ message: 'Server error while creating booking', error: err.message });
+        res.status(500).json({ message: 'Server error while creating booking' });
     }
 };
 
@@ -415,7 +415,7 @@ const getUserBookings = async (req, res) => {
         });
     } catch (err) {
         logger.error('Error fetching user bookings', { error: err.message, userId: req.user.id });
-        res.status(500).json({ message: 'Server error while fetching bookings', error: err.message });
+        res.status(500).json({ message: 'Server error while fetching bookings' });
     }
 };
 
@@ -483,7 +483,7 @@ const getAllBookings = async (req, res) => {
         });
     } catch (err) {
         logger.error('Error fetching all bookings', { error: err.message, stack: err.stack });
-        res.status(500).json({ message: 'Server error while fetching bookings', error: err.message });
+        res.status(500).json({ message: 'Server error while fetching bookings' });
     }
 };
 
@@ -558,7 +558,7 @@ const updateBooking = async (req, res) => {
         res.json(booking);
     } catch (err) {
         logger.error('Error updating booking', { error: err.message, bookingId: req.params.id });
-        res.status(500).json({ message: 'Server error while updating booking', error: err.message });
+        res.status(500).json({ message: 'Server error while updating booking' });
     }
 };
 
@@ -645,7 +645,7 @@ const cancelBooking = async (req, res) => {
         });
     } catch (err) {
         logger.error('Error cancelling booking', { error: err.message, bookingId: req.params.id });
-        res.status(500).json({ message: 'Server error while cancelling booking', error: err.message });
+        res.status(500).json({ message: 'Server error while cancelling booking' });
     }
 };
 
@@ -672,7 +672,7 @@ const deleteBooking = async (req, res) => {
         res.json({ message: 'Booking successfully deleted' });
     } catch (err) {
         logger.error('Error deleting booking', { error: err.message, bookingId: req.params.id });
-        res.status(500).json({ message: 'Server error while deleting booking', error: err.message });
+        res.status(500).json({ message: 'Server error while deleting booking' });
     }
 };
 
@@ -707,7 +707,7 @@ const getTutorBookings = async (req, res) => {
         res.json(bookings);
     } catch (err) {
         logger.error('Error fetching tutor bookings', { error: err.message, tutorId: req.user.id });
-        res.status(500).json({ message: 'Server error while fetching tutor bookings', error: err.message });
+        res.status(500).json({ message: 'Server error while fetching tutor bookings' });
     }
 };
 
@@ -752,7 +752,7 @@ const acceptBooking = async (req, res) => {
         res.json({ message: 'Booking accepted successfully', booking });
     } catch (err) {
         logger.error('Error accepting booking', { error: err.message, bookingId: req.params.id });
-        res.status(500).json({ message: 'Server error while accepting booking', error: err.message });
+        res.status(500).json({ message: 'Server error while accepting booking' });
     }
 };
 
@@ -790,7 +790,7 @@ const declineBooking = async (req, res) => {
         res.json({ message: 'Booking declined successfully', booking });
     } catch (err) {
         logger.error('Error declining booking', { error: err.message, bookingId: req.params.id });
-        res.status(500).json({ message: 'Server error while declining booking', error: err.message });
+        res.status(500).json({ message: 'Server error while declining booking' });
     }
 };
 
@@ -848,7 +848,7 @@ const completeBooking = async (req, res) => {
         res.json({ message: 'Booking marked as complete', booking });
     } catch (err) {
         logger.error('Error completing booking', { error: err.message, bookingId: req.params.id });
-        res.status(500).json({ message: 'Server error while completing booking', error: err.message });
+        res.status(500).json({ message: 'Server error while completing booking' });
     }
 };
 
@@ -886,7 +886,7 @@ const markNoShow = async (req, res) => {
         res.json({ message: 'Booking marked as no-show', booking });
     } catch (err) {
         logger.error('Error marking no-show', { error: err.message, bookingId: req.params.id });
-        res.status(500).json({ message: 'Server error while marking no-show', error: err.message });
+        res.status(500).json({ message: 'Server error while marking no-show' });
     }
 };
 
@@ -942,7 +942,7 @@ const updateSessionNotes = async (req, res) => {
         res.json({ message: 'Session notes updated successfully', booking });
     } catch (err) {
         logger.error('Error updating session notes', { error: err.message, bookingId: req.params.id });
-        res.status(500).json({ message: 'Server error while updating session notes', error: err.message });
+        res.status(500).json({ message: 'Server error while updating session notes' });
     }
 };
 
@@ -992,7 +992,7 @@ const getSessionNotes = async (req, res) => {
         });
     } catch (err) {
         logger.error('Error fetching session notes', { error: err.message, bookingId: req.params.id });
-        res.status(500).json({ message: 'Server error while fetching session notes', error: err.message });
+        res.status(500).json({ message: 'Server error while fetching session notes' });
     }
 };
 
@@ -1029,7 +1029,7 @@ const markBookingAsPaid = async (req, res) => {
         res.json({ message: 'Booking marked as paid', booking });
     } catch (err) {
         logger.error('Error marking booking as paid', { error: err.message, bookingId: req.params.id });
-        res.status(500).json({ message: 'Server error while marking booking as paid', error: err.message });
+        res.status(500).json({ message: 'Server error while marking booking as paid' });
     }
 };
 
@@ -1072,7 +1072,7 @@ const markBookingsAsPaidBatch = async (req, res) => {
         });
     } catch (err) {
         logger.error('Error marking bookings as paid (batch)', { error: err.message });
-        res.status(500).json({ message: 'Server error while marking bookings as paid', error: err.message });
+        res.status(500).json({ message: 'Server error while marking bookings as paid' });
     }
 };
 
@@ -1125,7 +1125,7 @@ const getBookingById = async (req, res) => {
         res.json(booking);
     } catch (err) {
         logger.error('Error fetching booking by ID', { error: err.message, bookingId: req.params.id });
-        res.status(500).json({ message: 'Server error while fetching booking', error: err.message });
+        res.status(500).json({ message: 'Server error while fetching booking' });
     }
 };
 

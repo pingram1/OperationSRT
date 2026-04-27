@@ -10,6 +10,8 @@ const {
     getSchoolMetrics,
 } = require('../controllers/schoolController');
 const { authMiddleware, authorize } = require('../middleware/AuthMiddleware');
+const { validateRequest } = require('../middleware/validate');
+const schoolValidators = require('../middleware/validators/schools');
 
 const requireAdmin = [authMiddleware, authorize('admin', 'super_admin')];
 const requireSchoolAccess = [authMiddleware, authorize('admin', 'super_admin', 'school_admin')];
@@ -19,7 +21,7 @@ const requireSchoolAccess = [authMiddleware, authorize('admin', 'super_admin', '
  * @desc    Create a school pilot cohort
  * @access  Private (Admin, Super Admin)
  */
-router.post('/', requireAdmin, createSchool);
+router.post('/', requireAdmin, schoolValidators.create, validateRequest, createSchool);
 
 /**
  * @route   GET /api/schools
@@ -33,27 +35,27 @@ router.get('/', requireAdmin, getAllSchools);
  * @desc    Bulk-create shell student accounts linked to this school
  * @access  Private (Admin, Super Admin)
  */
-router.post('/:schoolId/roster-upload', requireAdmin, rosterUpload);
+router.post('/:schoolId/roster-upload', requireAdmin, schoolValidators.rosterUpload, validateRequest, rosterUpload);
 
 /**
  * @route   GET /api/schools/:schoolId/metrics
  * @desc    Aggregated pilot reporting metrics for a school cohort
  * @access  Private (Admin, Super Admin)
  */
-router.get('/:schoolId/metrics', requireAdmin, getSchoolMetrics);
+router.get('/:schoolId/metrics', requireAdmin, schoolValidators.schoolIdParam, validateRequest, getSchoolMetrics);
 
 /**
  * @route   GET /api/schools/:id/students
  * @desc    Get students linked to a school pilot cohort
  * @access  Private (Admin, Super Admin, School Admin for own school)
  */
-router.get('/:id/students', requireSchoolAccess, getStudentsBySchool);
+router.get('/:id/students', requireSchoolAccess, schoolValidators.idParam, validateRequest, getStudentsBySchool);
 
 /**
  * @route   GET /api/schools/:id
  * @desc    Get one school pilot cohort
  * @access  Private (Admin, Super Admin)
  */
-router.get('/:id', requireAdmin, getSchoolById);
+router.get('/:id', requireAdmin, schoolValidators.idParam, validateRequest, getSchoolById);
 
 module.exports = router;

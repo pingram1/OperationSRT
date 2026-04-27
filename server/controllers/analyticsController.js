@@ -34,7 +34,7 @@ const getAnalytics = async (req, res) => {
     });
   } catch (error) {
     console.error('[getAnalytics] Error:', error);
-    res.status(500).json({ message: 'Server error while fetching analytics', error: error.message });
+    res.status(500).json({ message: 'Server error while fetching analytics' });
   }
 };
 

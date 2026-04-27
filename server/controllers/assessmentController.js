@@ -67,7 +67,7 @@ const completeAssessment = async (req, res) => {
         });
     } catch (err) {
         console.error('[completeAssessment] Error:', err.message);
-        res.status(500).json({ message: 'Server error while saving assessment', error: err.message });
+        res.status(500).json({ message: 'Server error while saving assessment' });
     }
 };
 
@@ -101,7 +101,7 @@ const getAssessmentStatus = async (req, res) => {
         });
     } catch (err) {
         console.error('[getAssessmentStatus] Error:', err.message);
-        res.status(500).json({ message: 'Server error while fetching assessment status', error: err.message });
+        res.status(500).json({ message: 'Server error while fetching assessment status' });
     }
 };
 
@@ -158,7 +158,7 @@ const processStudentAssessment = async (req, res) => {
         });
     } catch (err) {
         console.error('[processStudentAssessment] Error:', err.message);
-        res.status(500).json({ message: 'Server error while processing student assessment', error: err.message });
+        res.status(500).json({ message: 'Server error while processing student assessment' });
     }
 };
 
@@ -218,7 +218,7 @@ const processTutorAssessment = async (req, res) => {
         });
     } catch (err) {
         console.error('[processTutorAssessment] Error:', err.message);
-        res.status(500).json({ message: 'Server error while processing tutor assessment', error: err.message });
+        res.status(500).json({ message: 'Server error while processing tutor assessment' });
     }
 };
 

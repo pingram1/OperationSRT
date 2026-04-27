@@ -28,7 +28,7 @@ const getTutorPayroll = async (req, res) => {
         res.json(summary);
     } catch (err) {
         console.error('[getTutorPayroll] Error:', err.message);
-        res.status(500).json({ message: 'Server error while fetching payroll', error: err.message });
+        res.status(500).json({ message: 'Server error while fetching payroll' });
     }
 };
 
@@ -50,7 +50,7 @@ const getUnpaidEarnings = async (req, res) => {
         res.json(result);
     } catch (err) {
         console.error('[getUnpaidEarnings] Error:', err.message);
-        res.status(500).json({ message: 'Server error while calculating unpaid earnings', error: err.message });
+        res.status(500).json({ message: 'Server error while calculating unpaid earnings' });
     }
 };
 
@@ -71,7 +71,7 @@ const checkCompliance = async (req, res) => {
         res.json(compliance);
     } catch (err) {
         console.error('[checkCompliance] Error:', err.message);
-        res.status(500).json({ message: 'Server error while checking compliance', error: err.message });
+        res.status(500).json({ message: 'Server error while checking compliance' });
     }
 };
 

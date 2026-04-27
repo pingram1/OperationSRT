@@ -32,7 +32,7 @@ const {
 
 // Import the authentication middleware to protect routes.
 const { authMiddleware, authorize } = require('../middleware/AuthMiddleware');
-const { uploadBadge, handleUploadError } = require('../middleware/uploadMiddleware');
+const { uploadBadge, handleUploadError, verifyUploadedFileContent } = require('../middleware/uploadMiddleware');
 
 /**
  * @route   GET /api/users/profile
@@ -148,14 +148,14 @@ router.put('/student-payment-permission/:studentId', authMiddleware, updateStude
  * @desc    Upload a certification badge (Tutor, Admin, Super Admin only)
  * @access  Private (Tutor, Admin, Super Admin)
  */
-router.post('/profile/certification-badges', authMiddleware, uploadBadge.single('badgeImage'), handleUploadError, uploadCertificationBadge);
+router.post('/profile/certification-badges', authMiddleware, uploadBadge.single('badgeImage'), handleUploadError, verifyUploadedFileContent, uploadCertificationBadge);
 
 /**
  * @route   PUT /api/users/profile/certification-badges/:badgeIndex
  * @desc    Update a certification badge (Tutor, Admin, Super Admin only)
  * @access  Private (Tutor, Admin, Super Admin)
  */
-router.put('/profile/certification-badges/:badgeIndex', authMiddleware, uploadBadge.single('badgeImage'), handleUploadError, updateCertificationBadge);
+router.put('/profile/certification-badges/:badgeIndex', authMiddleware, uploadBadge.single('badgeImage'), handleUploadError, verifyUploadedFileContent, updateCertificationBadge);
 
 /**
  * @route   DELETE /api/users/profile/certification-badges/:badgeIndex

@@ -183,7 +183,7 @@ const checkAndAwardAchievements = async (req, res) => {
         });
     } catch (err) {
         console.error('[checkAndAwardAchievements] Error:', err.message);
-        res.status(500).json({ message: 'Server error while checking achievements', error: err.message });
+        res.status(500).json({ message: 'Server error while checking achievements' });
     }
 };
 
@@ -227,7 +227,7 @@ const getStudentAchievements = async (req, res) => {
         });
     } catch (err) {
         console.error('[getStudentAchievements] Error:', err.message);
-        res.status(500).json({ message: 'Server error while fetching achievements', error: err.message });
+        res.status(500).json({ message: 'Server error while fetching achievements' });
     }
 };
 
@@ -251,7 +251,7 @@ const getAllAchievements = async (req, res) => {
         res.json(achievements);
     } catch (err) {
         console.error('[getAllAchievements] Error:', err.message);
-        res.status(500).json({ message: 'Server error while fetching achievements', error: err.message });
+        res.status(500).json({ message: 'Server error while fetching achievements' });
     }
 };
 

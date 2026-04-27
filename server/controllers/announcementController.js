@@ -49,7 +49,7 @@ const createAnnouncement = async (req, res) => {
         });
     } catch (error) {
         console.error('[createAnnouncement] Error:', error);
-        res.status(500).json({ message: 'Server error while creating announcement', error: error.message });
+        res.status(500).json({ message: 'Server error while creating announcement' });
     }
 };
 
@@ -67,7 +67,7 @@ const getAllAnnouncements = async (req, res) => {
         res.json(announcements);
     } catch (error) {
         console.error('[getAllAnnouncements] Error:', error);
-        res.status(500).json({ message: 'Server error while fetching announcements', error: error.message });
+        res.status(500).json({ message: 'Server error while fetching announcements' });
     }
 };
 
@@ -132,7 +132,7 @@ const deleteAnnouncement = async (req, res) => {
         res.json({ message: 'Announcement deleted successfully' });
     } catch (error) {
         console.error('[deleteAnnouncement] Error:', error);
-        res.status(500).json({ message: 'Server error while deleting announcement', error: error.message });
+        res.status(500).json({ message: 'Server error while deleting announcement' });
     }
 };
 
@@ -169,7 +169,7 @@ const updateAnnouncement = async (req, res) => {
         res.json(updatedAnnouncement);
     } catch (error) {
         console.error('[updateAnnouncement] Error:', error);
-        res.status(500).json({ message: 'Server error while updating announcement', error: error.message });
+        res.status(500).json({ message: 'Server error while updating announcement' });
     }
 };
 

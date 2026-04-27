@@ -159,8 +159,12 @@ describe('PaymentController', () => {
       expect(res.status).toHaveBeenCalledWith(500);
       const jsonCall = res.json.mock.calls[0][0];
       expect(jsonCall).toHaveProperty('message');
-      expect(jsonCall).toHaveProperty('error');
-      expect(jsonCall.error).toContain('Stripe');
+      // The 500 response must NOT include the underlying Stripe error message;
+      // it would leak API key fragments / internal details to clients.
+      expect(jsonCall).not.toHaveProperty('error');
+      const serialized = JSON.stringify(jsonCall);
+      expect(serialized).not.toContain('Stripe API key');
+      expect(serialized).not.toContain('sk_live_');
     });
   });
 

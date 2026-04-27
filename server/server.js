@@ -32,6 +32,13 @@ mongoose.connection.once('connected', () => {
 
 const app = express();
 
+// Trust the first proxy hop (e.g. nginx, Cloudfront, App Runner). Without
+// this, req.ip is the LB's address and express-rate-limit attributes every
+// request to the same IP, making it both bypassable (X-Forwarded-For
+// spoofing if not trusted) and ineffective. The hop count must match your
+// actual deployment topology; bump it if you add another reverse proxy.
+app.set('trust proxy', Number(process.env.TRUST_PROXY_HOPS || 1));
+
 // Security headers
 app.use(helmet({
   contentSecurityPolicy: {
