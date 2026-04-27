@@ -17,6 +17,7 @@ import { generateStudyPlan, generatePracticeQuestions } from '../api/ai.js';
 import { getAllChallenges } from '../api/challenges.js';
 import { getTutorDashboardStats, getTutorStudents } from '../api/tutors.js';
 import Modal from '../components/common/Modal.jsx';
+import Skeleton from '../components/common/Skeleton.jsx';
 import { isLearnToEarnEligibleFromUser } from '../utils/learnToEarn.js';
 import { useToast } from '../components/common/Toast.jsx';
 import { useConfirm } from '../components/common/ConfirmDialog.jsx';
@@ -39,25 +40,46 @@ const CardHeader = ({ icon: Icon, title, rightContent = null, onClick = null }) 
 );
 
 // Stat Card Component
-const StatCard = ({ title, value, change, icon: Icon, iconBgColor = 'bg-blue-100', iconColor = 'text-blue-600', onClick = null }) => (
-    <Card className={`${onClick ? 'cursor-pointer hover:shadow-xl hover:scale-[1.02] transition-all' : ''}`} onClick={onClick}>
-        <div className="flex items-center">
+const StatCard = ({ title, value, change, icon: Icon, iconBgColor = 'bg-blue-100', iconColor = 'text-blue-600', onClick = null, isLoading = false }) => (
+    <Card
+        className={`${onClick ? 'cursor-pointer hover:shadow-xl hover:scale-[1.02] transition-all' : ''}`}
+        onClick={onClick}
+    >
+        <div className="flex items-center" aria-busy={isLoading || undefined}>
             <div className={`p-3 ${iconBgColor} rounded-lg mr-4`}>
                 <Icon className={`w-6 h-6 ${iconColor}`} />
             </div>
             <div className="flex-1">
                 <p className="text-sm text-gray-500">{title}</p>
-                <div className="flex items-baseline">
-                    <p className="text-2xl font-bold text-gray-800">{value}</p>
-                    {change && (
-                        <span className={`ml-2 text-sm font-semibold ${change.startsWith('+') ? 'text-green-500' : change.startsWith('-') ? 'text-red-500' : 'text-gray-500'}`}>
-                            {change}
-                        </span>
-                    )}
-                </div>
+                {isLoading ? (
+                    <Skeleton height={28} width={96} className="mt-1" />
+                ) : (
+                    <div className="flex items-baseline">
+                        <p className="text-2xl font-bold text-gray-800">{value}</p>
+                        {change && (
+                            <span className={`ml-2 text-sm font-semibold ${change.startsWith('+') ? 'text-green-500' : change.startsWith('-') ? 'text-red-500' : 'text-gray-500'}`}>
+                                {change}
+                            </span>
+                        )}
+                    </div>
+                )}
             </div>
         </div>
     </Card>
+);
+
+// Skeleton placeholder for a list-item row (recent bookings, upcoming sessions).
+const BookingRowSkeleton = () => (
+    <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
+        <div className="flex-1 space-y-2">
+            <div className="flex items-center gap-2">
+                <Skeleton height={14} width={120} />
+                <Skeleton height={18} width={64} rounded="full" />
+            </div>
+            <Skeleton height={12} width="60%" />
+            <Skeleton height={10} width={96} />
+        </div>
+    </div>
 );
 
 // --- AI Modal Component ---
@@ -637,6 +659,7 @@ const AdminDashboard = ({
                     iconBgColor="bg-green-100"
                     iconColor="text-green-600"
                     onClick={() => navigate('/financials')}
+                    isLoading={isLoading}
                 />
                 <StatCard
                     title="Total Users"
@@ -645,6 +668,7 @@ const AdminDashboard = ({
                     iconBgColor="bg-blue-100"
                     iconColor="text-blue-600"
                     onClick={() => navigate('/admin-panel')}
+                    isLoading={isLoading}
                 />
                 <StatCard
                     title="Active Tutors"
@@ -653,6 +677,7 @@ const AdminDashboard = ({
                     iconBgColor="bg-purple-100"
                     iconColor="text-purple-600"
                     onClick={() => navigate('/tutor-management')}
+                    isLoading={isLoading}
                 />
                 <StatCard
                     title="Pending Bookings"
@@ -661,6 +686,7 @@ const AdminDashboard = ({
                     iconBgColor="bg-orange-100"
                     iconColor="text-orange-600"
                     onClick={() => navigate('/admin-bookings')}
+                    isLoading={isLoading}
                 />
             </div>
 
@@ -741,9 +767,11 @@ const AdminDashboard = ({
                             }
                         />
                         {isLoading ? (
-                            <div className="text-center py-8">
-                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-                                <p className="mt-2 text-gray-500 text-sm">Loading bookings...</p>
+                            <div className="space-y-3" aria-busy="true" aria-live="polite">
+                                <span className="sr-only">Loading bookings…</span>
+                                <BookingRowSkeleton />
+                                <BookingRowSkeleton />
+                                <BookingRowSkeleton />
                             </div>
                         ) : Array.isArray(recentBookings) && recentBookings.length > 0 ? (
                             <div className="space-y-3">
@@ -936,6 +964,7 @@ const TutorDashboard = ({
                     iconBgColor="bg-blue-100"
                     iconColor="text-blue-600"
                     onClick={() => navigate('/tutor-appointments')}
+                    isLoading={isLoading}
                 />
                 <StatCard
                     title="Upcoming (7 days)"
@@ -944,6 +973,7 @@ const TutorDashboard = ({
                     iconBgColor="bg-purple-100"
                     iconColor="text-purple-600"
                     onClick={() => navigate('/tutor-appointments')}
+                    isLoading={isLoading}
                 />
                 <StatCard
                     title="Total Students"
@@ -952,6 +982,7 @@ const TutorDashboard = ({
                     iconBgColor="bg-green-100"
                     iconColor="text-green-600"
                     onClick={() => navigate('/my-students')}
+                    isLoading={isLoading}
                 />
                 <StatCard
                     title="Completed Sessions"
@@ -959,6 +990,7 @@ const TutorDashboard = ({
                     icon={CheckCircle}
                     iconBgColor="bg-emerald-100"
                     iconColor="text-emerald-600"
+                    isLoading={isLoading}
                 />
             </div>
 
@@ -1053,9 +1085,11 @@ const TutorDashboard = ({
                             }
                         />
                         {isLoading ? (
-                            <div className="text-center py-8">
-                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-                                <p className="mt-2 text-gray-500 text-sm">Loading sessions...</p>
+                            <div className="space-y-3" aria-busy="true" aria-live="polite">
+                                <span className="sr-only">Loading sessions…</span>
+                                <BookingRowSkeleton />
+                                <BookingRowSkeleton />
+                                <BookingRowSkeleton />
                             </div>
                         ) : nextSessions.length > 0 ? (
                             <div className="space-y-3">

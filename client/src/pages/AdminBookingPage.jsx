@@ -995,7 +995,7 @@ export default function AdminBookingPage() {
                                             <td className="px-6 py-4">
                                                 <div className="flex items-center">
                                                     {booking.student?.avatar && (
-                                                        <img src={booking.student.avatar} alt={booking.student.name} className="w-8 h-8 rounded-full mr-2" />
+                                                        <img src={booking.student.avatar} alt={booking.student.name} className="w-8 h-8 rounded-full mr-2" loading="lazy" decoding="async" />
                                                     )}
                                                     <div>
                                                         <p className="font-medium">{booking.student?.name || 'N/A'}</p>
@@ -1007,7 +1007,7 @@ export default function AdminBookingPage() {
                                                 {booking.tutor ? (
                                                     <div className="flex items-center">
                                                         {booking.tutor.avatar && (
-                                                            <img src={booking.tutor.avatar} alt={booking.tutor.name} className="w-8 h-8 rounded-full mr-2" />
+                                                            <img src={booking.tutor.avatar} alt={booking.tutor.name} className="w-8 h-8 rounded-full mr-2" loading="lazy" decoding="async" />
                                                         )}
                                                         <span>{booking.tutor.name}</span>
                                                     </div>

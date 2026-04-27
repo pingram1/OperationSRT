@@ -52,6 +52,8 @@ export default function ChildProfileCard({ child }) {
                     src={childAvatar}
                     alt={`${childName}'s profile`}
                     className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-24 h-24 rounded-full border-4 border-white object-cover"
+                    loading="lazy"
+                    decoding="async"
                     onError={(e) => {
                         // Fallback to initials if image fails to load
                         e.target.style.display = 'none';

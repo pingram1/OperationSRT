@@ -1,13 +1,23 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, Suspense, lazy } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowRight, ArrowLeft, Check, CheckCircle, Star, BookCopy, Calendar, User, ClipboardCheck, Sparkles, AlertCircle, Users, Video, MapPin } from 'lucide-react';
+import { ArrowRight, ArrowLeft, Check, CheckCircle, Star, BookCopy, Calendar, User, ClipboardCheck, Sparkles, AlertCircle, Users, Video, MapPin, Loader2 } from 'lucide-react';
 
 // --- Import the separate booking step components ---
 import ServiceSelectionStep from '../components/booking/ServiceSelectionStep.jsx';
 import ScheduleStep from '../components/booking/ScheduleStep.jsx';
 import BookingProgressTracker from '../components/booking/BookingProgressTracker.jsx';
 import SessionSetupStep from '../components/membership/SessionSetupStep.jsx';
-import PaymentStep from '../components/membership/PaymentStep.jsx';
+
+// PaymentStep pulls in Stripe (~165 KB). Defer until the booking flow
+// actually reaches the payment step.
+const PaymentStep = lazy(() => import('../components/membership/PaymentStep.jsx'));
+
+const PaymentStepFallback = () => (
+    <div className="flex items-center justify-center py-16" role="status" aria-live="polite">
+        <Loader2 className="w-6 h-6 animate-spin text-blue-600" aria-hidden="true" />
+        <span className="ml-3 text-gray-600">Preparing secure checkout…</span>
+    </div>
+);
 import { getTutors } from '../api/users.js';
 import { getAllMembershipPlans, getCurrentMembership, selectMembershipPlan } from '../api/memberships.js';
 import { createBooking, getBookingById } from '../api/bookings.js';
@@ -165,7 +175,7 @@ const TutorPreferenceStep = ({ onSelect, onNext, onBack, bookingDetails, tutors 
                             }} 
                             className={`flex items-center p-4 border-2 rounded-lg cursor-pointer transition-colors ${isSelected(tutor) ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-gray-300'}`}
                         >
-                            <img src={getAvatarUrl(tutor)} className="rounded-full mr-4 w-10 h-10" alt={tutor.name}/>
+                            <img src={getAvatarUrl(tutor)} className="rounded-full mr-4 w-10 h-10" alt={tutor.name} loading="lazy" decoding="async"/>
                             <div className="flex-1">
                                 <p className="font-semibold">{tutor.name}</p>
                                 {tutor.tutorInfo?.subjects && tutor.tutorInfo.subjects.length > 0 && (
@@ -213,6 +223,8 @@ const TutorPreferenceStep = ({ onSelect, onNext, onBack, bookingDetails, tutors 
                                                     src={getAvatarUrl(match.tutor)} 
                                                     className="rounded-full mr-4 w-12 h-12" 
                                                     alt={match.tutor.name}
+                                                    loading="lazy"
+                                                    decoding="async"
                                                 />
                                                 <div className="flex-1">
                                                     <div className="flex items-center gap-2 mb-1">
@@ -1124,26 +1136,28 @@ export default function AppointmentPage() {
                         const paymentPrice = bookingDetails.service?.price || sessionPrice || 65;
                         
                         return (
-                            <PaymentStep
-                                bookingId={createdBookingId}
-                                plan={{ 
-                                    name: bookingDetails.service?.name || 'Tutoring Session',
-                                    price: paymentPrice,
-                                    priceType: 'per_session'
-                                }}
-                                sessionConfiguration={null}
-                                bookingDetails={bookingDetails}
-                                onBack={() => {
-                                    // If we came from payForBooking, go back to dashboard/parent portal instead
-                                    const params = new URLSearchParams(window.location.search);
-                                    if (params.get('payForBooking') === 'true') {
-                                        navigate(user?.role === 'parent' ? '/parent-portal' : '/dashboard');
-                                    } else {
-                                        prevStep();
-                                    }
-                                }}
-                                onComplete={handlePaymentComplete}
-                            />
+                            <Suspense fallback={<PaymentStepFallback />}>
+                                <PaymentStep
+                                    bookingId={createdBookingId}
+                                    plan={{
+                                        name: bookingDetails.service?.name || 'Tutoring Session',
+                                        price: paymentPrice,
+                                        priceType: 'per_session'
+                                    }}
+                                    sessionConfiguration={null}
+                                    bookingDetails={bookingDetails}
+                                    onBack={() => {
+                                        // If we came from payForBooking, go back to dashboard/parent portal instead
+                                        const params = new URLSearchParams(window.location.search);
+                                        if (params.get('payForBooking') === 'true') {
+                                            navigate(user?.role === 'parent' ? '/parent-portal' : '/dashboard');
+                                        } else {
+                                            prevStep();
+                                        }
+                                    }}
+                                    onComplete={handlePaymentComplete}
+                                />
+                            </Suspense>
                         );
                     } else {
                         // Booking ID not set - this shouldn't happen, but handle gracefully
@@ -1436,14 +1450,16 @@ export default function AppointmentPage() {
                                     : ['Plan', 'Subject', 'Schedule', 'Tutor', 'Payment']}
                             />
                             <hr className="my-8" />
-                            <PaymentStep
-                                plan={selectedPlan}
-                                sessionConfiguration={sessionConfiguration}
-                                bookingDetails={membershipBookingDetails}
-                                bookingId={createdBookingId}
-                                onBack={() => setMembershipFlowStep('tutor')}
-                                onComplete={handleMembershipPaymentComplete}
-                            />
+                            <Suspense fallback={<PaymentStepFallback />}>
+                                <PaymentStep
+                                    plan={selectedPlan}
+                                    sessionConfiguration={sessionConfiguration}
+                                    bookingDetails={membershipBookingDetails}
+                                    bookingId={createdBookingId}
+                                    onBack={() => setMembershipFlowStep('tutor')}
+                                    onComplete={handleMembershipPaymentComplete}
+                                />
+                            </Suspense>
                             {membershipError && (
                                 <div className="mt-4 bg-red-50 border border-red-200 rounded-lg p-4">
                                     <p className="text-red-600">{membershipError}</p>

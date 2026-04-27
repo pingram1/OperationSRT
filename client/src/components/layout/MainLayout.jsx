@@ -9,6 +9,7 @@ import {
 import { useAuth } from '../../contexts/AuthContext.jsx';
 import { getUserAnnouncements } from '../../api/announcements.js';
 import { getNotifications, markNotificationAsRead } from '../../api/notifications.js';
+import { prefetchRoute } from '../../utils/routePrefetch.js';
 import logoUrl from '../../assets/logo.jpg';
 
 /**
@@ -105,7 +106,9 @@ const Sidebar = () => {
                     {visibleNavItems.map(item => (
                         <li key={item.path}>
                             <Link 
-                                to={item.path} 
+                                to={item.path}
+                                onMouseEnter={() => prefetchRoute(item.path)}
+                                onFocus={() => prefetchRoute(item.path)}
                                 className={`w-full flex items-center px-4 py-3 my-1 rounded-lg transition-colors duration-200 ${
                                     location.pathname.startsWith(item.path) 
                                         ? 'bg-blue-600 text-white shadow-md' 
@@ -321,6 +324,8 @@ const Header = ({ user, onLogout }) => {
                                     src={user.avatar} 
                                     alt="User Avatar" 
                                     className="w-full h-full object-cover absolute inset-0 z-10"
+                                    loading="lazy"
+                                    decoding="async"
                                     onError={() => setAvatarError(true)}
                                 />
                             ) : null}

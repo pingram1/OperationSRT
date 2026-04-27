@@ -1,5 +1,5 @@
-import { jsPDF } from 'jspdf';
-import autoTable from 'jspdf-autotable';
+// `jspdf` and `jspdf-autotable` are loaded on demand inside generateSchoolPDF
+// so the ~350 KB of PDF/canvas tooling does not ship with the admin chunk.
 
 /**
  * Escapes a value for a CSV cell (RFC 4180). Commas, quotes, and newlines
@@ -95,11 +95,18 @@ export function generateSchoolCSV(school, metrics, students) {
 
 /**
  * Builds a PDF and triggers a browser download.
+ * Loads jspdf and jspdf-autotable lazily so they are not in the initial bundle.
  * @param {object} school
  * @param {object|null|undefined} metrics
  * @param {object[]} students
+ * @returns {Promise<void>}
  */
-export function generateSchoolPDF(school, metrics, students) {
+export async function generateSchoolPDF(school, metrics, students) {
+    const [{ jsPDF }, autoTableModule] = await Promise.all([
+        import('jspdf'),
+        import('jspdf-autotable'),
+    ]);
+    const autoTable = autoTableModule.default || autoTableModule;
     const doc = new jsPDF({ unit: 'mm', format: 'a4' });
     const pageW = doc.internal.pageSize.getWidth();
     const margin = 14;

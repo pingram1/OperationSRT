@@ -22,6 +22,7 @@ import {
     FileType2,
 } from 'lucide-react';
 import Button from '../common/Button.jsx';
+import { useToast } from '../common/Toast.jsx';
 import { getSchoolMetrics, getStudentsBySchool } from '../../api/schools.js';
 import RosterUploadModal from './RosterUploadModal.jsx';
 import { generateSchoolCSV, generateSchoolPDF } from '../../utils/exportUtils.js';
@@ -57,7 +58,9 @@ export default function SchoolDetail({ school, onBack }) {
     const [metricsLoading, setMetricsLoading] = useState(true);
     const [metricsError, setMetricsError] = useState('');
     const [exportMenuOpen, setExportMenuOpen] = useState(false);
+    const [isExporting, setIsExporting] = useState(false);
     const exportMenuRef = useRef(null);
+    const toast = useToast();
 
     const fetchStudents = async () => {
         if (!schoolId) return;
@@ -106,7 +109,29 @@ export default function SchoolDetail({ school, onBack }) {
         return () => document.removeEventListener('mousedown', close);
     }, [exportMenuOpen]);
 
-    const isExportLoading = metricsLoading || isLoading;
+    const isExportLoading = metricsLoading || isLoading || isExporting;
+
+    const handleExportCsv = () => {
+        try {
+            generateSchoolCSV(school, metrics, students);
+        } catch (err) {
+            toast.error(err?.message || 'Failed to generate CSV');
+        } finally {
+            setExportMenuOpen(false);
+        }
+    };
+
+    const handleExportPdf = async () => {
+        setExportMenuOpen(false);
+        setIsExporting(true);
+        try {
+            await generateSchoolPDF(school, metrics, students);
+        } catch (err) {
+            toast.error(err?.message || 'Failed to generate PDF');
+        } finally {
+            setIsExporting(false);
+        }
+    };
 
     if (!school) return null;
 
@@ -165,7 +190,7 @@ export default function SchoolDetail({ school, onBack }) {
                             ) : (
                                 <Download className="w-4 h-4 shrink-0" />
                             )}
-                            <span>Download report</span>
+                            <span>{isExporting ? 'Generating PDF…' : 'Download report'}</span>
                             <ChevronDown className="w-4 h-4 shrink-0 opacity-70" />
                         </button>
                         {exportMenuOpen && !isExportLoading && (
@@ -177,10 +202,7 @@ export default function SchoolDetail({ school, onBack }) {
                                     <button
                                         type="button"
                                         role="menuitem"
-                                        onClick={() => {
-                                            generateSchoolCSV(school, metrics, students);
-                                            setExportMenuOpen(false);
-                                        }}
+                                        onClick={handleExportCsv}
                                         className="w-full text-left flex items-center gap-2 px-3 py-2.5 text-sm text-gray-800 hover:bg-gray-50"
                                     >
                                         <FileText className="w-4 h-4 text-gray-500" />
@@ -191,10 +213,7 @@ export default function SchoolDetail({ school, onBack }) {
                                     <button
                                         type="button"
                                         role="menuitem"
-                                        onClick={() => {
-                                            generateSchoolPDF(school, metrics, students);
-                                            setExportMenuOpen(false);
-                                        }}
+                                        onClick={handleExportPdf}
                                         className="w-full text-left flex items-center gap-2 px-3 py-2.5 text-sm text-gray-800 hover:bg-gray-50"
                                     >
                                         <FileType2 className="w-4 h-4 text-gray-500" />

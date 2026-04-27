@@ -144,7 +144,7 @@ export default function ClassroomPage() {
         <div className="p-4 space-y-3">
              {participants.length > 0 ? participants.map(p => (
                 <div key={p.id} className="flex items-center gap-3">
-                     <img src={p.avatar} alt={p.name} className="w-10 h-10 rounded-full" />
+                     <img src={p.avatar} alt={p.name} className="w-10 h-10 rounded-full" loading="lazy" decoding="async" />
                      <p className="font-medium">{p.name}</p>
                 </div>
              )) : (

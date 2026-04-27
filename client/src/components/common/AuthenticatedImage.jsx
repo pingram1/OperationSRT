@@ -94,6 +94,8 @@ export function AuthenticatedImage({ src, alt, className, ...rest }) {
       src={displaySrc}
       alt={alt}
       className={className}
+      loading="lazy"
+      decoding="async"
       onError={(e) => {
         e.currentTarget.onerror = null;
         e.currentTarget.src = FALLBACK_SVG;

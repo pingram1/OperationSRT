@@ -1541,6 +1541,8 @@ export default function SettingsPage() {
                                                                     src={child.avatar} 
                                                                     alt={child.name} 
                                                                     className="w-10 h-10 rounded-full object-cover"
+                                                                    loading="lazy"
+                                                                    decoding="async"
                                                                 />
                                                             ) : (
                                                                 <User className="w-5 h-5 text-blue-600" />
@@ -1596,6 +1598,8 @@ export default function SettingsPage() {
                                                                     src={request.student.avatar} 
                                                                     alt={request.student.name} 
                                                                     className="w-10 h-10 rounded-full object-cover"
+                                                                    loading="lazy"
+                                                                    decoding="async"
                                                                 />
                                                             ) : (
                                                                 <User className="w-5 h-5 text-yellow-600" />
