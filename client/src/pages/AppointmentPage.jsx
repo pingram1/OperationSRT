@@ -15,6 +15,7 @@ import { getSubjects } from '../api/systemConfig.js';
 import { getUserProfile } from '../api/users.js';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { findTutorMatches } from '../api/matching.js';
+import { useToast } from '../components/common/Toast.jsx';
 
 // --- Reusable Components ---
 const Card = ({ children, className = '' }) => (<div className={`bg-white rounded-xl shadow-md p-6 ${className}`}>{children}</div>);
@@ -388,6 +389,7 @@ const ReviewAndConfirmStep = ({ onBack, bookingDetails, onSubmit, isProcessing }
 export default function AppointmentPage() {
     const { user, isAuthenticated, refreshUser } = useAuth();
     const navigate = useNavigate();
+    const toast = useToast();
     const [selectedChildId, setSelectedChildId] = useState(null);
     const [children, setChildren] = useState([]);
 
@@ -419,7 +421,7 @@ export default function AppointmentPage() {
             
             // Check if payment is already processed
             if (booking.customerPayment?.status === 'paid' || booking.customerPayment?.status === 'succeeded') {
-                alert('This booking has already been paid for.');
+                toast.info('This booking has already been paid for.');
                 navigate(user?.role === 'parent' ? '/parent-portal' : '/dashboard');
                 return;
             }
@@ -712,7 +714,7 @@ export default function AppointmentPage() {
                 await createBooking(bookingData);
                 
                 // Success - show message and redirect
-                alert('Consultation booked successfully!');
+                toast.success('Consultation booked successfully!');
                 if (user?.role === 'parent') {
                     navigate('/parent-portal');
                 } else {
@@ -782,7 +784,7 @@ export default function AppointmentPage() {
                 if (booking.customerPayment?.status === 'requested') {
                     // Payment request sent to parent, skip payment step
                     setIsProcessingBooking(false);
-                    alert('Booking created! A payment request has been sent to your parent. The session will be confirmed once payment is received.');
+                    toast.success('Booking created! A payment request has been sent to your parent. The session will be confirmed once payment is received.');
                     if (user?.role === 'parent') {
                         navigate('/parent-portal');
                     } else {
@@ -811,7 +813,7 @@ export default function AppointmentPage() {
     const handlePaymentComplete = async (paymentResult) => {
         if (paymentResult.success) {
             // Payment successful, redirect to dashboard
-            alert('Booking confirmed and payment processed successfully!');
+            toast.success('Booking confirmed and payment processed successfully!');
             if (user?.role === 'parent') {
                 navigate('/parent-portal');
             } else {
@@ -837,14 +839,14 @@ export default function AppointmentPage() {
     // Membership plan selection handlers
     const handlePlanSelect = async (plan) => {
         if (!isAuthenticated) {
-            alert('Please log in to select a membership plan');
+            toast.info('Please log in to select a membership plan');
             navigate('/login');
             return;
         }
 
         // Check if this is the current plan
         if (currentUserMembership?.plan === plan.name && currentUserMembership?.status === 'active') {
-            alert('You are already subscribed to this plan');
+            toast.info('You are already subscribed to this plan');
             return;
         }
 
@@ -1001,7 +1003,7 @@ export default function AppointmentPage() {
             const targetName = targetStudentId 
                 ? children.find(c => (c._id || c.id) === targetStudentId)?.name || 'selected child'
                 : 'your account';
-            alert(`Cum Laude membership activated successfully for ${targetName}! The membership has been synced with linked accounts.`);
+            toast.success(`Cum Laude membership activated successfully for ${targetName}! The membership has been synced with linked accounts.`);
             
             // Reset after a moment - use navigate instead of reload to avoid errors
             setTimeout(() => {
@@ -1055,7 +1057,7 @@ export default function AppointmentPage() {
             const targetName = targetStudentId 
                 ? children.find(c => (c._id || c.id) === targetStudentId)?.name || 'selected child'
                 : 'your account';
-            alert(`${selectedPlan.name} membership activated successfully for ${targetName}! The membership has been synced with linked accounts.`);
+            toast.success(`${selectedPlan.name} membership activated successfully for ${targetName}! The membership has been synced with linked accounts.`);
             
             // Reset after a moment - reload membership plans instead of full page reload
             setTimeout(() => {

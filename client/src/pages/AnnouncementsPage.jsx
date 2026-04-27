@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Megaphone, Users, Trash2, Send } from 'lucide-react';
 import { createAnnouncement, getAllAnnouncements, deleteAnnouncement } from '../api/announcements';
+import { useToast } from '../components/common/Toast.jsx';
+import { useConfirm } from '../components/common/ConfirmDialog.jsx';
 
 // --- Reusable Components (assuming they are in their own files) ---
 const Card = ({ children, className = '' }) => (<div className={`bg-white rounded-xl shadow-md p-6 ${className}`}>{children}</div>);
@@ -43,6 +45,8 @@ const formatDate = (dateString) => {
 
 // --- Announcements Page Main Component ---
 export default function AnnouncementsPage() {
+    const toast = useToast();
+    const confirm = useConfirm();
     const [announcements, setAnnouncements] = useState([]);
     const [newAnnouncement, setNewAnnouncement] = useState({ title: '', message: '', audience: 'All Users' });
     const [isLoading, setIsLoading] = useState(false);
@@ -76,7 +80,7 @@ export default function AnnouncementsPage() {
     const handleSendAnnouncement = async (e) => {
         e.preventDefault();
         if (!newAnnouncement.title || !newAnnouncement.message) {
-            alert("Please fill out both title and message.");
+            toast.warning('Please fill out both title and message.');
             return;
         }
         
@@ -100,30 +104,35 @@ export default function AnnouncementsPage() {
             setNewAnnouncement({ title: '', message: '', audience: 'All Users' });
             
             // Show success message
-            alert(`Announcement sent successfully to ${response.usersNotified} users!`);
+            toast.success(`Announcement sent successfully to ${response.usersNotified} users!`);
         } catch (err) {
             console.error('Failed to create announcement:', err);
             setError(err.message || 'Failed to send announcement');
-            alert(`Error: ${err.message || 'Failed to send announcement'}`);
+            toast.error(err.message || 'Failed to send announcement');
         } finally {
             setIsLoading(false);
         }
     };
 
     const handleDelete = async (id) => {
-        if (!window.confirm("Are you sure you want to delete this announcement?")) {
+        const ok = await confirm({
+            title: 'Delete announcement?',
+            message: 'Are you sure you want to delete this announcement?',
+            confirmLabel: 'Delete',
+            danger: true,
+        });
+        if (!ok) {
             return;
         }
         
         try {
             setError(null);
             await deleteAnnouncement(id);
-            // Refresh announcements list
             await fetchAnnouncements();
         } catch (err) {
             console.error('Failed to delete announcement:', err);
             setError(err.message || 'Failed to delete announcement');
-            alert(`Error: ${err.message || 'Failed to delete announcement'}`);
+            toast.error(err.message || 'Failed to delete announcement');
         }
     };
 

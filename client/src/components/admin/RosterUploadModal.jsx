@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
-    X,
     Upload,
     ClipboardPaste,
     FileSpreadsheet,
@@ -13,6 +12,7 @@ import {
     SkipForward,
 } from 'lucide-react';
 import Button from '../common/Button.jsx';
+import Dialog from '../common/Dialog.jsx';
 import { rosterUpload } from '../../api/schools.js';
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -168,7 +168,7 @@ export default function RosterUploadModal({ isOpen, onClose, school, onUploaded 
 
     const { students, invalid } = useMemo(() => parseRoster(csvText), [csvText]);
 
-    if (!isOpen || !school) return null;
+    if (!school) return null;
 
     const schoolId = school._id || school.id;
 
@@ -211,32 +211,25 @@ export default function RosterUploadModal({ isOpen, onClose, school, onUploaded 
         }
     };
 
-    return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col">
-                <div className="flex items-start justify-between p-6 border-b">
-                    <div>
-                        <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
-                            <FileSpreadsheet className="w-5 h-5 text-blue-600" />
-                            Upload Roster
-                        </h2>
-                        <p className="text-sm text-gray-500 mt-1">
-                            Add students to <span className="font-medium text-gray-700">{school.name}</span>{' '}
-                            in bulk. We'll create shell accounts and email each student a welcome link.
-                        </p>
-                    </div>
-                    <button
-                        type="button"
-                        onClick={onClose}
-                        className="p-2 rounded-full hover:bg-gray-100 text-gray-500"
-                        aria-label="Close roster upload"
-                    >
-                        <X className="w-5 h-5" />
-                    </button>
-                </div>
+    const description = (
+        <>
+            Add students to <span className="font-medium text-gray-700">{school.name}</span>{' '}
+            in bulk. We&apos;ll create shell accounts and email each student a welcome link.
+        </>
+    );
 
-                <div className="p-6 overflow-y-auto space-y-5">
-                    {!result && (
+    return (
+        <Dialog
+            isOpen={isOpen}
+            onClose={onClose}
+            title="Upload Roster"
+            description={description}
+            size="xl"
+            backdropClose={!isUploading}
+            escapeClose={!isUploading}
+        >
+            <div className="space-y-5">
+                {!result && (
                         <>
                             <div className="grid grid-cols-2 gap-1 p-1 bg-gray-100 rounded-xl" role="tablist" aria-label="Roster input mode">
                                 <button
@@ -339,16 +332,16 @@ John Smith, john@example.com`}
                                 </div>
                             )}
 
-                            {error && (
-                                <div className="flex items-center p-3 bg-red-100 text-red-700 rounded-lg text-sm">
-                                    <AlertCircle className="w-5 h-5 mr-2 flex-shrink-0" />
-                                    <span>{error}</span>
-                                </div>
-                            )}
-                        </>
-                    )}
+                        {error && (
+                            <div className="flex items-center p-3 bg-red-100 text-red-700 rounded-lg text-sm">
+                                <AlertCircle className="w-5 h-5 mr-2 flex-shrink-0" />
+                                <span>{error}</span>
+                            </div>
+                        )}
+                    </>
+                )}
 
-                    {result && (
+                {result && (
                         <div className="space-y-4">
                             <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-lg text-sm text-green-800">
                                 <CheckCircle className="w-5 h-5" />
@@ -387,22 +380,21 @@ John Smith, john@example.com`}
                                 />
                             )}
 
-                            {Array.isArray(result.errors) && result.errors.length > 0 && (
-                                <ResultTable
-                                    title="Errors"
-                                    icon={XCircle}
-                                    tone="red"
-                                    rows={result.errors.map((row) => ({
-                                        primary: row.email || `Row ${row.index + 1}`,
-                                        secondary: row.message || 'Error',
-                                    }))}
-                                />
-                            )}
-                        </div>
-                    )}
-                </div>
+                        {Array.isArray(result.errors) && result.errors.length > 0 && (
+                            <ResultTable
+                                title="Errors"
+                                icon={XCircle}
+                                tone="red"
+                                rows={result.errors.map((row) => ({
+                                    primary: row.email || `Row ${row.index + 1}`,
+                                    secondary: row.message || 'Error',
+                                }))}
+                            />
+                        )}
+                    </div>
+                )}
 
-                <div className="flex items-center justify-end gap-3 p-6 border-t bg-gray-50 rounded-b-2xl">
+                <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-200 -mx-6 px-6 -mb-6 pb-6 bg-gray-50 sticky bottom-0 mt-2 rounded-b-xl">
                     <Button
                         type="button"
                         variant="secondary"
@@ -430,7 +422,7 @@ John Smith, john@example.com`}
                     )}
                 </div>
             </div>
-        </div>
+        </Dialog>
     );
 }
 

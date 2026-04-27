@@ -8,6 +8,8 @@ import { getMyAvailability, updateMyAvailability } from '../api/availability.js'
 import { getSecureToken } from '../api/authStorage.js';
 import { getAllMembershipPlans, getCurrentMembership } from '../api/memberships.js';
 import { AuthenticatedImage } from '../components/common/AuthenticatedImage.jsx';
+import { useToast } from '../components/common/Toast.jsx';
+import { useConfirm } from '../components/common/ConfirmDialog.jsx';
 
 // Reusable Components
 const Card = ({ children, className = '' }) => (
@@ -321,6 +323,8 @@ const TwoFactorModal = ({ isOpen, onClose, isEnabled, onEnable, onDisable, isLoa
 
 export default function SettingsPage() {
     const { user, refreshUser } = useAuth();
+    const toast = useToast();
+    const confirm = useConfirm();
 
     // Profile state
     const [profile, setProfile] = useState({
@@ -863,7 +867,13 @@ export default function SettingsPage() {
     };
 
     const handleRejectRequest = async (requestId) => {
-        if (!window.confirm('Are you sure you want to reject this link request?')) {
+        const ok = await confirm({
+            title: 'Reject link request?',
+            message: 'Are you sure you want to reject this link request?',
+            confirmLabel: 'Reject',
+            danger: true,
+        });
+        if (!ok) {
             return;
         }
 
@@ -883,7 +893,14 @@ export default function SettingsPage() {
     };
 
     const handleCancelRequest = async (requestId) => {
-        if (!window.confirm('Are you sure you want to cancel this link request?')) {
+        const ok = await confirm({
+            title: 'Cancel link request?',
+            message: 'Are you sure you want to cancel this link request?',
+            confirmLabel: 'Cancel request',
+            cancelLabel: 'Keep request',
+            danger: true,
+        });
+        if (!ok) {
             return;
         }
 
@@ -949,7 +966,7 @@ export default function SettingsPage() {
                                 <button 
                                     type="button" 
                                     className="bg-gray-200 text-gray-800 px-4 py-2 rounded-lg text-sm font-semibold hover:bg-gray-300 transition-colors"
-                                    onClick={() => alert('Avatar upload coming soon!')}
+                                    onClick={() => toast.info('Avatar upload coming soon!')}
                                 >
                                     Change Picture
                                 </button>
@@ -2143,7 +2160,13 @@ export default function SettingsPage() {
                                                         </button>
                                                         <button
                                                             onClick={async () => {
-                                                                if (!window.confirm('Are you sure you want to delete this badge?')) return;
+                                                                const ok = await confirm({
+                                                                    title: 'Delete badge?',
+                                                                    message: 'Are you sure you want to delete this badge?',
+                                                                    confirmLabel: 'Delete',
+                                                                    danger: true,
+                                                                });
+                                                                if (!ok) return;
                                                                 setError('');
                                                                 try {
                                                                     await deleteCertificationBadge(index);

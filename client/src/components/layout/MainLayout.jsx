@@ -97,7 +97,7 @@ const Sidebar = () => {
                         alt="Start Right Tutoring Logo" 
                         className="w-8 h-8 object-contain flex-shrink-0"
                     />
-                    <h1 className="text-lg font-bold text-gray-800 leading-tight text-center">Start Right Tutoring</h1>
+                    <p className="text-lg font-bold text-gray-800 leading-tight text-center">Start Right Tutoring</p>
                 </div>
             </Link>
             <nav className="flex-grow p-4 overflow-y-auto">
@@ -396,10 +396,20 @@ export default function MainLayout() {
 
     return (
         <div className="min-h-screen bg-gray-100 font-sans flex">
+            <a
+                href="#main-content"
+                className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[1100] focus:px-4 focus:py-2 focus:rounded-lg focus:bg-blue-600 focus:text-white focus:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            >
+                Skip to main content
+            </a>
             <Sidebar />
             <div className="flex-1 flex flex-col ml-64 min-w-0 w-full">
                 <Header user={user} onLogout={handleLogout} />
-                <main className="flex-1 p-8 w-full min-w-0 overflow-x-hidden">
+                <main
+                    id="main-content"
+                    tabIndex={-1}
+                    className="flex-1 p-8 w-full min-w-0 overflow-x-hidden focus:outline-none"
+                >
                     <Outlet />
                 </main>
             </div>

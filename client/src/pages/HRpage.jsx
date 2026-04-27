@@ -5,6 +5,7 @@ import { getSystemConfig } from '../api/systemConfig';
 import { useAuth } from '../contexts/AuthContext';
 import { getMyAvailability, updateMyAvailability } from '../api/availability';
 import { getSecureToken } from '../api/authStorage';
+import { useConfirm } from '../components/common/ConfirmDialog.jsx';
 
 // --- Reusable Components ---
 const Card = ({ children, className = '' }) => (
@@ -45,6 +46,7 @@ const Button = ({ children, variant = 'primary', Icon, isLoading = false, classN
 // --- Tutor Management Page Component ---
 export default function HRPage() {
     const { user } = useAuth();
+    const confirm = useConfirm();
     const [applications, setApplications] = useState([]);
     const [tutors, setTutors] = useState([]);
     const [stats, setStats] = useState({
@@ -181,7 +183,13 @@ export default function HRPage() {
     };
     
     const handleDeny = async (application) => {
-        if (!window.confirm(`Are you sure you want to deny ${application.name}'s application? This action cannot be undone.`)) {
+        const ok = await confirm({
+            title: 'Deny tutor application?',
+            message: `Are you sure you want to deny ${application.name}'s application? This action cannot be undone.`,
+            confirmLabel: 'Deny application',
+            danger: true,
+        });
+        if (!ok) {
             return;
         }
         

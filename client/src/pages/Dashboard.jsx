@@ -18,6 +18,8 @@ import { getAllChallenges } from '../api/challenges.js';
 import { getTutorDashboardStats, getTutorStudents } from '../api/tutors.js';
 import Modal from '../components/common/Modal.jsx';
 import { isLearnToEarnEligibleFromUser } from '../utils/learnToEarn.js';
+import { useToast } from '../components/common/Toast.jsx';
+import { useConfirm } from '../components/common/ConfirmDialog.jsx';
 
 // --- Reusable Components ---
 const Card = ({ children, className = '' }) => (
@@ -146,6 +148,8 @@ const StudentStatsCard = React.memo(({ user, challenges = [] }) => {
 
 const UpcomingSessionsCard = React.memo(({ sessions = [], onPlanWeek, isPlanningWeek = false, onCancelSession = null, onRefresh = null }) => {
     const navigate = useNavigate();
+    const toast = useToast();
+    const confirm = useConfirm();
     const [cancellingId, setCancellingId] = React.useState(null);
     
     const handleCancel = async (session) => {
@@ -154,14 +158,18 @@ const UpcomingSessionsCard = React.memo(({ sessions = [], onPlanWeek, isPlanning
         const hoursUntilSession = (sessionDate - now) / (1000 * 60 * 60);
         const isWithin24Hours = hoursUntilSession < 24;
         
-        let confirmMessage = 'Are you sure you want to cancel this session?';
-        if (isWithin24Hours) {
-            confirmMessage = '⚠️ WARNING: This session is less than 24 hours away. Cancelling now may result in a cancellation penalty. Are you sure you want to proceed?';
-        } else {
-            confirmMessage = 'Are you sure you want to cancel this session? You can cancel penalty-free since it\'s more than 24 hours before the session.';
-        }
+        const message = isWithin24Hours
+            ? 'This session is less than 24 hours away. Cancelling now may result in a cancellation penalty. Are you sure you want to proceed?'
+            : 'Are you sure you want to cancel this session? You can cancel penalty-free since it\'s more than 24 hours before the session.';
         
-        if (!window.confirm(confirmMessage)) {
+        const ok = await confirm({
+            title: isWithin24Hours ? 'Cancel within 24 hours?' : 'Cancel session?',
+            message,
+            confirmLabel: 'Cancel session',
+            cancelLabel: 'Keep session',
+            danger: isWithin24Hours,
+        });
+        if (!ok) {
             return;
         }
         
@@ -170,18 +178,17 @@ const UpcomingSessionsCard = React.memo(({ sessions = [], onPlanWeek, isPlanning
             const result = await cancelBooking(session._id || session.id);
             
             if (result.hasPenalty) {
-                alert('⚠️ ' + result.message);
+                toast.warning(result.message);
             } else {
-                alert('✅ ' + result.message);
+                toast.success(result.message);
             }
             
-            // Refresh sessions list
             if (onRefresh) {
                 onRefresh();
             }
         } catch (error) {
             console.error('Failed to cancel booking:', error);
-            alert('Failed to cancel session: ' + (error.message || 'Please try again.'));
+            toast.error('Failed to cancel session: ' + (error.message || 'Please try again.'));
         } finally {
             setCancellingId(null);
         }

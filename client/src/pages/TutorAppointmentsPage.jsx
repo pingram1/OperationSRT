@@ -7,6 +7,7 @@ import {
 import { useAuth } from '../contexts/AuthContext';
 import { getTutorBookings, acceptBooking, declineBooking, completeBooking } from '../api/bookings';
 import SessionNotesModal from '../components/tutor/SessionNotesModal';
+import { useConfirm } from '../components/common/ConfirmDialog.jsx';
 
 // --- Reusable Components ---
 const Card = ({ children, className = '' }) => (
@@ -54,6 +55,7 @@ const Button = ({ children, variant = 'primary', Icon, onClick, isLoading = fals
 export default function TutorAppointmentsPage() {
     const { user } = useAuth();
     const navigate = useNavigate();
+    const confirm = useConfirm();
     const [bookings, setBookings] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState('');
@@ -145,7 +147,13 @@ export default function TutorAppointmentsPage() {
     };
 
     const handleDecline = async (bookingId) => {
-        if (!window.confirm('Are you sure you want to decline this session?')) {
+        const ok = await confirm({
+            title: 'Decline session?',
+            message: 'Are you sure you want to decline this session?',
+            confirmLabel: 'Decline session',
+            danger: true,
+        });
+        if (!ok) {
             return;
         }
 
@@ -168,7 +176,12 @@ export default function TutorAppointmentsPage() {
     };
 
     const handleComplete = async (bookingId) => {
-        if (!window.confirm('Mark this session as completed? You can add session notes after completing.')) {
+        const ok = await confirm({
+            title: 'Mark session complete?',
+            message: 'Mark this session as completed? You can add session notes after completing.',
+            confirmLabel: 'Mark complete',
+        });
+        if (!ok) {
             return;
         }
 

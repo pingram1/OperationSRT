@@ -6,6 +6,7 @@ import { useAuth } from '../contexts/AuthContext.jsx';
 import { QuestionRenderer } from '../components/challenges/QuestionRenderer';
 import { normalizeChallengeQuestion } from '../utils/normalizeChallengeQuestion';
 import { isAnswerIncomplete } from '../utils/challengeAnswerGuards';
+import { useToast } from '../components/common/Toast.jsx';
 
 const Card = ({ children, className = '' }) => (
     <div className={`bg-white rounded-xl shadow-md p-6 ${className}`}>{children}</div>
@@ -15,6 +16,7 @@ export default function ChallengePlayPage() {
     const { id } = useParams();
     const navigate = useNavigate();
     const { isAuthenticated, refreshUser } = useAuth();
+    const toast = useToast();
     const [challenge, setChallenge] = useState(null);
     const [attempt, setAttempt] = useState(null);
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -62,7 +64,7 @@ export default function ChallengePlayPage() {
                 }
             } catch (error) {
                 console.error('Failed to load challenge:', error);
-                alert('Failed to load challenge. Please try again.');
+                toast.error('Failed to load challenge. Please try again.');
                 navigate('/challenges');
             } finally {
                 setIsLoading(false);
@@ -80,12 +82,12 @@ export default function ChallengePlayPage() {
             const result = await completeChallenge(id);
             setAttempt(result.attempt);
             // Show a message and redirect to challenges page (new challenges tab)
-            alert('Time expired! The challenge has ended. You\'ll need to start over.');
+            toast.warning('Time expired! The challenge has ended. You\'ll need to start over.');
             navigate('/challenges');
         } catch (error) {
             console.error('Failed to handle time expiration:', error);
             // Still redirect even if API call fails
-            alert('Time expired! The challenge has ended.');
+            toast.warning('Time expired! The challenge has ended.');
             navigate('/challenges');
         }
     }, [id, navigate]);
@@ -181,7 +183,7 @@ export default function ChallengePlayPage() {
             }, 2000);
         } catch (error) {
             console.error('Failed to submit answer:', error);
-            alert('Failed to submit answer. Please try again.');
+            toast.error('Failed to submit answer. Please try again.');
             setIsSubmitting(false);
         }
     };

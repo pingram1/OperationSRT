@@ -5,6 +5,8 @@ import * as Sentry from '@sentry/react';
 import App from './App.jsx';
 import { AuthProvider } from './contexts/AuthContext.jsx';
 import ErrorBoundary from './components/ErrorBoundary.jsx';
+import { ToastProvider } from './components/common/Toast.jsx';
+import { ConfirmProvider } from './components/common/ConfirmDialog.jsx';
 import './index.css';
 
 const sentryDsn = import.meta.env.VITE_SENTRY_DSN;
@@ -21,7 +23,11 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     <BrowserRouter>
       <ErrorBoundary>
         <AuthProvider>
-          <App />
+          <ToastProvider>
+            <ConfirmProvider>
+              <App />
+            </ConfirmProvider>
+          </ToastProvider>
         </AuthProvider>
       </ErrorBoundary>
     </BrowserRouter>

@@ -2,12 +2,14 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { BookCopy, Video, FileText, Search, ChevronRight, File } from 'lucide-react';
 import { getAllResources } from '../api/resources';
 import { getSecureToken } from '../api/authStorage';
+import { useToast } from '../components/common/Toast.jsx';
 
 // --- Reusable Components ---
 const Card = ({ children, className = '' }) => (<div className={`bg-white rounded-xl shadow-md p-6 transition-all hover:shadow-lg hover:scale-[1.02] ${className}`}>{children}</div>);
 
 // --- Resources Page Main Component ---
 export default function ResourcesPage() {
+    const toast = useToast();
     const [activeTab, setActiveTab] = useState('all');
     const [searchTerm, setSearchTerm] = useState('');
     const [resources, setResources] = useState([]);
@@ -61,7 +63,7 @@ export default function ResourcesPage() {
                 try {
                     const token = getSecureToken();
                     if (!token) {
-                        alert('Please log in to view this PDF.');
+                        toast.info('Please log in to view this PDF.');
                         return;
                     }
                     
@@ -93,7 +95,7 @@ export default function ResourcesPage() {
                     }
                 } catch (error) {
                     console.error('Error opening PDF:', error);
-                    alert(`Failed to open PDF: ${error.message || 'Please try again.'}`);
+                    toast.error(`Failed to open PDF: ${error.message || 'Please try again.'}`);
                 }
             } else if (resource.url) {
                 // Open URL
@@ -101,7 +103,7 @@ export default function ResourcesPage() {
             } else if (resource.content) {
                 // Show content in modal or new page
                 // For now, just alert - can be enhanced later
-                alert('Resource content view coming soon!');
+                toast.info('Resource content view coming soon!');
             }
         };
 

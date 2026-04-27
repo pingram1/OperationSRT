@@ -4,6 +4,8 @@ import { getAllUsers, updateUser, deleteUser, getStudents, linkChildToParent, un
 import { getAllBookings } from '../api/bookings.js';
 import { registerEmployee } from '../api/auth.js';
 import { getSecureToken } from '../api/authStorage.js';
+import { useToast } from '../components/common/Toast.jsx';
+import { useConfirm } from '../components/common/ConfirmDialog.jsx';
 
 // --- Reusable Components ---
 const Card = ({ children, className = '' }) => (<div className={`bg-white rounded-xl shadow-md p-6 ${className}`}>{children}</div>);
@@ -556,6 +558,8 @@ const LinkParentStudentModal = ({ parent, isOpen, onClose, onSave, allStudents =
 
 // --- Admin Panel Main Component ---
 export default function AdminPanel() {
+    const toast = useToast();
+    const confirm = useConfirm();
     const [users, setUsers] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [adminStats, setAdminStats] = useState({ totalUsers: 0, activeTutors: 0, pendingAppointments: 0 });
@@ -603,18 +607,23 @@ export default function AdminPanel() {
     };
 
     const handleDeleteUser = async (user) => {
-        if (!window.confirm(`Are you sure you want to delete ${user.name}? This action cannot be undone.`)) {
+        const ok = await confirm({
+            title: 'Delete user?',
+            message: `Are you sure you want to delete ${user.name}? This action cannot be undone.`,
+            confirmLabel: 'Delete',
+            danger: true,
+        });
+        if (!ok) {
             return;
         }
 
         try {
             await deleteUser(user._id || user.id);
-            // Refresh the user list
             await fetchAdminData();
-            alert('User deleted successfully');
+            toast.success('User deleted successfully');
         } catch (error) {
             console.error('Failed to delete user:', error);
-            alert(`Error: ${error.message || 'Failed to delete user'}`);
+            toast.error(error.message || 'Failed to delete user');
         }
     };
 
@@ -639,18 +648,23 @@ export default function AdminPanel() {
     };
 
     const handleUnlinkChild = async (parent, childId) => {
-        if (!window.confirm('Are you sure you want to unlink this student from the parent?')) {
+        const ok = await confirm({
+            title: 'Unlink student?',
+            message: 'Are you sure you want to unlink this student from the parent?',
+            confirmLabel: 'Unlink',
+            danger: true,
+        });
+        if (!ok) {
             return;
         }
 
         try {
             await unlinkChildFromParent(parent._id || parent.id, childId);
-            // Refresh the user list
             await fetchAdminData();
-            alert('Student unlinked successfully');
+            toast.success('Student unlinked successfully');
         } catch (error) {
             console.error('Failed to unlink child:', error);
-            alert(`Error: ${error.message || 'Failed to unlink student'}`);
+            toast.error(error.message || 'Failed to unlink student');
         }
     };
 

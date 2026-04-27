@@ -4,6 +4,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { Trophy, Zap, BrainCircuit, BookCopy, ChevronRight, Filter, Award, TrendingUp } from 'lucide-react';
 import { getAllChallenges, getLeaderboard } from '../api/challenges.js';
 import { useAuth } from '../contexts/AuthContext.jsx';
+import { useToast } from '../components/common/Toast.jsx';
 
 // --- Reusable Components ---
 const Card = ({ children, className = '' }) => (<div className={`bg-white rounded-xl shadow-md p-6 transition-all hover:shadow-lg hover:scale-[1.02] ${className}`}>{children}</div>);
@@ -14,6 +15,7 @@ export default function ChallengesPage() {
     const navigate = useNavigate();
     const location = useLocation();
     const { user, isAuthenticated, refreshUser } = useAuth();
+    const toast = useToast();
     const [activeTab, setActiveTab] = useState('new');
     const [challenges, setChallenges] = useState([]);
     const [leaderboard, setLeaderboard] = useState([]);
@@ -45,7 +47,7 @@ export default function ChallengesPage() {
                 console.error('Error details:', error.message, error.status);
                 setChallenges([]);
                 // Show user-friendly error
-                alert('Failed to load challenges. Please refresh the page.');
+                toast.error('Failed to load challenges. Please refresh the page.');
             } finally {
                 setIsLoading(false);
             }

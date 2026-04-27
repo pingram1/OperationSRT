@@ -4,6 +4,8 @@ import { getAllChallenges, createChallenge, updateChallenge, deleteChallenge } f
 import { getAllResourcesAdmin, createResource, createResourceWithDocument, updateResource, deleteResource, generateMLAPDF } from '../api/resources';
 import { getSubjects } from '../api/systemConfig';
 import { useAuth } from '../contexts/AuthContext';
+import { useToast } from '../components/common/Toast.jsx';
+import { useConfirm } from '../components/common/ConfirmDialog.jsx';
 
 // --- Reusable Components ---
 const Card = ({ children, className = '' }) => (
@@ -29,6 +31,8 @@ const Button = ({ children, variant = 'primary', Icon, isLoading = false, classN
 // --- Main Content Management Page Component ---
 export default function ContentManagementPage() {
     const { user } = useAuth();
+    const toast = useToast();
+    const confirm = useConfirm();
     const [activeTab, setActiveTab] = useState('resources');
     const [challenges, setChallenges] = useState([]);
     const [resources, setResources] = useState([]);
@@ -106,7 +110,13 @@ export default function ContentManagementPage() {
     };
 
     const handleDelete = async (id) => {
-        if (!window.confirm("Are you sure you want to delete this challenge? This action cannot be undone.")) {
+        const ok = await confirm({
+            title: 'Delete challenge?',
+            message: 'Are you sure you want to delete this challenge? This action cannot be undone.',
+            confirmLabel: 'Delete',
+            danger: true,
+        });
+        if (!ok) {
             return;
         }
 
@@ -115,7 +125,7 @@ export default function ContentManagementPage() {
             setChallenges(challenges.filter(c => c._id !== id));
         } catch (err) {
             console.error('Failed to delete challenge:', err);
-            alert('Failed to delete challenge. Please try again.');
+            toast.error('Failed to delete challenge. Please try again.');
         }
     };
 
@@ -156,7 +166,13 @@ export default function ContentManagementPage() {
     };
 
     const handleDeleteResource = async (id) => {
-        if (!window.confirm("Are you sure you want to delete this resource? This action cannot be undone.")) {
+        const ok = await confirm({
+            title: 'Delete resource?',
+            message: 'Are you sure you want to delete this resource? This action cannot be undone.',
+            confirmLabel: 'Delete',
+            danger: true,
+        });
+        if (!ok) {
             return;
         }
 
@@ -165,7 +181,7 @@ export default function ContentManagementPage() {
             setResources(resources.filter(r => r._id !== id));
         } catch (err) {
             console.error('Failed to delete resource:', err);
-            alert('Failed to delete resource. Please try again.');
+            toast.error('Failed to delete resource. Please try again.');
         }
     };
 
@@ -176,7 +192,7 @@ export default function ContentManagementPage() {
             const response = await generateMLAPDF();
             await fetchResources();
             // Show success message
-            alert('MLA Citation Guide PDF generated successfully!');
+            toast.success('MLA Citation Guide PDF generated successfully!');
         } catch (err) {
             console.error('Failed to generate MLA PDF:', err);
             const errorMessage = err.message || 'Failed to generate MLA PDF. Please try again.';

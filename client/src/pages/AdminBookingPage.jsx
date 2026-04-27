@@ -7,6 +7,8 @@ import { getSubjects } from '../api/systemConfig';
 import { useAuth } from '../contexts/AuthContext';
 import { getCompatibilityAnalysis } from '../api/matching';
 import LearningStyleVisualizer from '../components/matching/LearningStyleVisualizer';
+import { useToast } from '../components/common/Toast.jsx';
+import { useConfirm } from '../components/common/ConfirmDialog.jsx';
 
 // --- Reusable Components ---
 const Card = ({ children, className = '' }) => (
@@ -31,6 +33,8 @@ const Button = ({ children, variant = 'primary', Icon, isLoading = false, classN
 
 export default function AdminBookingPage() {
     const { user, isLoading: authLoading } = useAuth();
+    const toast = useToast();
+    const confirm = useConfirm();
     const [activeTab, setActiveTab] = useState('bookings');
     const [bookings, setBookings] = useState([]);
     const [students, setStudents] = useState([]);
@@ -293,7 +297,7 @@ export default function AdminBookingPage() {
                 setShowMatchModal(true);
             } catch (err) {
                 console.error('Failed to fetch match details:', err);
-                alert('Failed to load match details. Please try again.');
+                toast.error('Failed to load match details. Please try again.');
             }
         }
     };
@@ -341,7 +345,13 @@ export default function AdminBookingPage() {
     };
 
     const handleMarkAsNoShow = async (bookingId) => {
-        if (!window.confirm('Mark this session as no-show? This will notify the tutor and all admins.')) return;
+        const ok = await confirm({
+            title: 'Mark as no-show?',
+            message: 'Mark this session as no-show? This will notify the tutor and all admins.',
+            confirmLabel: 'Mark no-show',
+            danger: true,
+        });
+        if (!ok) return;
         try {
             setMarkingNoShowId(bookingId);
             setError('');
@@ -397,7 +407,12 @@ export default function AdminBookingPage() {
             return;
         }
 
-        if (!window.confirm(`Mark ${selectedBookings.length} booking(s) as paid?`)) {
+        const ok = await confirm({
+            title: 'Mark bookings as paid?',
+            message: `Mark ${selectedBookings.length} booking(s) as paid?`,
+            confirmLabel: 'Mark paid',
+        });
+        if (!ok) {
             return;
         }
 
@@ -594,7 +609,13 @@ export default function AdminBookingPage() {
     };
 
     const handleDeleteBooking = async (bookingId) => {
-        if (!window.confirm('Are you sure you want to delete this booking? This action cannot be undone.')) {
+        const ok = await confirm({
+            title: 'Delete booking?',
+            message: 'Are you sure you want to delete this booking? This action cannot be undone.',
+            confirmLabel: 'Delete',
+            danger: true,
+        });
+        if (!ok) {
             return;
         }
 
