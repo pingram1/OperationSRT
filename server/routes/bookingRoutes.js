@@ -112,19 +112,22 @@ router.put('/:id/notes', authMiddleware, updateSessionNotes);
 router.get('/:id/notes', authMiddleware, getSessionNotes);
 
 /**
+ * @route   PUT /api/bookings/mark-paid-batch
+ * @desc    Mark multiple bookings as paid (Admin only)
+ * @access  Private (Admin)
+ * NOTE: This static segment MUST be registered before PUT /:id, otherwise
+ * Express matches the literal "mark-paid-batch" as :id and falls through to
+ * updateBooking with an invalid ObjectId.
+ */
+router.put('/mark-paid-batch', authMiddleware, markBookingsAsPaidBatch);
+
+/**
  * @route   GET /api/bookings/:id
  * @desc    Get a single booking by ID
  * @access  Private (Student, Tutor, Parent, Admin)
  * NOTE: This route MUST come after all specific /:id routes to avoid conflicts
  */
 router.get('/:id', authMiddleware, getBookingById);
-
-/**
- * @route   PUT /api/bookings/mark-paid-batch
- * @desc    Mark multiple bookings as paid (Admin only)
- * @access  Private (Admin)
- */
-router.put('/mark-paid-batch', authMiddleware, markBookingsAsPaidBatch);
 
 /**
  * @route   PUT /api/bookings/:id

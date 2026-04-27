@@ -446,6 +446,19 @@ const UserSchema = new Schema({
     timestamps: true,
 });
 
+// Defense-in-depth: never serialize secrets to JSON, even if a controller forgets
+// to .select('-password ...'). Applies to res.json(user), JSON.stringify(user),
+// and any populate target. Mongoose calls this transform on toJSON / toObject.
+const SENSITIVE_USER_FIELDS = ['password', 'refreshToken', 'refreshTokenExpiry', 'twoFactorSecret'];
+function stripSensitiveUserFields(_doc, ret) {
+    for (const field of SENSITIVE_USER_FIELDS) {
+        delete ret[field];
+    }
+    return ret;
+}
+UserSchema.set('toJSON', { transform: stripSensitiveUserFields });
+UserSchema.set('toObject', { transform: stripSensitiveUserFields });
+
 // Add indexes for frequently queried fields
 UserSchema.index({ email: 1 }, { unique: true });
 UserSchema.index({ role: 1 });

@@ -289,13 +289,23 @@ const handleWebhook = async (req, res) => {
         return res.status(400).send('Webhook signature verification failed');
     }
 
+    // Idempotency: insert a 'received' record. On duplicate-key, this is a
+    // retry — we re-run the handler unless the previous attempt finished
+    // (status === 'processed'). Legacy rows without `status` are treated as
+    // already processed to avoid replaying historic events.
     try {
-        await ProcessedStripeEvent.create({ eventId: event.id, type: event.type });
+        await ProcessedStripeEvent.create({ eventId: event.id, type: event.type, status: 'received' });
     } catch (dupErr) {
-        if (dupErr.code === 11000) {
-            return res.json({ received: true });
+        if (dupErr.code !== 11000) {
+            logger.error('Webhook idempotency record failed', { eventId: event.id, message: dupErr.message });
+            return res.status(500).json({ received: false, error: 'idempotency_record_failed' });
         }
-        throw dupErr;
+        const existing = await ProcessedStripeEvent.findOne({ eventId: event.id }).lean();
+        const isProcessed = !existing || !existing.status || existing.status === 'processed';
+        if (isProcessed) {
+            logger.info('Stripe webhook duplicate (already processed)', { eventId: event.id, type: event.type });
+            return res.json({ received: true, duplicate: true });
+        }
     }
 
     try {
@@ -310,9 +320,24 @@ const handleWebhook = async (req, res) => {
                 logger.info('Stripe webhook: unhandled event', { type: event.type });
         }
     } catch (e) {
-        logger.error('Webhook handler error', { type: event.type, message: e.message });
+        logger.error('Webhook handler error', { type: event.type, eventId: event.id, message: e.message });
+        await ProcessedStripeEvent.updateOne(
+            { eventId: event.id },
+            { $set: { status: 'failed', lastError: String(e.message || '').slice(0, 500) } },
+        ).catch((updateErr) => {
+            logger.error('Failed to mark webhook failed', { eventId: event.id, message: updateErr.message });
+        });
+        // Return 5xx so Stripe retries the delivery; the next attempt will
+        // re-enter this handler because status !== 'processed'.
+        return res.status(500).json({ received: false, error: 'handler_failed' });
     }
 
+    await ProcessedStripeEvent.updateOne(
+        { eventId: event.id },
+        { $set: { status: 'processed', lastError: null } },
+    ).catch((e) => {
+        logger.error('Failed to mark webhook processed', { eventId: event.id, message: e.message });
+    });
     return res.json({ received: true });
 };
 

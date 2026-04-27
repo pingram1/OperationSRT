@@ -34,9 +34,14 @@ function formatDate(value) {
  * @returns {string}
  */
 function safeReportBaseName(name) {
+    // Intentionally strip ASCII control chars (U+0000–U+001F) from filenames
+    // so the OS download dialog never sees them. ESLint's no-control-regex
+    // is overly cautious here.
+    // eslint-disable-next-line no-control-regex
+    const illegal = /[<>:"/\\|?*\u0000-\u001f]/g;
     const base = String(name || 'school')
         .trim()
-        .replace(/[<>:"/\\|?*\u0000-\u001f]/g, '-')
+        .replace(illegal, '-')
         .replace(/\s+/g, '-')
         .replace(/-+/g, '-');
     return base.slice(0, 80) || 'school';

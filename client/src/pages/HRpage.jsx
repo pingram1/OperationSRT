@@ -4,6 +4,7 @@ import { getPendingApplications, getActiveTutors, getTutorStats, approveTutor, d
 import { getSystemConfig } from '../api/systemConfig';
 import { useAuth } from '../contexts/AuthContext';
 import { getMyAvailability, updateMyAvailability } from '../api/availability';
+import { getSecureToken } from '../api/authStorage';
 
 // --- Reusable Components ---
 const Card = ({ children, className = '' }) => (
@@ -256,10 +257,9 @@ export default function HRPage() {
         try {
             setAvailabilityLoading(true);
             // Use the tutor's ID to fetch their availability (returns system default if no custom)
+            const token = getSecureToken();
             const response = await fetch(`/api/availability/tutor/${tutor._id}`, {
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
-                },
+                headers: token ? { Authorization: `Bearer ${token}` } : {},
             });
             if (response.ok) {
                 const data = await response.json();

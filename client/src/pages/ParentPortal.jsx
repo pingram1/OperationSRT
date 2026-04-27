@@ -221,8 +221,7 @@ export default function ParentPortal() {
     // --- Tab Content Components ---
 
     const OverviewTab = ({ child }) => {
-        if (!child) return <div className="text-center py-8 text-gray-500">No child selected.</div>;
-        const childId = child._id || child.id;
+        const childId = child?._id || child?.id;
         const childBookingsForTab = useMemo(() => {
             if (!child || !bookings.length) return [];
             const childIdStr = String(childId);
@@ -255,8 +254,8 @@ export default function ParentPortal() {
                     return studentId && String(studentId) === childIdStr;
                 }
                 return false;
-            }).filter(b => 
-                b.customerPayment?.status === 'requested' && 
+            }).filter(b =>
+                b.customerPayment?.status === 'requested' &&
                 b.status === 'scheduled'
             ).sort((a, b) => new Date(a.sessionDate) - new Date(b.sessionDate));
         }, [child, bookings, childId]);
@@ -264,6 +263,8 @@ export default function ParentPortal() {
         const handlePayForBooking = (booking) => {
             navigate(`/appointments?bookingId=${booking._id || booking.id}&payForBooking=true`);
         };
+
+        if (!child) return <div className="text-center py-8 text-gray-500">No child selected.</div>;
 
         return (
         <div className="space-y-6">
@@ -479,8 +480,7 @@ export default function ParentPortal() {
     };
 
     const ScheduleTab = ({ child }) => {
-        if (!child) return <div className="text-center py-8 text-gray-500">No child selected.</div>;
-        const childId = child._id || child.id;
+        const childId = child?._id || child?.id;
         const allChildBookings = useMemo(() => {
             if (!child || !bookings.length) return [];
             const childIdStr = String(childId);
@@ -498,12 +498,14 @@ export default function ParentPortal() {
             }).sort((a, b) => new Date(a.sessionDate) - new Date(b.sessionDate));
         }, [child, bookings, childId]);
 
-        const upcomingBookings = allChildBookings.filter(b => 
+        const upcomingBookings = allChildBookings.filter(b =>
             b.status === 'scheduled' && new Date(b.sessionDate) > new Date()
         );
-        const pastBookings = allChildBookings.filter(b => 
+        const pastBookings = allChildBookings.filter(b =>
             b.status === 'completed' || new Date(b.sessionDate) < new Date()
         );
+
+        if (!child) return <div className="text-center py-8 text-gray-500">No child selected.</div>;
 
         return (
         <div className="space-y-6">
@@ -644,11 +646,10 @@ export default function ParentPortal() {
     };
 
     const AchievementsTab = ({ child }) => {
-        if (!child) return <div className="text-center py-8 text-gray-500">No child selected.</div>;
-        const childId = child._id || child.id;
+        const childId = child?._id || child?.id;
         const childAchievements = useMemo(() => {
             if (!achievements || !achievements.length) return [];
-            return achievements.filter(a => 
+            return achievements.filter(a =>
                 (a.student?._id || a.student?.id || a.student) === childId
             ).sort((a, b) => new Date(b.createdAt || b.earnedAt) - new Date(a.createdAt || a.earnedAt));
         }, [achievements, childId]);
@@ -665,6 +666,8 @@ export default function ParentPortal() {
             });
             return grouped;
         }, [childAchievements]);
+
+        if (!child) return <div className="text-center py-8 text-gray-500">No child selected.</div>;
 
         return (
             <div className="space-y-6">
@@ -704,8 +707,7 @@ export default function ParentPortal() {
     };
 
     const CommunicationTab = ({ child }) => {
-        if (!child) return <div className="text-center py-8 text-gray-500">No child selected.</div>;
-        const childId = child._id || child.id;
+        const childId = child?._id || child?.id;
         const childBookings = useMemo(() => {
             if (!child || !bookings.length) return [];
             const childIdStr = String(childId);
@@ -721,6 +723,8 @@ export default function ParentPortal() {
                 return false;
             });
         }, [child, bookings, childId]);
+
+        if (!child) return <div className="text-center py-8 text-gray-500">No child selected.</div>;
 
         return (
             <div className="space-y-6">
@@ -741,15 +745,16 @@ export default function ParentPortal() {
     };
 
     const SessionsTab = ({ child }) => {
-        if (!child) return <div className="text-center py-8 text-gray-500">No child selected.</div>;
-        const childId = child._id || child.id;
+        const childId = child?._id || child?.id;
         const completedBookings = useMemo(() => {
             if (!child || !bookings.length) return [];
-            return bookings.filter(b => 
+            return bookings.filter(b =>
                 b.student && ((b.student._id || b.student.id) === childId || (typeof b.student === 'string' && b.student === childId))
             ).filter(b => b.status === 'completed')
             .sort((a, b) => new Date(b.sessionDate) - new Date(a.sessionDate));
         }, [child, bookings, childId]);
+
+        if (!child) return <div className="text-center py-8 text-gray-500">No child selected.</div>;
 
         return (
             <div className="space-y-6">
@@ -813,11 +818,10 @@ export default function ParentPortal() {
     };
 
     const BillingTab = ({ child }) => {
-        if (!child) return <div className="text-center py-8 text-gray-500">No child selected.</div>;
-        const childId = child._id || child.id;
+        const childId = child?._id || child?.id;
         const [transactions, setTransactions] = useState([]);
         const [loadingTransactions, setLoadingTransactions] = useState(false);
-        
+
         // Fetch transactions for this child
         useEffect(() => {
             const fetchTransactions = async () => {
@@ -835,7 +839,7 @@ export default function ParentPortal() {
             };
             fetchTransactions();
         }, [childId]);
-        
+
         // Get bookings with payment requests for this child
         const paymentRequests = useMemo(() => {
             if (!child || !bookings.length) return [];
@@ -850,11 +854,13 @@ export default function ParentPortal() {
                     return studentId && String(studentId) === childIdStr;
                 }
                 return false;
-            }).filter(b => 
-                b.customerPayment?.status === 'requested' && 
+            }).filter(b =>
+                b.customerPayment?.status === 'requested' &&
                 b.status === 'scheduled'
             ).sort((a, b) => new Date(a.sessionDate) - new Date(b.sessionDate));
         }, [child, bookings, childId]);
+
+        if (!child) return <div className="text-center py-8 text-gray-500">No child selected.</div>;
 
         const handlePayForBooking = (booking) => {
             // Navigate to payment page with booking ID
