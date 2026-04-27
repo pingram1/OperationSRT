@@ -5,9 +5,13 @@
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
+    "lint": "eslint . --max-warnings 25",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage"
+  },
+  "engines": {
+    "node": ">=20.0.0 <21.0.0"
   },
   "keywords": [],
   "author": "",
@@ -36,7 +40,10 @@
     "winston": "^3.18.3"
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.4",
     "@vitest/coverage-v8": "^2.1.0",
+    "eslint": "^9.39.4",
+    "globals": "^15.15.0",
     "mock-require": "^3.0.3",
     "nodemon": "^3.1.10",
     "vitest": "^2.1.0"

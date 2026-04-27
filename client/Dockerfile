@@ -28,4 +28,10 @@ COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 EXPOSE 80
 
+# Probe nginx serving the SPA itself, NOT the upstream API. This isolates
+# the web container's liveness from the api container's state — if the
+# API is briefly down the SPA is still healthy and can render an error.
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+    CMD wget --quiet --spider --tries=1 http://127.0.0.1/ || exit 1
+
 CMD ["nginx", "-g", "daemon off;"]

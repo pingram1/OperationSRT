@@ -4,9 +4,23 @@ on:
   pull_request:
     branches:
       - main
+  push:
+    branches:
+      - main
+
+# Cancel superseded runs for the same ref so PRs that get pushed-to twice
+# don't double-charge minutes.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# Least-privilege default token. Individual jobs can opt-in to more.
+permissions:
+  contents: read
 
 jobs:
-  server-test:
+  server:
+    name: server (lint + test + coverage)
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -20,13 +34,34 @@ jobs:
           cache: npm
           cache-dependency-path: server/package-lock.json
 
-      - name: Install dependencies
+      # `npm ci` enforces an exact lockfile match with package.json; this
+      # is the same install we want CI to do every run.
+      - name: Install dependencies (lockfile-strict)
         run: npm ci
 
-      - name: Run tests
-        run: npm test
+      - name: Lint
+        run: npm run lint
 
-  client-lint-test:
+      - name: Tests with coverage (threshold-gated)
+        run: npm run test:coverage
+
+      # Surface known vulnerabilities without failing the build, so an
+      # upstream advisory doesn't block unrelated PRs but also doesn't
+      # disappear into the void.
+      - name: npm audit (advisory only)
+        if: always()
+        run: npm audit --audit-level=high --omit=dev || true
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: server-coverage
+          path: server/coverage
+          retention-days: 14
+
+  client:
+    name: client (lint + test + build)
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -40,11 +75,20 @@ jobs:
           cache: npm
           cache-dependency-path: client/package-lock.json
 
-      - name: Install dependencies
+      - name: Install dependencies (lockfile-strict)
         run: npm ci
 
       - name: Lint
         run: npm run lint
 
-      - name: Test
+      - name: Tests
         run: npm test
+
+      # Catches regressions that lint+tests miss (broken imports, env-var
+      # plumbing, manualChunks misconfig, etc.).
+      - name: Production build smoke
+        run: npm run build
+
+      - name: npm audit (advisory only)
+        if: always()
+        run: npm audit --audit-level=high --omit=dev || true

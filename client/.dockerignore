@@ -2,7 +2,22 @@ node_modules
 npm-debug.log
 .git
 .gitignore
+.github
+
+# Build artifacts produced inside the image; never copied from host.
 dist
+coverage
+
+# Test files: build skips them anyway, but keeping them out makes the
+# build context smaller and avoids leaking test fixtures into images.
+**/*.test.{js,jsx,ts,tsx}
+src/test
+.eslintrc.cjs
+
+# Local secrets.
 .env
 .env.*
+
+# Docs.
 README.md
+*.md
