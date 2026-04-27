@@ -3,9 +3,13 @@ import { Mic, MicOff, Video, VideoOff, PhoneOff, MessageSquare, Users, FileText,
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { getUserBookings, getBookingById } from '../api/bookings.js';
 import { useSearchParams, Link } from 'react-router-dom';
+import SharedCard from '../components/common/Card.jsx';
 
 // --- Reusable Components ---
-const Card = ({ children, className = '' }) => (<div className={`bg-white rounded-xl shadow-md p-4 sm:p-6 ${className}`}>{children}</div>);
+// Classroom panels use responsive padding so chat/video stay readable on phones.
+const Card = ({ children, className = '', ...rest }) => (
+    <SharedCard padding="responsive" className={className} {...rest}>{children}</SharedCard>
+);
 
 // ChatTab Component - extracted to maintain stable identity
 const ChatTabComponent = React.memo(({ messages, chatInput, onInputChange, onSendMessage, inputRef }) => (

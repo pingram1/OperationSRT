@@ -18,15 +18,15 @@ import { getAllChallenges } from '../api/challenges.js';
 import { getTutorDashboardStats, getTutorStudents } from '../api/tutors.js';
 import Modal from '../components/common/Modal.jsx';
 import Skeleton from '../components/common/Skeleton.jsx';
+import SharedCard from '../components/common/Card.jsx';
 import { isLearnToEarnEligibleFromUser } from '../utils/learnToEarn.js';
 import { useToast } from '../components/common/Toast.jsx';
 import { useConfirm } from '../components/common/ConfirmDialog.jsx';
 
 // --- Reusable Components ---
-const Card = ({ children, className = '' }) => (
-    <div className={`bg-white rounded-xl shadow-md p-6 transition-all duration-200 hover:shadow-lg ${className}`}>
-        {children}
-    </div>
+// Dashboard cards opt into the subtle hover treatment for the whole page.
+const Card = ({ children, className = '', ...rest }) => (
+    <SharedCard hover="subtle" className={className} {...rest}>{children}</SharedCard>
 );
 
 const CardHeader = ({ icon: Icon, title, rightContent = null, onClick = null }) => (

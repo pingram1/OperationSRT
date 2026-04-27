@@ -26,10 +26,9 @@ import { getUserProfile } from '../api/users.js';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { findTutorMatches } from '../api/matching.js';
 import { useToast } from '../components/common/Toast.jsx';
+import Card from '../components/common/Card.jsx';
 
 // --- Reusable Components ---
-const Card = ({ children, className = '' }) => (<div className={`bg-white rounded-xl shadow-md p-6 ${className}`}>{children}</div>);
-
 // --- Sub-components for each booking step (except the imported ones) ---
 
 const SubjectAndGoalsStep = ({ onNext, onBack, onFormChange, bookingDetails, subjects = [] }) => {

@@ -6,10 +6,7 @@ import { getAllUsers } from '../api/users';
 import { getTutors } from '../api/users';
 import { findTutorMatches, getCompatibilityAnalysis } from '../api/matching';
 import LearningStyleVisualizer from '../components/matching/LearningStyleVisualizer';
-
-const Card = ({ children, className = '' }) => (
-    <div className={`bg-white rounded-xl shadow-md p-6 ${className}`}>{children}</div>
-);
+import Card from '../components/common/Card.jsx';
 
 export default function MatchAnalysisPage() {
     const { user } = useAuth();

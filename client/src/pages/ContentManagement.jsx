@@ -1,32 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { Edit3, Trash2, PlusCircle, BookOpen, Trophy, AlertCircle, X, Plus, Minus, FileText, File } from 'lucide-react';
+import { Edit3, Trash2, PlusCircle, BookOpen, Trophy, AlertCircle, Plus, Minus, FileText, File } from 'lucide-react';
 import { getAllChallenges, createChallenge, updateChallenge, deleteChallenge } from '../api/challenges';
 import { getAllResourcesAdmin, createResource, createResourceWithDocument, updateResource, deleteResource, generateMLAPDF } from '../api/resources';
 import { getSubjects } from '../api/systemConfig';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../components/common/Toast.jsx';
 import { useConfirm } from '../components/common/ConfirmDialog.jsx';
-
-// --- Reusable Components ---
-const Card = ({ children, className = '' }) => (
-    <div className={`bg-white rounded-xl shadow-md p-6 ${className}`}>{children}</div>
-);
-
-const Button = ({ children, variant = 'primary', Icon, isLoading = false, className = '', ...rest }) => {
-    const baseStyles = 'flex items-center justify-center px-4 py-2 rounded-lg font-semibold transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2';
-    const variantStyles = {
-        primary: 'bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500',
-        secondary: 'bg-gray-200 text-gray-800 hover:bg-gray-300 focus:ring-gray-400',
-        danger: 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500',
-    };
-    const disabledStyles = 'disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed';
-    return (
-        <button className={`${baseStyles} ${variantStyles[variant]} ${disabledStyles} ${className}`} disabled={isLoading} {...rest}>
-            {Icon && <Icon className="w-5 h-5 mr-2 -ml-1" />}
-            {children}
-        </button>
-    );
-};
+import Card from '../components/common/Card.jsx';
+import Button from '../components/common/Button.jsx';
+import Dialog from '../components/common/Dialog.jsx';
 
 // --- Main Content Management Page Component ---
 export default function ContentManagementPage() {
@@ -561,23 +543,13 @@ const ResourceModal = ({ isOpen, onClose, onSave, resource, error, isSaving, onG
         onSave(formData, documentFile);
     };
 
-    if (!isOpen) return null;
-
     return (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 overflow-y-auto">
-            <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-                <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-2xl font-bold">
-                        {resource?._id ? 'Edit Resource' : 'Create New Resource'}
-                    </h2>
-                    <button
-                        onClick={onClose}
-                        className="p-2 text-gray-500 hover:text-gray-700"
-                    >
-                        <X className="w-6 h-6" />
-                    </button>
-                </div>
-
+        <Dialog
+            isOpen={isOpen}
+            onClose={onClose}
+            size="lg"
+            title={resource?._id ? 'Edit Resource' : 'Create New Resource'}
+        >
                 {error && (
                     <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-lg text-sm flex items-center">
                         <AlertCircle className="w-5 h-5 mr-2" />
@@ -760,8 +732,7 @@ const ResourceModal = ({ isOpen, onClose, onSave, resource, error, isSaving, onG
                         </Button>
                     </div>
                 </form>
-            </Card>
-        </div>
+        </Dialog>
     );
 };
 
@@ -1145,23 +1116,13 @@ const ChallengeModal = ({ isOpen, onClose, onSave, challenge, error, isSaving, s
         onSave(cleanedData);
     };
 
-    if (!isOpen) return null;
-
     return (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 overflow-y-auto">
-            <Card className="w-full max-w-4xl max-h-[90vh] overflow-y-auto">
-                <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-2xl font-bold">
-                        {challenge?._id ? 'Edit Challenge' : 'Create New Challenge'}
-                    </h2>
-                    <button
-                        onClick={onClose}
-                        className="p-2 text-gray-500 hover:text-gray-700"
-                    >
-                        <X className="w-6 h-6" />
-                    </button>
-                </div>
-
+        <Dialog
+            isOpen={isOpen}
+            onClose={onClose}
+            size="xl"
+            title={challenge?._id ? 'Edit Challenge' : 'Create New Challenge'}
+        >
                 {error && (
                     <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-lg text-sm flex items-center">
                         <AlertCircle className="w-5 h-5 mr-2" />
@@ -1728,7 +1689,6 @@ const ChallengeModal = ({ isOpen, onClose, onSave, challenge, error, isSaving, s
                         </Button>
                     </div>
                 </form>
-            </Card>
-        </div>
+        </Dialog>
     );
 };

@@ -1,19 +1,16 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { UserPlus, Users, DollarSign, Search, Check, X, FileText, AlertCircle, CheckCircle, Plus, Copy, Mail, Clock } from 'lucide-react';
+import { UserPlus, Users, DollarSign, Search, Check, FileText, AlertCircle, CheckCircle, Plus, Copy, Mail, Clock } from 'lucide-react';
 import { getPendingApplications, getActiveTutors, getTutorStats, approveTutor, denyTutor, createTutor, updateTutor } from '../api/tutors';
 import { getSystemConfig } from '../api/systemConfig';
 import { useAuth } from '../contexts/AuthContext';
 import { getMyAvailability, updateMyAvailability } from '../api/availability';
 import { getSecureToken } from '../api/authStorage';
 import { useConfirm } from '../components/common/ConfirmDialog.jsx';
+import Card from '../components/common/Card.jsx';
+import Button from '../components/common/Button.jsx';
+import Dialog from '../components/common/Dialog.jsx';
 
 // --- Reusable Components ---
-const Card = ({ children, className = '' }) => (
-    <div className={`bg-white rounded-xl shadow-md p-6 ${className}`}>
-        {children}
-    </div>
-);
-
 const StatCard = ({ title, value, icon: Icon, iconBgColor = 'bg-blue-100', iconColor = 'text-blue-600' }) => (
     <Card className="flex items-center">
         <div className={`p-3 ${iconBgColor} rounded-lg mr-4`}>
@@ -25,23 +22,6 @@ const StatCard = ({ title, value, icon: Icon, iconBgColor = 'bg-blue-100', iconC
         </div>
     </Card>
 );
-
-const Button = ({ children, variant = 'primary', Icon, isLoading = false, className = '', ...rest }) => {
-    const baseStyles = 'flex items-center justify-center px-4 py-2 rounded-lg font-semibold transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2';
-    const variantStyles = {
-        primary: 'bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500',
-        secondary: 'bg-gray-200 text-gray-800 hover:bg-gray-300 focus:ring-gray-400',
-        success: 'bg-green-500 text-white hover:bg-green-600 focus:ring-green-400',
-        danger: 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500'
-    };
-    const disabledStyles = 'disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed';
-    return (
-        <button className={`${baseStyles} ${variantStyles[variant]} ${disabledStyles} ${className}`} disabled={isLoading} {...rest}>
-            {Icon && <Icon className="w-5 h-5 mr-2 -ml-1" />}
-            {children}
-        </button>
-    );
-};
 
 // --- Tutor Management Page Component ---
 export default function HRPage() {
@@ -731,18 +711,12 @@ export default function HRPage() {
 
             {/* Add Tutor Modal */}
             {showAddTutorModal && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-xl shadow-2xl p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-                        <div className="flex justify-between items-center mb-6">
-                            <h2 className="text-2xl font-bold text-gray-800">Add New Tutor</h2>
-                            <button
-                                onClick={() => setShowAddTutorModal(false)}
-                                className="text-gray-400 hover:text-gray-600 transition-colors"
-                            >
-                                <X className="w-6 h-6" />
-                            </button>
-                        </div>
-
+                <Dialog
+                    isOpen
+                    onClose={() => setShowAddTutorModal(false)}
+                    size="lg"
+                    title="Add New Tutor"
+                >
                         <form onSubmit={handleCreateTutor} className="space-y-6">
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -909,32 +883,25 @@ export default function HRPage() {
                                 </Button>
                             </div>
                         </form>
-                    </div>
-                </div>
+                </Dialog>
             )}
 
             {/* Edit Tutor Modal */}
             {showEditModal && editingTutor && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-xl shadow-2xl p-8 max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-                        <div className="flex justify-between items-center mb-6">
-                            <h2 className="text-2xl font-bold text-gray-800">Edit Tutor: {editingTutor.name}</h2>
-                            <button
-                                onClick={() => {
-                                    setShowEditModal(false);
-                                    setEditingTutor(null);
-                                    setTutorAvailability({
-                                        weeklySchedule: [],
-                                        timezone: 'America/New_York',
-                                        hasCustomAvailability: false,
-                                    });
-                                }}
-                                className="text-gray-400 hover:text-gray-600 transition-colors"
-                            >
-                                <X className="w-6 h-6" />
-                            </button>
-                        </div>
-
+                <Dialog
+                    isOpen
+                    onClose={() => {
+                        setShowEditModal(false);
+                        setEditingTutor(null);
+                        setTutorAvailability({
+                            weeklySchedule: [],
+                            timezone: 'America/New_York',
+                            hasCustomAvailability: false,
+                        });
+                    }}
+                    size="xl"
+                    title={`Edit Tutor: ${editingTutor.name}`}
+                >
                         <form onSubmit={handleUpdateTutor} className="space-y-6">
                             {/* Basic Information */}
                             <div className="border-b pb-4">
@@ -1165,24 +1132,17 @@ export default function HRPage() {
                                 </Button>
                             </div>
                         </form>
-                    </div>
-                </div>
+                </Dialog>
             )}
 
             {/* Password Display Modal */}
             {showPasswordModal && createdTutorPassword && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-xl shadow-2xl p-8 max-w-md w-full">
-                        <div className="flex justify-between items-center mb-6">
-                            <h2 className="text-2xl font-bold text-gray-800">Tutor Account Created</h2>
-                            <button
-                                onClick={handleClosePasswordModal}
-                                className="text-gray-400 hover:text-gray-600 transition-colors"
-                            >
-                                <X className="w-6 h-6" />
-                            </button>
-                        </div>
-
+                <Dialog
+                    isOpen
+                    onClose={handleClosePasswordModal}
+                    size="md"
+                    title="Tutor Account Created"
+                >
                         <div className="space-y-4">
                             <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
                                 <p className="text-sm text-blue-800 mb-2">
@@ -1227,8 +1187,7 @@ export default function HRPage() {
                                 </Button>
                             </div>
                         </div>
-                    </div>
-                </div>
+                </Dialog>
             )}
         </div>
     );

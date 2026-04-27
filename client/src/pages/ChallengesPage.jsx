@@ -5,9 +5,13 @@ import { Trophy, Zap, BrainCircuit, BookCopy, ChevronRight, Filter, Award, Trend
 import { getAllChallenges, getLeaderboard } from '../api/challenges.js';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { useToast } from '../components/common/Toast.jsx';
+import SharedCard from '../components/common/Card.jsx';
 
 // --- Reusable Components ---
-const Card = ({ children, className = '' }) => (<div className={`bg-white rounded-xl shadow-md p-6 transition-all hover:shadow-lg hover:scale-[1.02] ${className}`}>{children}</div>);
+// Challenge cards lift on hover to advertise interactivity.
+const Card = ({ children, className = '', ...rest }) => (
+    <SharedCard hover="lift" className={className} {...rest}>{children}</SharedCard>
+);
 const Pill = ({ text, className = '' }) => (<div className={`text-xs font-semibold px-3 py-1 rounded-full ${className}`}>{text}</div>);
 
 // --- Challenges Page Main Component ---

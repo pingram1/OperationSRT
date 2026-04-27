@@ -3,14 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { DollarSign, Download, CheckCircle, Clock, AlertCircle, ArrowLeft, CreditCard, X } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { getTransactions } from '../api/financials.js';
+import Card from '../components/common/Card.jsx';
 
 // Reusable Components
-const Card = ({ children, className = '' }) => (
-    <div className={`bg-white rounded-xl shadow-md p-6 ${className}`}>
-        {children}
-    </div>
-);
-
 const CardHeader = ({ icon: Icon, title, subtitle }) => (
     <div className="border-b pb-4 mb-6">
         <div className="flex items-center">

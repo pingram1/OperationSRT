@@ -8,6 +8,7 @@ import SessionSummary from '../components/parent/SessionSummary.jsx';
 import { AchievementBadges } from '../components/parent/AchievementBadge.jsx';
 import TutorCommunicationHub from '../components/parent/TutorCommunicationHub.jsx';
 import Button from '../components/common/Button.jsx';
+import Card from '../components/common/Card.jsx';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { getUserProfile } from '../api/users.js';
 import { getUserBookings } from '../api/bookings.js';
@@ -17,7 +18,6 @@ import { getAllMembershipPlans } from '../api/memberships.js';
 import { getTransactions } from '../api/financials.js';
 
 // --- Reusable Components (can be moved to their own files) ---
-const Card = ({ children, className = '' }) => (<div className={`bg-white rounded-xl shadow-md p-6 ${className}`}>{children}</div>);
 const CardHeader = ({ icon: Icon, title, rightContent = null }) => (
     <div className="flex justify-between items-center mb-4 border-b pb-3"><div className="flex items-center"><Icon className="w-6 h-6 mr-3 text-blue-500" /><h3 className="font-semibold text-lg text-gray-800">{title}</h3></div>{rightContent}</div>
 );

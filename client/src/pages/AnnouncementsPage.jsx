@@ -3,15 +3,8 @@ import { Megaphone, Users, Trash2, Send } from 'lucide-react';
 import { createAnnouncement, getAllAnnouncements, deleteAnnouncement } from '../api/announcements';
 import { useToast } from '../components/common/Toast.jsx';
 import { useConfirm } from '../components/common/ConfirmDialog.jsx';
-
-// --- Reusable Components (assuming they are in their own files) ---
-const Card = ({ children, className = '' }) => (<div className={`bg-white rounded-xl shadow-md p-6 ${className}`}>{children}</div>);
-const Button = ({ children, variant = 'primary', Icon, isLoading = false, className = '', ...rest }) => {
-    const baseStyles = 'flex items-center justify-center px-4 py-2 rounded-lg font-semibold transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2';
-    const variantStyles = { primary: 'bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500', secondary: 'bg-gray-200 text-gray-800 hover:bg-gray-300 focus:ring-gray-400' };
-    const disabledStyles = 'disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed';
-    return (<button className={`${baseStyles} ${variantStyles[variant]} ${disabledStyles} ${className}`} disabled={isLoading} {...rest}>{Icon && <Icon className="w-5 h-5 mr-2 -ml-1" />}{children}</button>);
-};
+import Card from '../components/common/Card.jsx';
+import Button from '../components/common/Button.jsx';
 
 // Helper function to convert UI audience format to API format
 const audienceToApiFormat = (audience) => {

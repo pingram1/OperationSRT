@@ -4,12 +4,9 @@ import { Brain, Eye, Ear, Hand, BookOpen, CheckCircle, ArrowRight, ArrowLeft, Al
 import { useAuth } from '../contexts/AuthContext';
 import { getSubjects } from '../api/systemConfig';
 import { getSecureToken } from '../api/authStorage';
+import Card from '../components/common/Card.jsx';
 
 // Reusable Components
-const Card = ({ children, className = '' }) => (
-    <div className={`bg-white rounded-xl shadow-md p-6 ${className}`}>{children}</div>
-);
-
 const ProgressTracker = ({ currentStep, totalSteps, steps }) => {
     return (
         <div className="flex items-center w-full mb-8">

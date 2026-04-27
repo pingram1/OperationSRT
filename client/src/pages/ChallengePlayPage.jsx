@@ -6,11 +6,8 @@ import { useAuth } from '../contexts/AuthContext.jsx';
 import { QuestionRenderer } from '../components/challenges/QuestionRenderer';
 import { normalizeChallengeQuestion } from '../utils/normalizeChallengeQuestion';
 import { isAnswerIncomplete } from '../utils/challengeAnswerGuards';
+import Card from '../components/common/Card.jsx';
 import { useToast } from '../components/common/Toast.jsx';
-
-const Card = ({ children, className = '' }) => (
-    <div className={`bg-white rounded-xl shadow-md p-6 ${className}`}>{children}</div>
-);
 
 export default function ChallengePlayPage() {
     const { id } = useParams();

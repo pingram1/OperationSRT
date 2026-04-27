@@ -5,14 +5,9 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { getTutorPayroll, checkCompliance } from '../api/payroll';
+import Card from '../components/common/Card.jsx';
 
 // --- Reusable Components ---
-const Card = ({ children, className = '' }) => (
-    <div className={`bg-white rounded-xl shadow-md p-6 ${className}`}>
-        {children}
-    </div>
-);
-
 const CardHeader = ({ icon: Icon, title, rightContent = null }) => (
     <div className="flex justify-between items-center mb-4">
         <div className="flex items-center">

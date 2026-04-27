@@ -3,9 +3,13 @@ import { BookCopy, Video, FileText, Search, ChevronRight, File } from 'lucide-re
 import { getAllResources } from '../api/resources';
 import { getSecureToken } from '../api/authStorage';
 import { useToast } from '../components/common/Toast.jsx';
+import SharedCard from '../components/common/Card.jsx';
 
 // --- Reusable Components ---
-const Card = ({ children, className = '' }) => (<div className={`bg-white rounded-xl shadow-md p-6 transition-all hover:shadow-lg hover:scale-[1.02] ${className}`}>{children}</div>);
+// Resource cards lift on hover to advertise interactivity.
+const Card = ({ children, className = '', ...rest }) => (
+    <SharedCard hover="lift" className={className} {...rest}>{children}</SharedCard>
+);
 
 // --- Resources Page Main Component ---
 export default function ResourcesPage() {

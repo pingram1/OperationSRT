@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { X, FileText, Save, Loader } from 'lucide-react';
+import { FileText, Save, Loader } from 'lucide-react';
 import { updateSessionNotes, getSessionNotes } from '../../api/bookings.js';
+import Dialog from '../common/Dialog.jsx';
 
 /**
  * Modal component for tutors to add/edit session notes
@@ -98,26 +99,19 @@ export default function SessionNotesModal({ booking, isOpen, onClose, onSave }) 
         }
     };
 
-    if (!isOpen) return null;
-
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-                <div className="flex justify-between items-center p-6 border-b sticky top-0 bg-white z-10">
-                    <h2 className="text-xl font-semibold text-gray-800 flex items-center">
-                        <FileText className="w-5 h-5 mr-2 text-blue-500" />
-                        Session Notes
-                    </h2>
-                    <button
-                        onClick={onClose}
-                        className="text-gray-400 hover:text-gray-600 transition-colors"
-                        aria-label="Close"
-                    >
-                        <X className="w-6 h-6" />
-                    </button>
-                </div>
-
-                <form onSubmit={handleSubmit} className="p-6">
+        <Dialog
+            isOpen={isOpen}
+            onClose={onClose}
+            size="xl"
+            title={
+                <span className="flex items-center text-xl font-semibold text-gray-800">
+                    <FileText className="w-5 h-5 mr-2 text-blue-500" aria-hidden="true" />
+                    Session Notes
+                </span>
+            }
+        >
+            <form onSubmit={handleSubmit}>
                     {error && (
                         <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
                             {error}
@@ -269,8 +263,7 @@ export default function SessionNotesModal({ booking, isOpen, onClose, onSave }) 
                         </button>
                     </div>
                 </form>
-            </div>
-        </div>
+        </Dialog>
     );
 }
 

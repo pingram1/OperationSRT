@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Sliders, Bell, AlertTriangle, List, Plus, X, Clock, AlertCircle } from 'lucide-react';
 import { getSystemConfig, updateSystemConfig } from '../api/systemConfig';
+import Card from '../components/common/Card.jsx';
+import Button from '../components/common/Button.jsx';
 
 // --- Reusable Components (can be moved to common folder) ---
-const Card = ({ children, className = '' }) => (<div className={`bg-white rounded-xl shadow-md p-6 ${className}`}>{children}</div>);
 const CardHeader = ({ icon: Icon, title, subtitle }) => (
     <div className="border-b pb-4 mb-6">
         <div className="flex items-center">
@@ -15,12 +16,6 @@ const CardHeader = ({ icon: Icon, title, subtitle }) => (
         </div>
     </div>
 );
-const Button = ({ children, variant = 'primary', Icon, isLoading = false, className = '', ...rest }) => {
-    const baseStyles = 'flex items-center justify-center px-4 py-2 rounded-lg font-semibold transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2';
-    const variantStyles = { primary: 'bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500', secondary: 'bg-gray-200 text-gray-800 hover:bg-gray-300 focus:ring-gray-400', danger: 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500' };
-    const disabledStyles = 'disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed';
-    return (<button className={`${baseStyles} ${variantStyles[variant]} ${disabledStyles} ${className}`} disabled={isLoading} {...rest}>{Icon && <Icon className="w-5 h-5 mr-2 -ml-1" />}{children}</button>);
-};
 const Toggle = ({ enabled, onToggle }) => (
     <button onClick={onToggle} className={`relative inline-flex items-center h-6 rounded-full w-11 transition-colors ${enabled ? 'bg-blue-600' : 'bg-gray-300'}`}>
         <span className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${enabled ? 'translate-x-6' : 'translate-x-1'}`} />

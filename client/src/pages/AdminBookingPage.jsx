@@ -1,36 +1,19 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Calendar, User, Plus, Edit3, Trash2, Search, AlertCircle, CheckCircle, X, Filter, Clock, DollarSign, UserPlus } from 'lucide-react';
+import { Calendar, User, Plus, Edit3, Trash2, Search, AlertCircle, CheckCircle, Filter, Clock, DollarSign, UserPlus } from 'lucide-react';
 import { getAllUsers } from '../api/users';
 import { getTutors } from '../api/users';
 import { createBooking, getAllBookings, updateBooking, deleteBooking, markBookingAsPaid, markBookingsAsPaidBatch, markBookingAsNoShow } from '../api/bookings';
 import { getSubjects } from '../api/systemConfig';
 import { useAuth } from '../contexts/AuthContext';
 import { getCompatibilityAnalysis } from '../api/matching';
+import Card from '../components/common/Card.jsx';
+import Button from '../components/common/Button.jsx';
+import Dialog from '../components/common/Dialog.jsx';
 import LearningStyleVisualizer from '../components/matching/LearningStyleVisualizer';
 import { useToast } from '../components/common/Toast.jsx';
 import { useConfirm } from '../components/common/ConfirmDialog.jsx';
 
 // --- Reusable Components ---
-const Card = ({ children, className = '' }) => (
-    <div className={`bg-white rounded-xl shadow-md p-6 ${className}`}>{children}</div>
-);
-
-const Button = ({ children, variant = 'primary', Icon, isLoading = false, className = '', ...rest }) => {
-    const baseStyles = 'flex items-center justify-center px-4 py-2 rounded-lg font-semibold transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2';
-    const variantStyles = {
-        primary: 'bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500',
-        secondary: 'bg-gray-200 text-gray-800 hover:bg-gray-300 focus:ring-gray-400',
-        danger: 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500',
-    };
-    const disabledStyles = 'disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed';
-    return (
-        <button className={`${baseStyles} ${variantStyles[variant]} ${disabledStyles} ${className}`} disabled={isLoading} {...rest}>
-            {Icon && <Icon className="w-5 h-5 mr-2 -ml-1" />}
-            {children}
-        </button>
-    );
-};
-
 export default function AdminBookingPage() {
     const { user, isLoading: authLoading } = useAuth();
     const toast = useToast();
@@ -1329,23 +1312,17 @@ export default function AdminBookingPage() {
 
             {/* Assign Tutor Modal */}
             {showAssignTutorModal && assigningTutorBooking && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-xl shadow-2xl p-8 max-w-md w-full">
-                        <div className="flex justify-between items-center mb-6">
-                            <h2 className="text-2xl font-bold text-gray-800">Assign Tutor</h2>
-                            <button
-                                onClick={() => {
-                                    setShowAssignTutorModal(false);
-                                    setAssigningTutorBooking(null);
-                                    setSelectedTutorForAssignment('');
-                                }}
-                                className="text-gray-400 hover:text-gray-600 transition-colors"
-                            >
-                                <X className="w-6 h-6" />
-                            </button>
-                        </div>
-
-                        <div className="space-y-4">
+                <Dialog
+                    isOpen
+                    onClose={() => {
+                        setShowAssignTutorModal(false);
+                        setAssigningTutorBooking(null);
+                        setSelectedTutorForAssignment('');
+                    }}
+                    size="md"
+                    title="Assign Tutor"
+                >
+                    <div className="space-y-4">
                             <div>
                                 <p className="text-sm text-gray-600 mb-2">
                                     <strong>Student:</strong> {assigningTutorBooking.student?.name || 'N/A'}
@@ -1419,27 +1396,20 @@ export default function AdminBookingPage() {
                                 </button>
                             </div>
                         </div>
-                    </div>
-                </div>
+                </Dialog>
             )}
 
             {/* Match Details Modal */}
             {showMatchModal && selectedMatchDetails && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-xl shadow-2xl p-8 max-w-6xl w-full max-h-[90vh] overflow-y-auto">
-                        <div className="flex justify-between items-center mb-6">
-                            <h2 className="text-2xl font-bold text-gray-800">Match Compatibility Analysis</h2>
-                            <button
-                                onClick={() => {
-                                    setShowMatchModal(false);
-                                    setSelectedMatchDetails(null);
-                                }}
-                                className="text-gray-400 hover:text-gray-600 transition-colors"
-                            >
-                                <X className="w-6 h-6" />
-                            </button>
-                        </div>
-
+                <Dialog
+                    isOpen
+                    onClose={() => {
+                        setShowMatchModal(false);
+                        setSelectedMatchDetails(null);
+                    }}
+                    size="xl"
+                    title="Match Compatibility Analysis"
+                >
                         {selectedMatchDetails.analysis && (
                             <LearningStyleVisualizer
                                 student={selectedMatchDetails.booking.student}
@@ -1460,8 +1430,7 @@ export default function AdminBookingPage() {
                                 Close
                             </Button>
                         </div>
-                    </div>
-                </div>
+                </Dialog>
             )}
         </div>
     );

@@ -8,9 +8,9 @@ import {
     CheckCircle,
     KeyRound,
     Users,
-    X,
 } from 'lucide-react';
 import Button from '../components/common/Button.jsx';
+import Dialog from '../components/common/Dialog.jsx';
 import SchoolDetail from '../components/admin/SchoolDetail.jsx';
 import { createSchool, getAllSchools } from '../api/schools.js';
 
@@ -267,29 +267,19 @@ const CreateSchoolModal = ({ isOpen, onClose, onCreated }) => {
     };
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col">
-                <div className="flex items-start justify-between p-6 border-b">
-                    <div>
-                        <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
-                            <SchoolIcon className="w-5 h-5 text-blue-600" />
-                            New School
-                        </h2>
-                        <p className="text-sm text-gray-500 mt-1">
-                            Add a new school cohort. A registration code will be generated automatically.
-                        </p>
-                    </div>
-                    <button
-                        type="button"
-                        onClick={onClose}
-                        className="p-2 rounded-full hover:bg-gray-100 text-gray-500"
-                        aria-label="Close create school"
-                    >
-                        <X className="w-5 h-5" />
-                    </button>
-                </div>
-
-                <form onSubmit={handleSubmit} className="p-6 overflow-y-auto space-y-4">
+        <Dialog
+            isOpen
+            onClose={onClose}
+            size="lg"
+            title={
+                <span className="flex items-center gap-2 text-xl font-bold text-gray-800">
+                    <SchoolIcon className="w-5 h-5 text-blue-600" aria-hidden="true" />
+                    New School
+                </span>
+            }
+            description="Add a new school cohort. A registration code will be generated automatically."
+        >
+                <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                             School Name <span className="text-red-500">*</span>
@@ -403,7 +393,6 @@ const CreateSchoolModal = ({ isOpen, onClose, onCreated }) => {
                         </Button>
                     </div>
                 </form>
-            </div>
-        </div>
+        </Dialog>
     );
 };

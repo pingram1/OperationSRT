@@ -6,16 +6,12 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { getTutorBookings, acceptBooking, declineBooking, completeBooking } from '../api/bookings';
+import Card from '../components/common/Card.jsx';
+import Button from '../components/common/Button.jsx';
 import SessionNotesModal from '../components/tutor/SessionNotesModal';
 import { useConfirm } from '../components/common/ConfirmDialog.jsx';
 
 // --- Reusable Components ---
-const Card = ({ children, className = '' }) => (
-    <div className={`bg-white rounded-xl shadow-md p-6 ${className}`}>
-        {children}
-    </div>
-);
-
 const CardHeader = ({ icon: Icon, title, rightContent = null }) => (
     <div className="flex justify-between items-center mb-4">
         <div className="flex items-center">
@@ -25,31 +21,6 @@ const CardHeader = ({ icon: Icon, title, rightContent = null }) => (
         {rightContent}
     </div>
 );
-
-const Button = ({ children, variant = 'primary', Icon, onClick, isLoading = false, disabled = false, className = '' }) => {
-    const baseStyles = 'flex items-center justify-center px-4 py-2 rounded-lg font-semibold transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2';
-    const variantStyles = {
-        primary: 'bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500',
-        secondary: 'bg-gray-200 text-gray-800 hover:bg-gray-300 focus:ring-gray-400',
-        success: 'bg-green-500 text-white hover:bg-green-600 focus:ring-green-400',
-        danger: 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500',
-    };
-    const disabledStyles = 'disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed';
-    return (
-        <button 
-            className={`${baseStyles} ${variantStyles[variant]} ${disabledStyles} ${className}`} 
-            onClick={onClick}
-            disabled={isLoading || disabled}
-        >
-            {isLoading ? (
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-            ) : Icon && (
-                <Icon className="w-4 h-4 mr-2" />
-            )}
-            {children}
-        </button>
-    );
-};
 
 // --- Tutor Appointments Page Component ---
 export default function TutorAppointmentsPage() {

@@ -6,16 +6,11 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { getUserBookings } from '../api/bookings.js';
+import Card from '../components/common/Card.jsx';
 import { getUserProfile } from '../api/users.js';
 import SessionSummary from '../components/parent/SessionSummary.jsx';
 
 // --- Reusable Components ---
-const Card = ({ children, className = '' }) => (
-    <div className={`bg-white rounded-xl shadow-md p-6 ${className}`}>
-        {children}
-    </div>
-);
-
 const CardHeader = ({ icon: Icon, title, rightContent = null }) => (
     <div className="flex justify-between items-center mb-4 border-b pb-3">
         <div className="flex items-center">

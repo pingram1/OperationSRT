@@ -1,23 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, BellRing, Shield, CreditCard, Save, AlertTriangle, CheckCircle, AlertCircle as AlertIcon, X, Lock, Key, GraduationCap, BookOpen, Target, Eye, EyeOff, Clock, Users, Mail, UserPlus, UserCheck, UserX, Send, Brain, ArrowRight, Award, Upload, Trash2, Edit2, Image as ImageIcon, Building2 } from 'lucide-react';
+import { User, BellRing, Shield, CreditCard, Save, AlertTriangle, CheckCircle, AlertCircle as AlertIcon, Lock, Key, GraduationCap, BookOpen, Target, Eye, EyeOff, Clock, Users, Mail, UserPlus, UserCheck, UserX, Send, Brain, ArrowRight, Award, Upload, Trash2, Edit2, Image as ImageIcon, Building2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { updateUserProfile, updatePassword, enableTwoFactor, disableTwoFactor, sendParentLinkRequest, getParentLinkRequests, acceptParentLinkRequest, rejectParentLinkRequest, cancelParentLinkRequest, updateStudentPaymentPermission, uploadCertificationBadge, deleteCertificationBadge, updateCertificationBadge } from '../api/users.js';
 import { getSubjects } from '../api/systemConfig.js';
 import { getMyAvailability, updateMyAvailability } from '../api/availability.js';
 import { getSecureToken } from '../api/authStorage.js';
+import Card from '../components/common/Card.jsx';
+import Dialog from '../components/common/Dialog.jsx';
 import { getAllMembershipPlans, getCurrentMembership } from '../api/memberships.js';
 import { AuthenticatedImage } from '../components/common/AuthenticatedImage.jsx';
 import { useToast } from '../components/common/Toast.jsx';
 import { useConfirm } from '../components/common/ConfirmDialog.jsx';
 
 // Reusable Components
-const Card = ({ children, className = '' }) => (
-    <div className={`bg-white rounded-xl shadow-md p-6 ${className}`}>
-        {children}
-    </div>
-);
-
 const CardHeader = ({ icon: Icon, title, subtitle }) => (
     <div className="border-b pb-4 mb-6">
         <div className="flex items-center">
@@ -108,22 +104,19 @@ const PasswordChangeModal = ({ isOpen, onClose, onSave, error, isLoading }) => {
         }
     };
 
-    if (!isOpen) return null;
-
     return (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-xl shadow-2xl p-8 max-w-md w-full">
-                <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-2xl font-bold text-gray-800 flex items-center">
-                        <Lock className="w-6 h-6 mr-2 text-blue-500" />
-                        Change Password
-                    </h2>
-                    <button onClick={onClose} className="p-2 rounded-full hover:bg-gray-200">
-                        <X className="w-6 h-6" />
-                    </button>
-                </div>
-
-                <form onSubmit={handleSubmit} className="space-y-4">
+        <Dialog
+            isOpen={isOpen}
+            onClose={onClose}
+            size="md"
+            title={
+                <span className="flex items-center text-2xl font-bold text-gray-800">
+                    <Lock className="w-6 h-6 mr-2 text-blue-500" aria-hidden="true" />
+                    Change Password
+                </span>
+            }
+        >
+            <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                             Current Password
@@ -227,29 +220,25 @@ const PasswordChangeModal = ({ isOpen, onClose, onSave, error, isLoading }) => {
                         </button>
                     </div>
                 </form>
-            </div>
-        </div>
+        </Dialog>
     );
 };
 
 // Two-Factor Authentication Modal
 const TwoFactorModal = ({ isOpen, onClose, isEnabled, onEnable, onDisable, isLoading, error }) => {
-    if (!isOpen) return null;
-
     return (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-xl shadow-2xl p-8 max-w-md w-full">
-                <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-2xl font-bold text-gray-800 flex items-center">
-                        <Shield className="w-6 h-6 mr-2 text-blue-500" />
-                        Two-Factor Authentication
-                    </h2>
-                    <button onClick={onClose} className="p-2 rounded-full hover:bg-gray-200">
-                        <X className="w-6 h-6" />
-                    </button>
-                </div>
-
-                <div className="space-y-4">
+        <Dialog
+            isOpen={isOpen}
+            onClose={onClose}
+            size="md"
+            title={
+                <span className="flex items-center text-2xl font-bold text-gray-800">
+                    <Shield className="w-6 h-6 mr-2 text-blue-500" aria-hidden="true" />
+                    Two-Factor Authentication
+                </span>
+            }
+        >
+            <div className="space-y-4">
                     <p className="text-gray-600">
                         {isEnabled
                             ? 'Two-factor authentication is currently enabled. This adds an extra layer of security to your account.'
@@ -316,8 +305,7 @@ const TwoFactorModal = ({ isOpen, onClose, isEnabled, onEnable, onDisable, isLoa
                         )}
                     </div>
                 </div>
-            </div>
-        </div>
+        </Dialog>
     );
 };
 

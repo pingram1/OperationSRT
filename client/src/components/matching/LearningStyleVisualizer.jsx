@@ -1,14 +1,9 @@
 import React from 'react';
 import { Brain, Check, Users, Target } from 'lucide-react';
 import { getCompatibilityAnalysis } from '../../api/matching';
+import Card from '../common/Card.jsx';
 
 // Reusable Card component (matching your existing pattern)
-const Card = ({ children, className = '' }) => (
-    <div className={`bg-white rounded-xl shadow-md p-6 ${className}`}>
-        {children}
-    </div>
-);
-
 const CardHeader = ({ icon: Icon, title, subtitle }) => (
     <div className="border-b pb-4 mb-6">
         <div className="flex items-center">

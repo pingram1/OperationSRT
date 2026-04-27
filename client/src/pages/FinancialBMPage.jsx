@@ -1,9 +1,9 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { DollarSign, LineChart, Users, Repeat, Search, Download, FilePlus, AlertCircle } from 'lucide-react';
 import { getFinancialStats, getRevenueTrend, getTransactions } from '../api/financials';
+import Card from '../components/common/Card.jsx';
 
 // --- Reusable Components (can be moved to common folder) ---
-const Card = ({ children, className = '' }) => (<div className={`bg-white rounded-xl shadow-md p-6 ${className}`}>{children}</div>);
 const StatCard = ({ title, value, change, icon: Icon, iconBgColor = 'bg-blue-100', iconColor = 'text-blue-600', isLoading = false }) => (
     <Card className="flex items-center">
         <div className={`p-3 ${iconBgColor} rounded-lg mr-4`}>

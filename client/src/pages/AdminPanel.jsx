@@ -1,14 +1,15 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Users, UserCheck, Briefcase, Search, Edit, Trash2, X, UserPlus, UserMinus, Link2, Shield } from 'lucide-react';
+import { Users, UserCheck, Briefcase, Search, Edit, Trash2, UserPlus, UserMinus, Link2, Shield } from 'lucide-react';
 import { getAllUsers, updateUser, deleteUser, getStudents, linkChildToParent, unlinkChildFromParent } from '../api/users.js';
 import { getAllBookings } from '../api/bookings.js';
 import { registerEmployee } from '../api/auth.js';
 import { getSecureToken } from '../api/authStorage.js';
 import { useToast } from '../components/common/Toast.jsx';
 import { useConfirm } from '../components/common/ConfirmDialog.jsx';
+import Card from '../components/common/Card.jsx';
+import Dialog from '../components/common/Dialog.jsx';
 
 // --- Reusable Components ---
-const Card = ({ children, className = '' }) => (<div className={`bg-white rounded-xl shadow-md p-6 ${className}`}>{children}</div>);
 const StatCard = ({ title, value, icon: Icon }) => (
     <Card className="flex items-center">
         <div className="p-3 bg-blue-100 rounded-lg mr-4">
@@ -116,23 +117,14 @@ const CreateUserModal = ({ isOpen, onClose, onSave }) => {
         }
     };
 
-    if (!isOpen) return null;
-
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto">
-                <div className="flex justify-between items-center p-6 border-b">
-                    <h2 className="text-xl font-semibold text-gray-800">Create New User</h2>
-                    <button
-                        onClick={onClose}
-                        className="text-gray-400 hover:text-gray-600"
-                        aria-label="Close"
-                    >
-                        <X className="w-6 h-6" />
-                    </button>
-                </div>
-
-                <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        <Dialog
+            isOpen={isOpen}
+            onClose={onClose}
+            size="md"
+            title="Create New User"
+        >
+            <form onSubmit={handleSubmit} className="space-y-4">
                     {error && (
                         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
                             {error}
@@ -247,8 +239,7 @@ const CreateUserModal = ({ isOpen, onClose, onSave }) => {
                         </button>
                     </div>
                 </form>
-            </div>
-        </div>
+        </Dialog>
     );
 };
 
@@ -308,23 +299,14 @@ const EditUserModal = ({ user, isOpen, onClose, onSave }) => {
         }
     };
 
-    if (!isOpen) return null;
-
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto">
-                <div className="flex justify-between items-center p-6 border-b">
-                    <h2 className="text-xl font-semibold text-gray-800">Edit User</h2>
-                    <button
-                        onClick={onClose}
-                        className="text-gray-400 hover:text-gray-600"
-                        aria-label="Close"
-                    >
-                        <X className="w-6 h-6" />
-                    </button>
-                </div>
-
-                <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        <Dialog
+            isOpen={isOpen}
+            onClose={onClose}
+            size="md"
+            title="Edit User"
+        >
+            <form onSubmit={handleSubmit} className="space-y-4">
                     {error && (
                         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
                             {error}
@@ -410,8 +392,7 @@ const EditUserModal = ({ user, isOpen, onClose, onSave }) => {
                         </button>
                     </div>
                 </form>
-            </div>
-        </div>
+        </Dialog>
     );
 };
 
@@ -459,23 +440,14 @@ const LinkParentStudentModal = ({ parent, isOpen, onClose, onSave, allStudents =
         !linkedChildIds.includes(student._id || student.id)
     );
 
-    if (!isOpen) return null;
-
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
-                <div className="flex justify-between items-center p-6 border-b">
-                    <h2 className="text-xl font-semibold text-gray-800">Link Student to Parent</h2>
-                    <button
-                        onClick={onClose}
-                        className="text-gray-400 hover:text-gray-600"
-                        aria-label="Close"
-                    >
-                        <X className="w-6 h-6" />
-                    </button>
-                </div>
-
-                <div className="p-6 space-y-4">
+        <Dialog
+            isOpen={isOpen}
+            onClose={onClose}
+            size="md"
+            title="Link Student to Parent"
+        >
+            <div className="space-y-4">
                     {error && (
                         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
                             {error}
@@ -551,8 +523,7 @@ const LinkParentStudentModal = ({ parent, isOpen, onClose, onSave, allStudents =
                         </button>
                     </div>
                 </div>
-            </div>
-        </div>
+        </Dialog>
     );
 };
 
