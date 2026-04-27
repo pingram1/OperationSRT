@@ -40,6 +40,8 @@ router.get(
     '/admin/payout-requests',
     authMiddleware,
     authorize('admin', 'super_admin'),
+    scholarshipValidators.adminListPayoutRequests,
+    validateRequest,
     adminListPayoutRequests
 );
 router.put(

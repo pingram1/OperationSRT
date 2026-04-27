@@ -9,36 +9,15 @@ function getStripe() {
 }
 
 const Booking = require('../models/Booking');
-const User = require('../models/User');
-const Transaction = require('../models/Transaction');
 const ProcessedStripeEvent = require('../models/ProcessedStripeEvent');
-const { applyMembershipAfterPayment } = require('./membershipController');
 const logger = require('../utils/logger');
-
-/**
- * @param {import('mongoose').Document} booking
- * @param {import('stripe').Stripe.PaymentIntent} [paymentIntent]
- * @returns {Promise<void>}
- */
-const finalizeAfterSuccessfulCharge = async (booking, paymentIntent) => {
-    if (!booking || booking.paymentPurpose !== 'membership') {
-        return;
-    }
-    try {
-        const result = await applyMembershipAfterPayment(booking);
-        if (result.applied) {
-            logger.info('Membership activated after successful payment', {
-                bookingId: booking._id,
-                paymentIntentId: paymentIntent?.id,
-            });
-        }
-    } catch (e) {
-        logger.error('finalizeAfterSuccessfulCharge: membership application failed', {
-            bookingId: booking?._id,
-            message: e.message,
-        });
-    }
-};
+const { canUserAccessBooking } = require('../utils/bookingAccess');
+const {
+    recordPaymentTransaction,
+    markBookingPaid,
+    markBookingFailed,
+    finalizeAfterSuccessfulCharge,
+} = require('../services/paymentService');
 
 /**
  * @desc    Create a payment intent for a booking
@@ -59,24 +38,7 @@ const createPaymentIntent = async (req, res) => {
             return res.status(404).json({ message: 'Booking not found' });
         }
 
-        let isAuthorized =
-            booking.user._id.toString() === userId
-            || booking.student._id.toString() === userId
-            || req.user.role === 'admin'
-            || req.user.role === 'super_admin';
-
-        if (!isAuthorized && req.user.role === 'parent') {
-            const user = await User.findById(userId);
-            if (user && user.children && user.children.length > 0) {
-                const studentId = booking.student._id.toString();
-                const childrenIds = user.children.map((child) => (child._id || child).toString());
-                if (childrenIds.includes(studentId)) {
-                    isAuthorized = true;
-                }
-            }
-        }
-
-        if (!isAuthorized) {
+        if (!(await canUserAccessBooking(req, booking))) {
             return res.status(403).json({ message: 'Not authorized to pay for this booking' });
         }
 
@@ -177,7 +139,6 @@ const confirmPayment = async (req, res) => {
         }
 
         const { paymentIntentId, bookingId } = req.body;
-        const userId = req.user.id;
 
         const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
 
@@ -195,24 +156,7 @@ const confirmPayment = async (req, res) => {
             return res.status(404).json({ message: 'Booking not found' });
         }
 
-        let isAuthorized =
-            booking.user._id.toString() === userId
-            || booking.student._id.toString() === userId
-            || req.user.role === 'admin'
-            || req.user.role === 'super_admin';
-
-        if (!isAuthorized && req.user.role === 'parent') {
-            const user = await User.findById(userId);
-            if (user && user.children && user.children.length > 0) {
-                const studentId = booking.student._id.toString();
-                const childrenIds = user.children.map((child) => (child._id || child).toString());
-                if (childrenIds.includes(studentId)) {
-                    isAuthorized = true;
-                }
-            }
-        }
-
-        if (!isAuthorized) {
+        if (!(await canUserAccessBooking(req, booking))) {
             return res.status(403).json({ message: 'Not authorized to confirm payment for this booking' });
         }
 
@@ -227,31 +171,8 @@ const confirmPayment = async (req, res) => {
             return res.status(400).json({ message: 'Payment amount does not match the booking' });
         }
 
-        if (!booking.customerPayment) {
-            booking.customerPayment = {};
-        }
-        booking.customerPayment.status = 'paid';
-        booking.customerPayment.paidAt = new Date();
-        await booking.save();
-
-        const studentId = booking.student._id || booking.student;
-        const existingTransaction = await Transaction.findOne({ gatewayTransactionId: paymentIntentId });
-        if (!existingTransaction) {
-            const transaction = new Transaction({
-                transactionId: `txn_${Date.now()}_${bookingId}`,
-                user: studentId,
-                type: 'Payment',
-                amount: paidUsd,
-                currency: paymentIntent.currency.toUpperCase(),
-                status: 'Completed',
-                booking: bookingId,
-                paymentMethod: 'Credit Card',
-                gatewayTransactionId: paymentIntentId,
-                description: `Payment for ${booking.subject} tutoring session`,
-            });
-            await transaction.save();
-        }
-
+        await markBookingPaid(booking, paymentIntent);
+        await recordPaymentTransaction({ booking, paymentIntent, source: 'confirm' });
         await finalizeAfterSuccessfulCharge(booking, paymentIntent);
 
         logger.info('Payment confirmed for booking', { bookingId });
@@ -361,33 +282,10 @@ const handlePaymentSuccess = async (paymentIntent) => {
         return;
     }
 
-    if (!booking.customerPayment) {
-        booking.customerPayment = {};
-    }
-    booking.customerPayment.stripePaymentIntentId = paymentIntent.id;
-    booking.customerPayment.status = 'paid';
-    booking.customerPayment.paidAt = new Date();
-    await booking.save();
-
-    const existingTransaction = await Transaction.findOne({ gatewayTransactionId: paymentIntent.id });
-    if (!existingTransaction) {
-        const studentId = booking.student?._id || booking.student || booking.user;
-        const transaction = new Transaction({
-            transactionId: `txn_w_${Date.now()}_${bookingId}`,
-            user: studentId,
-            type: 'Payment',
-            amount: paidUsd,
-            currency: (paymentIntent.currency || 'usd').toUpperCase(),
-            status: 'Completed',
-            booking: bookingId,
-            paymentMethod: 'Credit Card',
-            gatewayTransactionId: paymentIntent.id,
-            description: `Payment for ${booking.subject} tutoring session`,
-        });
-        await transaction.save();
-    }
-
+    await markBookingPaid(booking, paymentIntent);
+    await recordPaymentTransaction({ booking, paymentIntent, source: 'webhook' });
     await finalizeAfterSuccessfulCharge(booking, paymentIntent);
+
     logger.info('handlePaymentSuccess completed', { bookingId });
 };
 
@@ -404,11 +302,7 @@ const handlePaymentFailure = async (paymentIntent) => {
         return;
     }
 
-    if (!booking.customerPayment) {
-        booking.customerPayment = {};
-    }
-    booking.customerPayment.status = 'failed';
-    await booking.save();
+    await markBookingFailed(booking);
 
     logger.info('handlePaymentFailure: updated booking', { bookingId });
 };
@@ -421,31 +315,13 @@ const handlePaymentFailure = async (paymentIntent) => {
 const getPaymentStatus = async (req, res) => {
     try {
         const { bookingId } = req.params;
-        const userId = req.user.id;
 
         const booking = await Booking.findById(bookingId);
         if (!booking) {
             return res.status(404).json({ message: 'Booking not found' });
         }
 
-        let isAuthorized =
-            booking.user.toString() === userId
-            || booking.student.toString() === userId
-            || req.user.role === 'admin'
-            || req.user.role === 'super_admin';
-
-        if (!isAuthorized && req.user.role === 'parent') {
-            const user = await User.findById(userId);
-            if (user && user.children && user.children.length > 0) {
-                const studentId = booking.student.toString();
-                const childrenIds = user.children.map((child) => (child._id || child).toString());
-                if (childrenIds.includes(studentId)) {
-                    isAuthorized = true;
-                }
-            }
-        }
-
-        if (!isAuthorized) {
+        if (!(await canUserAccessBooking(req, booking))) {
             return res.status(403).json({ message: 'Not authorized to view this payment status' });
         }
 

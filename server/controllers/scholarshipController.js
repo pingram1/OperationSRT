@@ -12,6 +12,7 @@ const {
     isStudentLearnToEarnEligible,
 } = require('../services/scholarshipService');
 const logger = require('../utils/logger');
+const { parsePagination, paginatedResponse } = require('../utils/pagination');
 
 /**
  * @route GET /api/scholarship/config
@@ -190,17 +191,35 @@ const adminVerifyParentConsent = async (req, res) => {
 /**
  * @route GET /api/scholarship/admin/payout-requests
  * @access Admin
+ *
+ * Canonical paginated endpoint. Query params:
+ *   - status: 'pending' (default) | 'approved' | 'rejected' | 'paid' | 'all'
+ *   - page:   1-indexed page number, default 1
+ *   - pageSize: 1..100, default 20
+ *
+ * Response shape (see utils/pagination.js):
+ *   { data, page, pageSize, total, totalPages, hasMore }
  */
 const adminListPayoutRequests = async (req, res) => {
     try {
         const status = req.query.status || 'pending';
         const q = status === 'all' ? {} : { status };
-        const list = await ScholarshipPayoutRequest.find(q)
-            .populate('user', 'name email dateOfBirth scholarshipPayout')
-            .sort({ createdAt: -1 })
-            .limit(200)
-            .lean();
-        res.json(list);
+        const { page, pageSize, skip, limit } = parsePagination(req, {
+            defaultPageSize: 20,
+            maxPageSize: 100,
+        });
+
+        const [items, total] = await Promise.all([
+            ScholarshipPayoutRequest.find(q)
+                .populate('user', 'name email dateOfBirth scholarshipPayout')
+                .sort({ createdAt: -1 })
+                .skip(skip)
+                .limit(limit)
+                .lean(),
+            ScholarshipPayoutRequest.countDocuments(q),
+        ]);
+
+        res.json(paginatedResponse(items, total, { page, pageSize }));
     } catch (err) {
         logger.error('[scholarship] adminListPayoutRequests', { error: err.message });
         res.status(500).json({ message: 'Server error' });

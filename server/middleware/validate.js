@@ -10,10 +10,18 @@ const { validationResult } = require('express-validator');
  *     validateRequest,
  *     loginUser);
  *
- * The 400 response shape is intentionally narrow — we expose only `path`
- * (the field that failed) and `msg` (a short, safe description). We do NOT
- * echo back the offending value, since some fields (passwords, tokens) are
- * sensitive even when invalid.
+ * Emits the canonical error envelope (see middleware/errorHandler.js):
+ *
+ *   {
+ *     success: false,
+ *     message: 'Invalid request',
+ *     code: 'INVALID_INPUT',
+ *     errors: [{ path, msg }, ...]
+ *   }
+ *
+ * We intentionally expose only `path` (the field that failed) and `msg`
+ * (a short, safe description). We do NOT echo back the offending value,
+ * since some fields (passwords, tokens) are sensitive even when invalid.
  */
 function validateRequest(req, res, next) {
     const result = validationResult(req);
@@ -23,7 +31,9 @@ function validateRequest(req, res, next) {
         msg: e.msg,
     }));
     return res.status(400).json({
+        success: false,
         message: 'Invalid request',
+        code: 'INVALID_INPUT',
         errors,
     });
 }

@@ -1,7 +1,7 @@
 /**
  * Validators for /api/scholarship/* endpoints.
  */
-const { body, param } = require('express-validator');
+const { body, param, query } = require('express-validator');
 
 const objectIdParam = (name) => param(name)
     .matches(/^[a-fA-F0-9]{24}$/)
@@ -32,9 +32,25 @@ const adminReject = [
         .withMessage('adminNotes must be ≤ 2000 characters'),
 ];
 
+const adminListPayoutRequests = [
+    query('status')
+        .optional()
+        .isIn(['pending', 'approved', 'rejected', 'paid', 'all'])
+        .withMessage('status must be pending | approved | rejected | paid | all'),
+    query('page')
+        .optional()
+        .isInt({ min: 1, max: 10000 })
+        .withMessage('page must be a positive integer'),
+    query('pageSize')
+        .optional()
+        .isInt({ min: 1, max: 100 })
+        .withMessage('pageSize must be between 1 and 100'),
+];
+
 module.exports = {
     postPayoutRequest,
     verifyConsent,
     requestIdParam,
     adminReject,
+    adminListPayoutRequests,
 };
