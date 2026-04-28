@@ -48,6 +48,9 @@ mock('bcryptjs', bcryptMock);
 mock('jsonwebtoken', jwtMock);
 mock('../models/User', MockUser);
 mock('./parentLinkController', parentLinkMock);
+mock('../services/telemetryService', {
+  trackEvent: vi.fn(),
+});
 
 const User = require('../models/User');
 const {

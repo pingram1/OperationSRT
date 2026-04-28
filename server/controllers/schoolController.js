@@ -5,6 +5,7 @@ const School = require('../models/School');
 const User = require('../models/User');
 const Booking = require('../models/Booking');
 const { sendPilotStudentWelcomeEmail } = require('../utils/emailService');
+const { trackEvent } = require('../services/telemetryService');
 
 const isValidObjectId = (id) => mongoose.Types.ObjectId.isValid(id);
 
@@ -222,6 +223,16 @@ const rosterUpload = async (req, res) => {
                     schoolId: school._id,
                 });
 
+                trackEvent(
+                    'cohort_student_school_linked',
+                    { linkReason: 'roster_bulk' },
+                    {
+                        actorUserId: req.user.id,
+                        subjectStudentId: newUser._id,
+                        schoolId: school._id,
+                    },
+                ).catch(() => {});
+
                 let emailSent = false;
                 try {
                     emailSent = await sendPilotStudentWelcomeEmail(rawEmail, rawName, {
@@ -251,6 +262,20 @@ const rosterUpload = async (req, res) => {
                 });
             }
         }
+
+        trackEvent(
+            'cohort_roster_bulk_import_finished',
+            {
+                requestedRowCount: students.length,
+                createdUserCount: created.length,
+                skippedExistingCount: skipped.length,
+                errorRowCount: errors.length,
+            },
+            {
+                actorUserId: req.user.id,
+                schoolId: school._id,
+            },
+        ).catch(() => {});
 
         return res.status(201).json({
             schoolId: school._id,

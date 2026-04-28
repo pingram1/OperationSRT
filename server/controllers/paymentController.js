@@ -12,6 +12,7 @@ const Booking = require('../models/Booking');
 const ProcessedStripeEvent = require('../models/ProcessedStripeEvent');
 const logger = require('../utils/logger');
 const { canUserAccessBooking } = require('../utils/bookingAccess');
+const { trackEvent } = require('../services/telemetryService');
 const {
     recordPaymentTransaction,
     markBookingPaid,
@@ -175,6 +176,23 @@ const confirmPayment = async (req, res) => {
         await recordPaymentTransaction({ booking, paymentIntent, source: 'confirm' });
         await finalizeAfterSuccessfulCharge(booking, paymentIntent);
 
+        await booking.populate('student', 'schoolId');
+
+        trackEvent(
+            'booking_payment_completed',
+            {
+                paidAmountUsd: paymentIntent.amount / 100,
+                purpose: booking.paymentPurpose === 'membership' ? 'membership' : 'session',
+                paidVia: 'confirm_endpoint',
+            },
+            {
+                actorUserId: req.user.id,
+                subjectStudentId: booking.student._id || booking.student,
+                bookingId: booking._id,
+                schoolId: booking.student.schoolId,
+            },
+        ).catch(() => {});
+
         logger.info('Payment confirmed for booking', { bookingId });
 
         return res.json({
@@ -269,7 +287,7 @@ const handlePaymentSuccess = async (paymentIntent) => {
         return;
     }
 
-    const booking = await Booking.findById(bookingId).populate('student', '_id');
+    const booking = await Booking.findById(bookingId).populate('student', 'schoolId');
     if (!booking) {
         logger.error('handlePaymentSuccess: booking not found', { bookingId });
         return;
@@ -285,6 +303,20 @@ const handlePaymentSuccess = async (paymentIntent) => {
     await markBookingPaid(booking, paymentIntent);
     await recordPaymentTransaction({ booking, paymentIntent, source: 'webhook' });
     await finalizeAfterSuccessfulCharge(booking, paymentIntent);
+
+    trackEvent(
+        'booking_payment_completed',
+        {
+            paidAmountUsd: paidUsd,
+            purpose: booking.paymentPurpose === 'membership' ? 'membership' : 'session',
+            paidVia: 'stripe_webhook',
+        },
+        {
+            subjectStudentId: booking.student._id || booking.student,
+            bookingId: booking._id,
+            schoolId: booking.student.schoolId,
+        },
+    ).catch(() => {});
 
     logger.info('handlePaymentSuccess completed', { bookingId });
 };

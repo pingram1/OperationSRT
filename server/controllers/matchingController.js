@@ -2,6 +2,7 @@ const User = require('../models/User');
 const Booking = require('../models/Booking');
 const SystemConfig = require('../models/SystemConfig');
 const { LearningStyleProfile, LearningStyleMatcher } = require('../utils/matchingUtils');
+const { trackEvent } = require('../services/telemetryService');
 
 // Use lower threshold for admin analysis (0.5 = 50%), higher for regular users (0.75 = 75%)
 // Loads matchingWeights from SystemConfig when available
@@ -453,6 +454,24 @@ const recordMatchFeedback = async (req, res) => {
         };
 
         await booking.save();
+
+        if (studentSatisfaction != null && Number.isFinite(Number(studentSatisfaction))) {
+            await booking.populate('student', 'schoolId');
+            trackEvent(
+                'tutor_session_rating_submitted',
+                {
+                    ratingValue: Number(studentSatisfaction),
+                    wouldRebook: null,
+                    tutorId: booking.tutor ? booking.tutor.toString() : null,
+                },
+                {
+                    actorUserId: userId,
+                    subjectStudentId: booking.student._id || booking.student,
+                    bookingId: booking._id,
+                    schoolId: booking.student.schoolId,
+                },
+            ).catch(() => {});
+        }
 
         console.log(`[recordMatchFeedback] Feedback recorded for booking ${bookingId}`);
         res.json({ 

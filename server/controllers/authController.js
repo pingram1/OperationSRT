@@ -4,6 +4,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { createParentLinkRequestFromSignup } = require('./parentLinkController');
 const logger = require('../utils/logger');
+const { trackEvent } = require('../services/telemetryService');
 
 /**
  * Returns the refresh-token signing secret. Prefers the dedicated
@@ -213,6 +214,12 @@ const loginUser = async (req, res) => {
 
         logger.info('Login successful', { userId: user.id, email: user.email });
 
+        trackEvent(
+            'auth_login_success',
+            { authMethod: 'password' },
+            { actorUserId: user._id },
+        ).catch(() => {});
+
         const payload = {
             user: { id: user.id, role: user.role },
         };
@@ -421,6 +428,35 @@ const getLoggedInUser = async (req, res) => {
 };
 
 /**
+ * @desc    Invalidate refresh token (logout)
+ * @route   POST /api/auth/logout
+ * @access  Private
+ */
+const logoutUser = async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        trackEvent(
+            'auth_logout',
+            { logoutReason: 'user_initiated' },
+            { actorUserId: user._id },
+        ).catch(() => {});
+
+        user.refreshToken = null;
+        user.refreshTokenExpiry = null;
+        await user.save();
+
+        return res.json({ message: 'Logged out successfully' });
+    } catch (err) {
+        logger.error('Logout error', { error: err.message });
+        return res.status(500).json({ message: 'Server error during logout' });
+    }
+};
+
+/**
  * @desc    Refresh access token using refresh token
  * @route   POST /api/auth/refresh
  * @access  Public
@@ -519,6 +555,16 @@ const registerWithCode = async (req, res) => {
             schoolId: school._id,
         });
 
+        trackEvent(
+            'cohort_student_school_linked',
+            { linkReason: 'invite_flow' },
+            {
+                actorUserId: user._id,
+                subjectStudentId: user._id,
+                schoolId: school._id,
+            },
+        ).catch(() => {});
+
         const payload = { user: { id: user.id, role: user.role } };
         jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '5h' }, (err, token) => {
             if (err) {
@@ -559,5 +605,6 @@ module.exports = {
     registerEmployee,
     registerWithCode,
     loginUser,
+    logoutUser,
     getLoggedInUser,
 };

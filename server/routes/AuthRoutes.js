@@ -6,6 +6,7 @@ const {
     registerEmployee,
     registerWithCode,
     loginUser,
+    logoutUser,
     getLoggedInUser,
     refreshToken,
 } = require('../controllers/authController');
@@ -57,6 +58,13 @@ router.post(
  * @access  Private
  */
 router.get('/user', authMiddleware, getLoggedInUser);
+
+/**
+ * @route   POST /api/auth/logout
+ * @desc    Clear refresh token on server (logout)
+ * @access  Private
+ */
+router.post('/logout', authMiddleware, logoutUser);
 
 /**
  * @route   POST /api/auth/refresh

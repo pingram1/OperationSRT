@@ -10,6 +10,24 @@ const { creditTutoringSession } = require('../services/scholarshipService');
 const MembershipPlan = require('../models/MembershipPlan');
 const { computeMembershipTotalUsd } = require('../utils/membershipPrice');
 const { validateSessionConfigForPlan } = require('./membershipController');
+const { trackEvent } = require('../services/telemetryService');
+
+function mapCancellationReasonEnum(raw) {
+    if (raw == null || typeof raw !== 'string' || !raw.trim()) return 'unspecified';
+    const s = raw.trim().toLowerCase();
+    if (s.includes('schedule') || s.includes('conflict')) return 'schedule_conflict';
+    if (s.includes('financial') || s.includes('money') || s.includes('cost')) return 'financial';
+    if (s.includes('no longer') || s.includes('don\'t need') || s.includes('dont need')) return 'no_longer_needed';
+    return 'other';
+}
+
+function cancelledByTelemetryRole(role) {
+    if (role === 'student') return 'student';
+    if (role === 'parent') return 'parent';
+    if (role === 'tutor') return 'tutor';
+    if (role === 'admin' || role === 'super_admin') return 'admin';
+    return 'unknown';
+}
 
 /**
  * @desc    Create a new booking
@@ -348,6 +366,51 @@ const createBooking = async (req, res) => {
         }
         
         logger.info('Booking created successfully', { bookingId: booking._id });
+
+        trackEvent(
+            'booking_created',
+            { serviceType, durationMin: duration },
+            {
+                actorUserId: user,
+                subjectStudentId: requestedStudentId,
+                bookingId: booking._id,
+                schoolId: studentUser?.schoolId,
+            }
+        ).catch(() => {});
+
+        if (booking.customerPayment?.status === 'requested' && parentForPayment) {
+            trackEvent(
+                'guardian_payment_requested',
+                {
+                    amountUsd: booking.customerPayment.amount,
+                    currency: booking.customerPayment.currency || 'USD',
+                    requestedFromGuardianUserId: parentForPayment.toString(),
+                },
+                {
+                    actorUserId: user,
+                    subjectStudentId: requestedStudentId,
+                    bookingId: booking._id,
+                    schoolId: studentUser?.schoolId,
+                },
+            ).catch(() => {});
+        }
+
+        if (booking.sessionType === 'virtual' && booking.wherebyRoom?.roomUrl) {
+            trackEvent(
+                'virtual_session_joined',
+                {
+                    surface: 'booking_flow_virtual_room_provisioned',
+                    participantRole: 'unknown',
+                },
+                {
+                    actorUserId: user,
+                    subjectStudentId: requestedStudentId,
+                    bookingId: booking._id,
+                    schoolId: studentUser?.schoolId,
+                },
+            ).catch(() => {});
+        }
+
         res.status(201).json(booking);
 
     } catch (err) {
@@ -505,6 +568,8 @@ const updateBooking = async (req, res) => {
             return res.status(404).json({ message: 'Booking not found' });
         }
 
+        const prevSessionMs = booking.sessionDate ? new Date(booking.sessionDate).getTime() : null;
+
         // Update booking fields
         const { student, tutor, subject, goals, sessionDate, duration, serviceType, status } = req.body;
         
@@ -521,6 +586,8 @@ const updateBooking = async (req, res) => {
         
         if (student) booking.student = student;
         let tutorJustAssigned = false;
+        let sessionRescheduled = false;
+        let previousScheduledStartIso = null;
         if (tutor !== undefined) {
             const previousTutorId = booking.tutor ? booking.tutor.toString() : null;
             booking.tutor = tutor; // Allow null
@@ -539,12 +606,42 @@ const updateBooking = async (req, res) => {
         }
         if (subject) booking.subject = subject;
         if (goals) booking.goals = goals;
-        if (sessionDate) booking.sessionDate = new Date(sessionDate);
+        if (sessionDate !== undefined && sessionDate !== null && sessionDate !== '') {
+            const nextDate = new Date(sessionDate);
+            if (prevSessionMs !== nextDate.getTime()) {
+                sessionRescheduled = true;
+                previousScheduledStartIso = booking.sessionDate
+                    ? new Date(booking.sessionDate).toISOString()
+                    : null;
+            }
+            booking.sessionDate = nextDate;
+        }
         if (duration) booking.duration = duration;
         if (serviceType) booking.serviceType = serviceType;
         if (status) booking.status = status;
 
         await booking.save();
+
+        if (sessionRescheduled && booking.sessionDate) {
+            await booking.populate('student', 'schoolId');
+            const deltaMs = previousScheduledStartIso
+                ? booking.sessionDate.getTime() - new Date(previousScheduledStartIso).getTime()
+                : null;
+            trackEvent(
+                'booking_rescheduled',
+                {
+                    previousScheduledStartAt: previousScheduledStartIso,
+                    newScheduledStartAt: booking.sessionDate.toISOString(),
+                    deltaHours: deltaMs != null ? deltaMs / (1000 * 60 * 60) : null,
+                },
+                {
+                    actorUserId: req.user.id,
+                    subjectStudentId: booking.student._id || booking.student,
+                    bookingId: booking._id,
+                    schoolId: booking.student.schoolId,
+                },
+            ).catch(() => {});
+        }
 
         if (tutorJustAssigned && booking.tutor && booking.tutorAcceptanceStatus === 'pending') {
             createSessionRequestedNotification(booking).catch(e => logger.error('Failed to create session-requested notification', e));
@@ -571,7 +668,7 @@ const cancelBooking = async (req, res) => {
     try {
         const booking = await Booking.findById(req.params.id)
             .populate('user', 'name email role')
-            .populate('student', 'name email role');
+            .populate('student', 'name email role schoolId');
 
         if (!booking) {
             return res.status(404).json({ message: 'Booking not found' });
@@ -636,6 +733,21 @@ const cancelBooking = async (req, res) => {
             : 'Booking cancelled successfully with no penalty (cancelled 24+ hours before session).';
 
         logger.info('Booking cancelled', { bookingId: booking._id, userId: req.user.id, hasPenalty });
+
+        trackEvent(
+            'booking_cancelled',
+            {
+                cancellationReasonEnum: mapCancellationReasonEnum(req.body.reason),
+                hoursBeforeStart: hoursUntilSession,
+                cancelledByRole: cancelledByTelemetryRole(req.user.role),
+            },
+            {
+                actorUserId: req.user.id,
+                subjectStudentId: booking.student._id || booking.student,
+                bookingId: booking._id,
+                schoolId: booking.student.schoolId,
+            },
+        ).catch(() => {});
 
         res.json({ 
             message,
@@ -745,10 +857,26 @@ const acceptBooking = async (req, res) => {
         await booking.save();
 
         await booking.populate('user', 'name email avatar');
-        await booking.populate('student', 'name email avatar');
+        await booking.populate('student', 'name email avatar schoolId');
         await booking.populate('tutor', 'name email avatar');
 
+        const latencyMsSinceCreated = booking.createdAt
+            ? Date.now() - new Date(booking.createdAt).getTime()
+            : null;
+
         logger.info('Booking accepted', { bookingId: req.params.id, tutorId: req.user.id });
+
+        trackEvent(
+            'tutor_booking_accepted',
+            { latencyMsSinceCreated },
+            {
+                actorUserId: req.user.id,
+                subjectStudentId: booking.student._id || booking.student,
+                bookingId: booking._id,
+                schoolId: booking.student.schoolId,
+            },
+        ).catch(() => {});
+
         res.json({ message: 'Booking accepted successfully', booking });
     } catch (err) {
         logger.error('Error accepting booking', { error: err.message, bookingId: req.params.id });
@@ -783,10 +911,22 @@ const declineBooking = async (req, res) => {
         await booking.save();
 
         await booking.populate('user', 'name email avatar');
-        await booking.populate('student', 'name email avatar');
+        await booking.populate('student', 'name email avatar schoolId');
         await booking.populate('tutor', 'name email avatar');
 
         logger.info('Booking declined', { bookingId: req.params.id, tutorId: req.user.id });
+
+        trackEvent(
+            'tutor_booking_declined',
+            {},
+            {
+                actorUserId: req.user.id,
+                subjectStudentId: booking.student._id || booking.student,
+                bookingId: booking._id,
+                schoolId: booking.student.schoolId,
+            },
+        ).catch(() => {});
+
         res.json({ message: 'Booking declined successfully', booking });
     } catch (err) {
         logger.error('Error declining booking', { error: err.message, bookingId: req.params.id });
@@ -822,8 +962,31 @@ const completeBooking = async (req, res) => {
         await booking.save();
 
         await booking.populate('user', 'name email avatar');
-        await booking.populate('student', 'name email avatar');
+        await booking.populate('student', 'name email avatar schoolId');
         await booking.populate('tutor', 'name email avatar');
+
+        const markedAt = new Date();
+        const scheduledEndMs = booking.sessionDate && booking.duration
+            ? new Date(booking.sessionDate).getTime() + booking.duration * 60 * 1000
+            : null;
+        const scheduledVsActualLatencyMin = scheduledEndMs != null
+            ? (markedAt.getTime() - scheduledEndMs) / (1000 * 60)
+            : null;
+
+        trackEvent(
+            'tutoring_session_completed',
+            {
+                scheduledDurationMin: booking.duration,
+                actualMarkedCompleteAt: markedAt.toISOString(),
+                scheduledVsActualLatencyMin,
+            },
+            {
+                actorUserId: req.user.id,
+                subjectStudentId: booking.student._id || booking.student,
+                bookingId: booking._id,
+                schoolId: booking.student.schoolId,
+            },
+        ).catch(() => {});
 
         // Auto-check achievements for the student
         if (booking.student) {
@@ -880,7 +1043,20 @@ const markNoShow = async (req, res) => {
         booking.status = 'no_show';
         await booking.save();
 
+        await booking.populate('student', 'schoolId');
+
         await createNoShowNotifications(booking);
+
+        trackEvent(
+            'tutoring_session_no_show',
+            { noShowParty: 'unknown' },
+            {
+                actorUserId: req.user.id,
+                subjectStudentId: booking.student._id || booking.student,
+                bookingId: booking._id,
+                schoolId: booking.student.schoolId,
+            },
+        ).catch(() => {});
 
         logger.info('Booking marked as no-show', { bookingId: req.params.id, adminId: req.user.id });
         res.json({ message: 'Booking marked as no-show', booking });
@@ -1022,10 +1198,26 @@ const markBookingAsPaid = async (req, res) => {
         await booking.save();
 
         await booking.populate('user', 'name email avatar');
-        await booking.populate('student', 'name email avatar');
+        await booking.populate('student', 'name email avatar schoolId');
         await booking.populate('tutor', 'name email avatar');
 
         logger.info('Booking marked as paid', { bookingId: req.params.id, adminId: req.user.id });
+
+        trackEvent(
+            'booking_payment_completed',
+            {
+                paidAmountUsd: Number(booking.price),
+                purpose: booking.paymentPurpose === 'membership' ? 'membership' : 'session',
+                paidVia: 'admin_mark_paid',
+            },
+            {
+                actorUserId: req.user.id,
+                subjectStudentId: booking.student._id || booking.student,
+                bookingId: booking._id,
+                schoolId: booking.student.schoolId,
+            },
+        ).catch(() => {});
+
         res.json({ message: 'Booking marked as paid', booking });
     } catch (err) {
         logger.error('Error marking booking as paid', { error: err.message, bookingId: req.params.id });

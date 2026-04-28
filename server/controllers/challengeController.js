@@ -3,6 +3,21 @@ const ChallengeAttempt = require('../models/ChallengeAttempt');
 const User = require('../models/User');
 const { checkAnswer } = require('../utils/challengeAnswerCheck');
 const { creditChallengeXp } = require('../services/scholarshipService');
+const { trackEvent } = require('../services/telemetryService');
+
+function emitChallengeAttemptCompleted(actorUserId, challenge, attempt) {
+    const outcome = attempt.status === 'completed' ? 'success' : 'fail';
+    trackEvent(
+        'challenge_attempt_completed',
+        {
+            outcome,
+            scorePct: attempt.percentage,
+            timeOnTaskSec: attempt.timeSpent != null ? attempt.timeSpent : null,
+            totalQuestions: Array.isArray(challenge?.questions) ? challenge.questions.length : null,
+        },
+        { actorUserId: actorUserId },
+    ).catch(() => {});
+}
 
 /**
  * @desc    Get all challenges (with optional filters)
@@ -318,6 +333,11 @@ const startChallenge = async (req, res) => {
             return res.json({ attempt, challenge });
         }
 
+        const priorAttemptCount = await ChallengeAttempt.countDocuments({
+            user: req.user.id,
+            challenge: challenge._id,
+        });
+
         // Create new attempt
         attempt = new ChallengeAttempt({
             user: req.user.id,
@@ -327,6 +347,17 @@ const startChallenge = async (req, res) => {
         });
 
         await attempt.save();
+
+        trackEvent(
+            'challenge_attempt_started',
+            {
+                challengeId: challenge._id.toString(),
+                attemptId: attempt._id.toString(),
+                attemptOrdinal: priorAttemptCount + 1,
+            },
+            { actorUserId: req.user.id },
+        ).catch(() => {});
+
         res.json({ attempt, challenge });
     } catch (err) {
         console.error('Error starting challenge:', err);
@@ -441,7 +472,26 @@ const submitAnswer = async (req, res) => {
         }
 
         await attempt.save();
-        
+
+        const elapsedSinceAttemptStartMs = attempt.startTime
+            ? Date.now() - new Date(attempt.startTime).getTime()
+            : null;
+
+        trackEvent(
+            'challenge_answer_submitted',
+            {
+                questionIndex,
+                isCorrect,
+                elapsedSinceAttemptStartMs,
+                itemId: String(questionIndex),
+            },
+            { actorUserId: req.user.id },
+        ).catch(() => {});
+
+        if (attempt.status === 'completed' || attempt.status === 'failed') {
+            emitChallengeAttemptCompleted(req.user.id, challenge, attempt);
+        }
+
         // Log attempt status for debugging
         if (attempt.status === 'completed') {
             console.log(`[submitAnswer] Attempt ${attempt._id} saved with status 'completed' for challenge ${challenge.title}`);
@@ -486,7 +536,9 @@ const completeChallenge = async (req, res) => {
         }
 
         const challenge = await Challenge.findById(req.params.id);
-        
+
+        let transitionedTerminal = false;
+
         // Only update if not already completed/failed
         if (attempt.status === 'in-progress') {
             attempt.status = attempt.percentage >= challenge.passingScore ? 'completed' : 'failed';
@@ -533,9 +585,16 @@ const completeChallenge = async (req, res) => {
                     attempt.xpEarned = 0;
                 }
             }
+
+            transitionedTerminal = true;
         }
 
         await attempt.save();
+
+        if (transitionedTerminal) {
+            emitChallengeAttemptCompleted(req.user.id, challenge, attempt);
+        }
+
         res.json({ attempt });
     } catch (err) {
         console.error('Error completing challenge:', err);

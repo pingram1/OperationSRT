@@ -1,4 +1,5 @@
 const { createRoom, getRoom } = require('../services/wherebyService');
+const { trackEvent } = require('../services/telemetryService');
 
 /**
  * @desc    Create a Whereby video room for a booking
@@ -36,6 +37,18 @@ const createBookingRoom = async (req, res) => {
             endDate: end,
             bookingId: bookingId || null,
         });
+
+        trackEvent(
+            'virtual_session_joined',
+            {
+                surface: 'whereby_api_room_created',
+                participantRole: 'unknown',
+            },
+            {
+                actorUserId: req.user?.id,
+                bookingId: bookingId || null,
+            },
+        ).catch(() => {});
 
         res.status(201).json({
             message: 'Room created successfully',
