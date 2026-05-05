@@ -1,0 +1,6 @@
+TEKS Standard: Grade 6, Section 6
+Title: Proportionality--applications of ratios and rates. The student applies mathematical process standards to solve problems involving proportional relationships. The student is expected to:
+Description: (6) Proportionality--applications of ratios and rates. The student applies mathematical process standards to solve problems involving proportional relationships. The student is expected to:
+(A) apply qualitative and quantitative reasoning to solve prediction and comparison of real- world problems involving ratios and rates;
+(B) calculate unit rates from rates in mathematical and real-world problems; and
+(C) convert within and between measurement systems, including the use of proportions and the use of unit rates.

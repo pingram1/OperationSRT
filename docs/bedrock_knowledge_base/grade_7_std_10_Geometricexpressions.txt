@@ -1,0 +1,11 @@
+TEKS Standard: Grade 7, Section 10
+Title: Geometric expressions, equations, and relationships--foundations of geometric concepts. The student applies mathematical process standards to develop geometric relationships and solve problems. The student is expected to:
+Description: (10) Geometric expressions, equations, and relationships--foundations of geometric concepts. The student applies mathematical process standards to develop geometric relationships and solve problems. The student is expected to:
+(A) use models to determine the approximate formulas for the circumference and area of a circle and connect the models to the actual formulas;
+(B) solve problems involving the lateral and total surface area of a rectangular prism, rectangular pyramid, triangular prism, and triangular pyramid by determining the area of the shape's net;
+(C) describe the volume formula V = Bh of a cylinder in terms of its base area and its height;
+(D) model the relationship between the volume of a rectangular prism and a rectangular pyramid having both congruent bases and heights and connect that relationship to the formulas;
+(E) explain verbally and symbolically the relationship between the volume of a triangular prism and a triangular pyramid having both congruent bases and heights and connect that relationship to the formulas;
+(F) model the relationship between the volume of a cylinder and a cone having both congruent bases and heights and connect that relationship to the formulas;
+(G) use models and diagrams to explain the Pythagorean theorem; and
+(H) use informal arguments to establish facts about the angle sum and exterior angle of triangles, the angles created when parallel lines are cut by a transversal, and the angle- angle criterion for similarity of triangles.

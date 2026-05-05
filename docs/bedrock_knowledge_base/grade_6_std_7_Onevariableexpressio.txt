@@ -1,0 +1,6 @@
+TEKS Standard: Grade 6, Section 7
+Title: One-variable expressions, equations, and relationships--foundations of one-variable relationships. The student applies mathematical process standards to develop concepts of expressions and equations. The student is expected to:
+Description: (7) One-variable expressions, equations, and relationships--foundations of one-variable relationships. The student applies mathematical process standards to develop concepts of expressions and equations. The student is expected to:
+(A) distinguish between expressions and equations verbally, numerically, and algebraically;
+(B) determine if two expressions are equivalent using concrete models, pictorial models, and algebraic representations; and
+(C) generate equivalent expressions using the properties of operations: inverse, identity, commutative, associative, and distributive properties.

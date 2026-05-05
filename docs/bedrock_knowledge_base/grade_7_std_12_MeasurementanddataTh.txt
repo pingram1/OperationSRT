@@ -1,0 +1,6 @@
+TEKS Standard: Grade 7, Section 12
+Title: Measurement and data. The student applies mathematical process standards to use statistical representations to analyze data. The student is expected to:
+Description: (12) Measurement and data. The student applies mathematical process standards to use statistical representations to analyze data. The student is expected to:
+(A) compare two groups of numeric data using comparative dot plots or box plots by comparing their shapes, centers, and spreads;
+(B) use data from a random sample to make inferences about a population; and
+(C) compare two populations based on data in random samples from these populations, including informal comparative inferences about differences between the two populations.

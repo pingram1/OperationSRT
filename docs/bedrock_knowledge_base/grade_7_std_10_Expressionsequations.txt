@@ -1,0 +1,6 @@
+TEKS Standard: Grade 7, Section 10
+Title: Expressions, equations, and relationships. The student applies mathematical process standards to use one-variable equations and inequalities to represent situations. The student is expected to:
+Description: (10) Expressions, equations, and relationships. The student applies mathematical process standards to use one-variable equations and inequalities to represent situations. The student is expected to:
+(A) write one-variable, two-step equations and inequalities to represent constraints or conditions within problems;
+(B) represent solutions for one-variable, two-step equations and inequalities on number lines; and
+(C) write a corresponding real-world problem given a one-variable, two-step equation or inequality.

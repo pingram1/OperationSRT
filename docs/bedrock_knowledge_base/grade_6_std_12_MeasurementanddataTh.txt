@@ -1,0 +1,7 @@
+TEKS Standard: Grade 6, Section 12
+Title: Measurement and data. The student applies mathematical process standards to use numerical or graphical representations to analyze problems. The student is expected to:
+Description: (12) Measurement and data. The student applies mathematical process standards to use numerical or graphical representations to analyze problems. The student is expected to:
+(A) represent numeric data graphically, including dot plots, stem-and-leaf plots, histograms, and box plots;
+(B) use the graphical representation of numeric data to describe the center, spread, and shape of the data distribution;
+(C) summarize numeric data with numerical summaries, including the mean and median (measures of center) and the range and interquartile range (IQR) (measures of spread), and use these summaries to describe the center, spread, and shape of the data distribution; and
+(D) summarize categorical data with numerical and graphical summaries, including the mode, the percent of values in each category (relative frequency table), and the percent bar graph, and use these summaries to describe the data distribution.

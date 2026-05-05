@@ -1,0 +1,12 @@
+TEKS Standard: Grade 6, Section 3
+Title: Numeracy--operations with rational numbers. The student applies mathematical process standards to represent addition, subtraction, multiplication, and division while solving problems and justifying solutions. The student is expected to:
+Description: (3) Numeracy--operations with rational numbers. The student applies mathematical process standards to represent addition, subtraction, multiplication, and division while solving problems and justifying solutions. The student is expected to:
+(A) recognize that dividing by a rational number and multiplying by its reciprocal result in equivalent values;
+(B) determine, with and without computation, whether a quantity is increased or decreased when multiplied by a fraction, including values greater than or less than one;
+(C) extend representations for division to include fraction notation such as a/b represents the same number as a ÷ b where b ≠ 0;
+(D) represent integer operations with concrete models and connect the actions with the models to standardized algorithms;
+(E) add, subtract, multiply, and divide integers fluently;
+(F) add, subtract, multiply, and divide rational numbers;
+(G) generate equivalent numerical expressions using order of operations, including whole number exponents and prime factorization;
+(H) balance a check register that includes deposits, withdrawals, and transfers; and
+(I) create and organize a financial assets and liabilities record and construct a net worth statement.

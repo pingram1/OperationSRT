@@ -1,0 +1,9 @@
+TEKS Standard: Grade 8, Section 10
+Title: Number and algebraic methods. The student applies the mathematical process standards and algebraic methods to rewrite in equivalent forms and perform operations on polynomial expressions. The student is expected to:
+Description: (10) Number and algebraic methods. The student applies the mathematical process standards and algebraic methods to rewrite in equivalent forms and perform operations on polynomial expressions. The student is expected to:
+(A) add and subtract polynomials of degree one and degree two;
+(B) multiply polynomials of degree one and degree two;
+(C) determine the quotient of a polynomial of degree one and polynomial of degree two when divided by a polynomial of degree one and polynomial of degree two when the degree of the divisor does not exceed the degree of the dividend;
+(D) rewrite polynomial expressions of degree one and degree two in equivalent forms using the distributive property;
+(E) factor, if possible, trinomials with real factors in the form ax2 + bx + c, including perfect square trinomials of degree two; and
+(F) decide if a binomial can be written as the difference of two squares and, if possible, use the structure of a difference of two squares to rewrite the binomial.

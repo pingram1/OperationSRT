@@ -1,0 +1,6 @@
+TEKS Standard: Grade 8, Section 7
+Title: Quadratic functions and equations. The student applies the mathematical process standards when using graphs of quadratic functions and their related transformations to represent in multiple ways and determine, with and without technology, the solutions to equations. The student is expected to:
+Description: (7) Quadratic functions and equations. The student applies the mathematical process standards when using graphs of quadratic functions and their related transformations to represent in multiple ways and determine, with and without technology, the solutions to equations. The student is expected to:
+(A) graph quadratic functions on the coordinate plane and use the graph to identify key attributes, if possible, including x-intercept, y-intercept, zeros, maximum value, minimum values, vertex, and the equation of the axis of symmetry;
+(B) describe the relationship between the linear factors of quadratic expressions and the zeros of their associated quadratic functions; and
+(C) determine the effects on the graph of the parent function f(x) = x2 when f(x) is replaced by af(x), f(x) + d, f(x - c), and f(bx) for specific values of a, b, c, and d.

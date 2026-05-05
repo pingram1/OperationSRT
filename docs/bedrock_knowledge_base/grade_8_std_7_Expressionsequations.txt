@@ -1,0 +1,7 @@
+TEKS Standard: Grade 8, Section 7
+Title: Expressions, equations, and relationships. The student applies mathematical process standards to use geometry to solve problems. The student is expected to:
+Description: (7) Expressions, equations, and relationships. The student applies mathematical process standards to use geometry to solve problems. The student is expected to:
+(A) solve problems involving the volume of cylinders, cones, and spheres;
+(B) use previous knowledge of surface area to make connections to the formulas for lateral and total surface area and determine solutions for problems involving rectangular prisms, triangular prisms, and cylinders;
+(C) use the Pythagorean Theorem and its converse to solve problems; and
+(D) determine the distance between two points on a coordinate plane using the Pythagorean Theorem.

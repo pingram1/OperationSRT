@@ -1,0 +1,6 @@
+TEKS Standard: Grade 6, Section 5
+Title: Proportionality. The student applies mathematical process standards to solve problems involving proportional relationships. The student is expected to:
+Description: (5) Proportionality. The student applies mathematical process standards to solve problems involving proportional relationships. The student is expected to:
+(A) represent mathematical and real-world problems involving ratios and rates using scale factors, tables, graphs, and proportions;
+(B) solve real-world problems to find the whole given a part and the percent, to find the part given the whole and the percent, and to find the percent given the part and the whole, including the use of concrete and pictorial models; and
+(C) use equivalent fractions, decimals, and percents to show equal parts of the same whole.

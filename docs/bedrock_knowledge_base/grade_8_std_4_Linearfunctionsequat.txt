@@ -1,0 +1,9 @@
+TEKS Standard: Grade 8, Section 4
+Title: Linear functions, equations, and inequalities. The student applies the mathematical process standards to formulate statistical relationships and evaluate their reasonableness based on real- world data. The student is expected to:
+Description: (4) Linear functions, equations, and inequalities. The student applies the mathematical process standards to formulate statistical relationships and evaluate their reasonableness based on real- world data. The student is expected to:
+(A) construct a scatterplot and describe the observed data to address questions of association such as linear, non-linear, and no association between bivariate data;
+(B) contrast bivariate sets of data that suggest a linear relationship with bivariate sets of data that do not suggest a linear relationship from a graphical representation;
+(C) use a trend line that approximates the linear relationship between bivariate sets of data to make predictions;
+(D) calculate, using technology, the correlation coefficient between two quantitative variables and interpret this quantity as a measure of the strength of the linear association;
+(E) compare and contrast association and causation in real-world problems; and
+(F) write, with and without technology, linear functions that provide a reasonable fit to data to estimate solutions and make predictions for real-world problems.

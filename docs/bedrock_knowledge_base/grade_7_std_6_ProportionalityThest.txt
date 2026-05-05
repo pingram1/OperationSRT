@@ -1,0 +1,12 @@
+TEKS Standard: Grade 7, Section 6
+Title: Proportionality. The student applies mathematical process standards to use probability and statistics to describe or solve problems involving proportional relationships. The student is expected to:
+Description: (6) Proportionality. The student applies mathematical process standards to use probability and statistics to describe or solve problems involving proportional relationships. The student is expected to:
+(A) represent sample spaces for simple and compound events using lists and tree diagrams;
+(B) select and use different simulations to represent simple and compound events with and without technology;
+(C) make predictions and determine solutions using experimental data for simple and compound events;
+(D) make predictions and determine solutions using theoretical probability for simple and compound events;
+(E) find the probabilities of a simple event and its complement and describe the relationship between the two;
+(F) use data from a random sample to make inferences about a population;
+(G) solve problems using data represented in bar graphs, dot plots, and circle graphs, including part-to-whole and part-to-part comparisons and equivalents;
+(H) solve problems using qualitative and quantitative predictions and comparisons from simple experiments; and
+(I) determine experimental and theoretical probabilities related to simple and compound events using data and sample spaces.

@@ -1,0 +1,8 @@
+TEKS Standard: Grade 6, Section 2
+Title: Number and operations. The student applies mathematical process standards to represent and use rational numbers in a variety of forms. The student is expected to:
+Description: (2) Number and operations. The student applies mathematical process standards to represent and use rational numbers in a variety of forms. The student is expected to:
+(A) classify whole numbers, integers, and rational numbers using a visual representation such as a Venn diagram to describe relationships between sets of numbers;
+(B) identify a number, its opposite, and its absolute value;
+(C) locate, compare, and order integers and rational numbers using a number line;
+(D) order a set of rational numbers arising from mathematical and real-world contexts; and
+(E) extend representations for division to include fraction notation such as a/b represents the same number as a ÷ b where b ≠ 0.

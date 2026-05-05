@@ -1,0 +1,6 @@
+TEKS Standard: Grade 8, Section 6
+Title: Expressions, equations, and relationships. The student applies mathematical process standards to develop mathematical relationships and make connections to geometric formulas. The student is expected to:
+Description: (6) Expressions, equations, and relationships. The student applies mathematical process standards to develop mathematical relationships and make connections to geometric formulas. The student is expected to:
+(A) describe the volume formula V = Bh of a cylinder in terms of its base area and its height;
+(B) model the relationship between the volume of a cylinder and a cone having both congruent bases and heights and connect that relationship to the formulas; and
+(C) use models and diagrams to explain the Pythagorean theorem.

@@ -1,0 +1,7 @@
+TEKS Standard: Grade 6, Section 9
+Title: Two-variable equations and relationships--foundations of linear relationships. The student applies mathematical process standards to use multiple representations to describe algebraic relationships. The student is expected to:
+Description: (9) Two-variable equations and relationships--foundations of linear relationships. The student applies mathematical process standards to use multiple representations to describe algebraic relationships. The student is expected to:
+(A) identify independent and dependent quantities from tables and graphs;
+(B) write an equation that represents the relationship between independent and dependent quantities from a table;
+(C) represent a given situation using verbal descriptions, tables, graphs, and equations in the form y = kx or y = x + b; and
+(D) compare two rules verbally, numerically, graphically, and symbolically in the form of y = ax or y = x + a in order to differentiate between additive and multiplicative relationships.

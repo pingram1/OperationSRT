@@ -1,0 +1,6 @@
+TEKS Standard: Grade 7, Section 8
+Title: Expressions, equations, and relationships. The student applies mathematical process standards to develop geometric relationships with volume. The student is expected to:
+Description: (8) Expressions, equations, and relationships. The student applies mathematical process standards to develop geometric relationships with volume. The student is expected to:
+(A) model the relationship between the volume of a rectangular prism and a rectangular pyramid having both congruent bases and heights and connect that relationship to the formulas;
+(B) explain verbally and symbolically the relationship between the volume of a triangular prism and a triangular pyramid having both congruent bases and heights and connect that relationship to the formulas; and
+(C) use models to determine the approximate formulas for the circumference and area of a circle and connect the models to the actual formulas.

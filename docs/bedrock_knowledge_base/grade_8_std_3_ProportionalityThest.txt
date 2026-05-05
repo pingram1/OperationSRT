@@ -1,0 +1,6 @@
+TEKS Standard: Grade 8, Section 3
+Title: Proportionality. The student applies mathematical process standards to use proportional relationships to describe dilations. The student is expected to:
+Description: (3) Proportionality. The student applies mathematical process standards to use proportional relationships to describe dilations. The student is expected to:
+(A) generalize that the ratio of corresponding sides of similar shapes are proportional, including a shape and its dilation;
+(B) compare and contrast the attributes of a shape and its dilation(s) on a coordinate plane; and
+(C) use an algebraic representation to explain the effect of a given positive rational scale factor applied to two-dimensional figures on a coordinate plane with the origin as the center of dilation.

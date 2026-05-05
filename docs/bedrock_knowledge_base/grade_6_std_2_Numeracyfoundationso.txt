@@ -1,0 +1,11 @@
+TEKS Standard: Grade 6, Section 2
+Title: Numeracy--foundations of rational numbers. The student applies mathematical process standards to represent and use rational numbers in a variety of forms. The student is expected to:
+Description: (2) Numeracy--foundations of rational numbers. The student applies mathematical process standards to represent and use rational numbers in a variety of forms. The student is expected to:
+(A) classify sets and subsets using a visual representation such as a Venn diagram or a hierarchy to describe relationships between sets of rational numbers;
+(B) identify a number, its opposite, and its absolute value;
+(C) represent benchmark fractions and percents such as 1%, 10%, 25%, 33 1/3%, and multiples of these values using 10 by 10 grids, strip diagrams, number lines, and numbers as proportional relationships;
+(D) generate equivalent forms of fractions, decimals, and percents using real-world problems as proportional relationships, including problems that involve money;
+(E) use equivalent fractions, decimals, and percents to show equal parts of the same whole as proportional relationships;
+(F) locate, compare, and order integers and rational numbers using a number line;
+(G) order a set of rational numbers arising from mathematical and real-world contexts; and
+(H) use coordinate geometry to identify locations on a plane, including graphing points in all four quadrants using ordered pairs of rational numbers.

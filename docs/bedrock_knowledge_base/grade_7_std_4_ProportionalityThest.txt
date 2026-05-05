@@ -1,0 +1,8 @@
+TEKS Standard: Grade 7, Section 4
+Title: Proportionality. The student applies mathematical process standards to represent and solve problems involving proportional relationships. The student is expected to:
+Description: (4) Proportionality. The student applies mathematical process standards to represent and solve problems involving proportional relationships. The student is expected to:
+(A) represent constant rates of change in mathematical and real-world problems given pictorial, tabular, verbal, numeric, graphical, and algebraic representations, including d = rt;
+(B) calculate unit rates from rates in mathematical and real-world problems;
+(C) determine the constant of proportionality (k = y/x) within mathematical and real-world problems;
+(D) solve problems involving ratios, rates, and percents, including multi-step problems involving percent increase and percent decrease, and financial literacy problems; and
+(E) convert between measurement systems, including the use of proportions and the use of unit rates.

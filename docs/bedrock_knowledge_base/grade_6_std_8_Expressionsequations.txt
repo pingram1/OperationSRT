@@ -1,0 +1,7 @@
+TEKS Standard: Grade 6, Section 8
+Title: Expressions, equations, and relationships. The student applies mathematical process standards to use geometry to represent relationships and solve problems. The student is expected to:
+Description: (8) Expressions, equations, and relationships. The student applies mathematical process standards to use geometry to represent relationships and solve problems. The student is expected to:
+(A) extend previous knowledge of triangles and their properties to include the sum of angles of a triangle, the relationship between the lengths of sides and measures of angles in a triangle, and determining when three lengths form a triangle;
+(B) model area formulas for parallelograms, trapezoids, and triangles by decomposing and rearranging parts of these shapes;
+(C) write equations that represent problems related to the area of rectangles, parallelograms, trapezoids, and triangles and volume of right rectangular prisms where dimensions are positive rational numbers; and
+(D) determine solutions for problems involving the area of rectangles, parallelograms, trapezoids, and triangles and volume of right rectangular prisms where dimensions are positive rational numbers.

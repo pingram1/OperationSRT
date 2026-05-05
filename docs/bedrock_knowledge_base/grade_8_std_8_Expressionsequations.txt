@@ -1,0 +1,7 @@
+TEKS Standard: Grade 8, Section 8
+Title: Expressions, equations, and relationships. The student applies mathematical process standards to use one-variable equations or inequalities in problem situations. The student is expected to:
+Description: (8) Expressions, equations, and relationships. The student applies mathematical process standards to use one-variable equations or inequalities in problem situations. The student is expected to:
+(A) write one-variable equations or inequalities with variables on both sides that represent problems using rational number coefficients and constants;
+(B) write a corresponding real-world problem when given a one-variable equation or inequality with variables on both sides of the equal sign using rational number coefficients and constants;
+(C) model and solve one-variable equations with variables on both sides of the equal sign that represent mathematical and real-world problems using rational number coefficients and constants; and
+(D) use informal arguments to establish facts about the angle sum and exterior angle of triangles, the angles created when parallel lines are cut by a transversal, and the angle- angle criterion for similarity of triangles.

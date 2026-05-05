@@ -1,0 +1,5 @@
+TEKS Standard: Grade 6, Section 13
+Title: Measurement and data. The student applies mathematical process standards to use numerical or graphical representations to solve problems. The student is expected to:
+Description: (13) Measurement and data. The student applies mathematical process standards to use numerical or graphical representations to solve problems. The student is expected to:
+(A) interpret numeric data summarized in dot plots, stem-and-leaf plots, histograms, and box plots; and
+(B) distinguish between situations that yield data with and without variability.

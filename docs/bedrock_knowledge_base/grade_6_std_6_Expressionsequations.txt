@@ -1,0 +1,6 @@
+TEKS Standard: Grade 6, Section 6
+Title: Expressions, equations, and relationships. The student applies mathematical process standards to use multiple representations to describe algebraic relationships. The student is expected to:
+Description: (6) Expressions, equations, and relationships. The student applies mathematical process standards to use multiple representations to describe algebraic relationships. The student is expected to:
+(A) identify independent and dependent quantities from tables and graphs;
+(B) write an equation that represents the relationship between independent and dependent quantities from a table; and
+(C) represent a given situation using verbal descriptions, tables, graphs, and equations in the form y = kx or y = x + b.

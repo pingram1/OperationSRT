@@ -1,0 +1,7 @@
+TEKS Standard: Grade 7, Section 9
+Title: Expressions, equations, and relationships. The student applies mathematical process standards to solve geometric problems. The student is expected to:
+Description: (9) Expressions, equations, and relationships. The student applies mathematical process standards to solve geometric problems. The student is expected to:
+(A) solve problems involving the volume of rectangular prisms, triangular prisms, rectangular pyramids, and triangular pyramids;
+(B) determine the circumference and area of circles;
+(C) determine the area of composite figures containing combinations of rectangles, squares, parallelograms, trapezoids, triangles, semicircles, and quarter circles; and
+(D) solve problems involving the lateral and total surface area of a rectangular prism, rectangular pyramid, triangular prism, and triangular pyramid by determining the area of the shape's net.

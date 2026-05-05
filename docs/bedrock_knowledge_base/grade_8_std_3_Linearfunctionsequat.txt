@@ -1,0 +1,14 @@
+TEKS Standard: Grade 8, Section 3
+Title: Linear functions, equations, and inequalities. The student applies the mathematical process standards when using graphs of linear functions, key features, and related transformations to represent in multiple ways and solve, with and without technology, equations, inequalities, and systems of equations. The student is expected to:
+Description: (3) Linear functions, equations, and inequalities. The student applies the mathematical process standards when using graphs of linear functions, key features, and related transformations to represent in multiple ways and solve, with and without technology, equations, inequalities, and systems of equations. The student is expected to:
+(A) use similar right triangles to develop an understanding that slope, m, given as the rate comparing the change in y-values to the change in x-values, (y2 - y1)/ (x2 - x1), is the same for any two points (x1, y1) and (x2, y2) on the same line;
+(B) graph proportional relationships, interpreting the unit rate as the slope of the line that models the relationship;
+(C) determine the slope of a line given a table of values, a graph, two points on the line, and an equation written in various forms, including y = mx + b, Ax + By = C, and y - y1 = m(x - x1);
+(D) calculate the rate of change of a linear function represented tabularly, graphically, or algebraically in context of mathematical and real-world problems;
+(E) use data from a table or graph to determine the rate of change or slope and y-intercept in mathematical and real-world problems;
+(F) graph linear functions on the coordinate plane and identify key features, including x- intercept, y-intercept, zeros, and slope, in mathematical and real-world problems;
+(G) graph the solution set of linear inequalities in two variables on the coordinate plane;
+(H) determine the effects on the graph of the parent function f(x) = x when f(x) is replaced by af(x), f(x) + d, f(x - c), and f(bx) for specific values of a, b, c, and d;
+(I) graph systems of two linear equations in two variables on the coordinate plane and determine the solutions if they exist;
+(J) estimate graphically the solutions to systems of two linear equations with two variables in real-world problems; and
+(K) graph the solution set of systems of two linear inequalities in two variables on the coordinate plane.

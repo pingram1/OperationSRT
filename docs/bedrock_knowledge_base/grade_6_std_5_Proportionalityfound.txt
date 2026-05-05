@@ -1,0 +1,7 @@
+TEKS Standard: Grade 6, Section 5
+Title: Proportionality--foundations of ratios and rates. The student applies mathematical process standards to develop an understanding of proportional relationships in problem situations. The student is expected to:
+Description: (5) Proportionality--foundations of ratios and rates. The student applies mathematical process standards to develop an understanding of proportional relationships in problem situations. The student is expected to:
+(A) give examples of ratios as multiplicative comparisons of two quantities describing the same attribute;
+(B) give examples of rates as the comparison by division of two quantities having different attributes, including rates as quotients;
+(C) represent ratios and percents with concrete models, fractions, and decimals; and
+(D) represent mathematical and real-world problems involving ratios and rates using scale factors, tables, graphs, and proportions.

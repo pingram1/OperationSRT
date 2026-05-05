@@ -1,0 +1,8 @@
+TEKS Standard: Grade 7, Section 5
+Title: Proportionality--geometric ratios. The student applies mathematical process standards to use geometry to describe or solve problems involving proportional relationships such as dilations. The student is expected to:
+Description: (5) Proportionality--geometric ratios. The student applies mathematical process standards to use geometry to describe or solve problems involving proportional relationships such as dilations. The student is expected to:
+(A) describe π as the ratio of the circumference of a circle to its diameter;
+(B) generalize the critical attributes of similarity, including ratios within and between similar shapes;
+(C) solve mathematical and real-world problems involving similar shape and scale drawings;
+(D) compare and contrast the attributes of a shape and its dilation(s) on a coordinate plane; and
+(E) use an algebraic representation to explain the effect of a given positive rational scale factor applied to two-dimensional figures on a coordinate plane with the origin as the center of dilation.

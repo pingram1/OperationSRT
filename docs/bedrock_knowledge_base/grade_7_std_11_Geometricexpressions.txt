@@ -1,0 +1,10 @@
+TEKS Standard: Grade 7, Section 11
+Title: Geometric expressions, equations, and relationships--applications of geometric concepts. The student applies mathematical process standards to solve geometric problems. The student is expected to:
+Description: (11) Geometric expressions, equations, and relationships--applications of geometric concepts. The student applies mathematical process standards to solve geometric problems. The student is expected to:
+(A) determine the circumference and area of circles;
+(B) determine the area of composite figures containing combinations of rectangles, squares, parallelograms, trapezoids, triangles, semicircles, and quarter circles;
+(C) use previous knowledge of surface area to make connections to the formulas for lateral and total surface area and determine solutions for problems involving rectangular prisms, triangular prisms, and cylinders;
+(D) solve problems involving the volume of rectangular pyramids and triangular pyramids;
+(E) solve problems involving the volume of cylinders, cones, and spheres;
+(F) use the Pythagorean theorem and its converse to solve problems; and
+(G) determine the distance between two points on a coordinate plane using the Pythagorean theorem.

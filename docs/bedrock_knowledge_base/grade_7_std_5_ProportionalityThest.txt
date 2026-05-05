@@ -1,0 +1,6 @@
+TEKS Standard: Grade 7, Section 5
+Title: Proportionality. The student applies mathematical process standards to use geometry to describe or solve problems involving proportional relationships. The student is expected to:
+Description: (5) Proportionality. The student applies mathematical process standards to use geometry to describe or solve problems involving proportional relationships. The student is expected to:
+(A) generalize the critical attributes of similarity, including ratios within and between similar shapes;
+(B) describe π as the ratio of the circumference of a circle to its diameter; and
+(C) solve mathematical and real-world problems involving similar shape and scale drawings.

@@ -1,0 +1,9 @@
+TEKS Standard: Grade 8, Section 12
+Title: Number and algebraic methods. The student applies the mathematical process standards and algebraic methods to write, solve, analyze, and evaluate equations, relations, and functions. The student is expected to:
+Description: (12) Number and algebraic methods. The student applies the mathematical process standards and algebraic methods to write, solve, analyze, and evaluate equations, relations, and functions. The student is expected to:
+(A) identify functions using sets of ordered pairs and mappings;
+(B) decide whether relations represented verbally, tabularly, graphically, and symbolically define a function;
+(C) evaluate functions, expressed in function notation, given one or more elements in their domains;
+(D) identify terms of arithmetic and geometric sequences when the sequences are given in function form using recursive processes;
+(E) write a formula for the nth term of arithmetic and geometric sequences, given the value of several of their terms; and
+(F) solve mathematic and scientific formulas, and other literal equations, for a specified variable.

@@ -1,0 +1,10 @@
+TEKS Standard: Grade 6, Section 1
+Title: Mathematical process standards. The student uses mathematical processes to acquire and demonstrate mathematical understanding. The student is expected to:
+Description: (1) Mathematical process standards. The student uses mathematical processes to acquire and demonstrate mathematical understanding. The student is expected to:
+(A) apply mathematics to problems arising in everyday life, society, and the workplace;
+(B) use a problem-solving model that incorporates analyzing given information, formulating a plan or strategy, determining a solution, justifying the solution, and evaluating the problem-solving process and the reasonableness of the solution;
+(C) select tools, including real objects, manipulatives, paper and pencil, and technology as appropriate, and techniques, including mental math, estimation, and number sense as appropriate, to solve problems;
+(D) communicate mathematical ideas, reasoning, and their implications using multiple representations, including symbols, diagrams, graphs, and language as appropriate;
+(E) create and use representations to organize, record, and communicate mathematical ideas;
+(F) analyze mathematical relationships to connect and communicate mathematical ideas; and
+(G) display, explain, and justify mathematical ideas and arguments using precise mathematical language in written or oral communication.

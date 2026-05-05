@@ -1,0 +1,7 @@
+TEKS Standard: Grade 8, Section 10
+Title: Two-dimensional shapes. The student applies mathematical process standards to develop transformational geometry concepts. The student is expected to:
+Description: (10) Two-dimensional shapes. The student applies mathematical process standards to develop transformational geometry concepts. The student is expected to:
+(A) generalize the properties of orientation and congruence of rotations, reflections, translations, and dilations of two-dimensional shapes on a coordinate plane;
+(B) differentiate between transformations that preserve congruence and those that do not;
+(C) explain the effect of translations, reflections over the x- or y-axis, and rotations limited to 90°, 180°, 270°, and 360° as applied to two-dimensional shapes on a coordinate plane using an algebraic representation; and
+(D) model the effect on linear and area measurements of dilated two-dimensional shapes.

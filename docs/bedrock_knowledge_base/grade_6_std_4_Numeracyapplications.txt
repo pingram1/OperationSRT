@@ -1,0 +1,5 @@
+TEKS Standard: Grade 6, Section 4
+Title: Numeracy--applications of percents. The student applies mathematical process standards to solve problems involving percents as proportional relationships. The student is expected to:
+Description: (4) Numeracy--applications of percents. The student applies mathematical process standards to solve problems involving percents as proportional relationships. The student is expected to:
+(A) solve real-world problems to find the whole given a part and the percent, to find the part given the whole and the percent, and to find the percent given the part and the whole, including the use of concrete and pictorial models; and
+(B) calculate the sales tax for a given purchase and calculate income tax for earned wages.

@@ -1,0 +1,7 @@
+TEKS Standard: Grade 6, Section 12
+Title: Geometric expressions, equations, and relationships--applications of geometric concepts. The student applies mathematical process standards to use geometry to represent relationships and solve problems. The student is expected to:
+Description: (12) Geometric expressions, equations, and relationships--applications of geometric concepts. The student applies mathematical process standards to use geometry to represent relationships and solve problems. The student is expected to:
+(A) extend previous knowledge of triangles and their properties to include the sum of angles of a triangle, the relationship between the lengths of sides and measures of angles in a triangle, and determining when three lengths form a triangle;
+(B) determine solutions for problems involving the area of rectangles, parallelograms, trapezoids, and triangles where dimensions are positive rational numbers;
+(C) solve problems involving the volume of right rectangular prisms and triangular prisms; and
+(D) write and solve equations using geometry concepts, including the sum of the angles in a triangle, and angle relationships.

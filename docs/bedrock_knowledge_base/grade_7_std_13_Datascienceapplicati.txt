@@ -1,0 +1,7 @@
+TEKS Standard: Grade 7, Section 13
+Title: Data science--applications of measurement and data. The student applies mathematical process standards to use statistical representations and procedures to analyze and describe data. The student is expected to:
+Description: (13) Data science--applications of measurement and data. The student applies mathematical process standards to use statistical representations and procedures to analyze and describe data. The student is expected to:
+(A) use data from a random sample to make inferences about a population;
+(B) compare two populations based on data in random samples from these populations, including informal comparative inferences about differences between the two populations;
+(C) simulate generating random samples of the same size from a population with known characteristics to develop the notion of a random sample being representative of the population from which it was selected; and
+(D) determine the mean absolute deviation and use this quantity as a measure of the average distance data are from the mean using a data set of no more than 10 data points.

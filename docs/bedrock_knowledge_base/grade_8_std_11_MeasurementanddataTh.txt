@@ -1,0 +1,6 @@
+TEKS Standard: Grade 8, Section 11
+Title: Measurement and data. The student applies mathematical process standards to use statistical procedures to describe data. The student is expected to:
+Description: (11) Measurement and data. The student applies mathematical process standards to use statistical procedures to describe data. The student is expected to:
+(A) construct a scatterplot and describe the observed data to address questions of association such as linear, non-linear, and no association between bivariate data;
+(B) determine the mean absolute deviation and use this quantity as a measure of the average distance data are from the mean using a data set of no more than 10 data points; and
+(C) simulate generating random samples of the same size from a population with known characteristics to develop the notion of a random sample being representative of the population from which it was selected.

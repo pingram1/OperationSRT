@@ -1,0 +1,7 @@
+TEKS Standard: Grade 6, Section 7
+Title: Expressions, equations, and relationships. The student applies mathematical process standards to develop concepts of expressions and equations. The student is expected to:
+Description: (7) Expressions, equations, and relationships. The student applies mathematical process standards to develop concepts of expressions and equations. The student is expected to:
+(A) generate equivalent numerical expressions using order of operations, including whole number exponents and prime factorization;
+(B) distinguish between expressions and equations verbally, numerically, and algebraically;
+(C) determine if two expressions are equivalent using concrete models, pictorial models, and algebraic representations; and
+(D) generate equivalent expressions using the properties of operations: inverse, identity, commutative, associative, and distributive properties.

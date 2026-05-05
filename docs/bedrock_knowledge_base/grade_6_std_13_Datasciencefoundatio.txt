@@ -1,0 +1,5 @@
+TEKS Standard: Grade 6, Section 13
+Title: Data science--foundations of measurement and data. The student applies mathematical process standards to represent and analyze data. The student is expected to:
+Description: (13) Data science--foundations of measurement and data. The student applies mathematical process standards to represent and analyze data. The student is expected to:
+(A) distinguish between situations that yield data with and without variability; and
+(B) represent numeric data graphically, including dot plots, stem-and-leaf plots, histograms, and box plots.

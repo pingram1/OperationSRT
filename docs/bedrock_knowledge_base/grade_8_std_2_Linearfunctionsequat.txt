@@ -1,0 +1,12 @@
+TEKS Standard: Grade 8, Section 2
+Title: Linear functions, equations, and inequalities. The student applies the mathematical process standards when using properties of linear functions to write and represent in multiple ways, with and without technology, linear equations, inequalities, and systems of equations. The student is expected to:
+Description: (2) Linear functions, equations, and inequalities. The student applies the mathematical process standards when using properties of linear functions to write and represent in multiple ways, with and without technology, linear equations, inequalities, and systems of equations. The student is expected to:
+(A) determine the domain and range of a linear function in mathematical problems; determine reasonable domain and range values for real-world situations, both continuous and discrete; and represent domain and range using inequalities;
+(B) write linear equations in two variables in various forms, including y = mx + b, Ax + By = C, and y - y1 = m(x - x1), given one point and the slope and given two points;
+(C) write linear equations in two variables given a table of values, a graph, and a verbal description;
+(D) write and solve equations involving direct variation;
+(E) write the equation of a line that contains a given point and is parallel to a given line;
+(F) write the equation of a line that contains a given point and is perpendicular to a given line;
+(G) write an equation of a line that is parallel or perpendicular to the x- or y- axis and determine whether the slope of the line is zero or undefined;
+(H) write linear inequalities in two variables given a table of values, a graph, and a verbal description; and
+(I) write systems of two linear equations given a table of values, a graph, and a verbal description.

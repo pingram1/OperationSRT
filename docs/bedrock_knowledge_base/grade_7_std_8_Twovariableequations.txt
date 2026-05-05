@@ -1,0 +1,6 @@
+TEKS Standard: Grade 7, Section 8
+Title: Two-variable equations and relationships--foundations of linear relationships. The student applies mathematical process standards to use proportional and non-proportional relationships to develop foundational concepts of functions. The student is expected to:
+Description: (8) Two-variable equations and relationships--foundations of linear relationships. The student applies mathematical process standards to use proportional and non-proportional relationships to develop foundational concepts of functions. The student is expected to:
+(A) determine the constant of proportionality (k = y/x) within mathematical and real-world problems;
+(B) distinguish between proportional and non-proportional situations using tables, graphs, and equations in the form y = kx or y = mx + b, where b ≠ 0; and
+(C) identify examples of proportional and non-proportional relationships that arise from mathematical and real-world problems.

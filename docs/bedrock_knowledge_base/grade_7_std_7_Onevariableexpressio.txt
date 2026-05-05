@@ -1,0 +1,8 @@
+TEKS Standard: Grade 7, Section 7
+Title: One-variable expressions, equations, and relationships--applications of one-variable relationships. The student applies mathematical process standards to use one-variable equations or inequalities in problem situations. The student is expected to:
+Description: (7) One-variable expressions, equations, and relationships--applications of one-variable relationships. The student applies mathematical process standards to use one-variable equations or inequalities in problem situations. The student is expected to:
+(A) represent solutions for one-variable, two-step inequalities on number lines;
+(B) model and solve one-variable, two-step inequalities;
+(C) write one-variable equations or inequalities with variables on both sides that represent problems using rational number coefficients and constants;
+(D) write a corresponding real-world problem when given a one-variable equation or inequality with variables on both sides of the equal sign using rational number coefficients and constants; and
+(E) model and solve one-variable equations with variables on both sides of the equal sign that represent mathematical and real-world problems using rational number coefficients and constants.

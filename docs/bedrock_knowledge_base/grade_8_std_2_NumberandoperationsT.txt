@@ -1,0 +1,7 @@
+TEKS Standard: Grade 8, Section 2
+Title: Number and operations. The student applies mathematical process standards to represent and use real numbers in a variety of forms. The student is expected to:
+Description: (2) Number and operations. The student applies mathematical process standards to represent and use real numbers in a variety of forms. The student is expected to:
+(A) extend previous knowledge of sets and subsets using a visual representation to describe relationships between sets of real numbers;
+(B) approximate the value of an irrational number, including π and square roots of numbers less than 225, and locate that rational number approximation on a number line;
+(C) convert between standard decimal notation and scientific notation; and
+(D) order a set of real numbers arising from mathematical and real-world contexts.

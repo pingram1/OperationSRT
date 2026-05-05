@@ -1,0 +1,6 @@
+TEKS Standard: Grade 8, Section 6
+Title: Quadratic functions and equations. The student applies the mathematical process standards when using properties of quadratic functions to write and represent in multiple ways, with and without technology, quadratic equations. The student is expected to:
+Description: (6) Quadratic functions and equations. The student applies the mathematical process standards when using properties of quadratic functions to write and represent in multiple ways, with and without technology, quadratic equations. The student is expected to:
+(A) determine the domain and range of quadratic functions and represent the domain and range using inequalities;
+(B) write equations of quadratic functions given the vertex and another point on the graph, write the equation in vertex form (f(x) = a(x - h)2+ k), and rewrite the equation from vertex form to standard form (f(x) = ax2+ bx + c); and
+(C) write quadratic functions when given real solutions and graphs of their related equations.

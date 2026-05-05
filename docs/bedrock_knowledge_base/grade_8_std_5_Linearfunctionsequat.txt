@@ -1,0 +1,6 @@
+TEKS Standard: Grade 8, Section 5
+Title: Linear functions, equations, and inequalities. The student applies the mathematical process standards to solve, with and without technology, linear equations and evaluate the reasonableness of their solutions. The student is expected to:
+Description: (5) Linear functions, equations, and inequalities. The student applies the mathematical process standards to solve, with and without technology, linear equations and evaluate the reasonableness of their solutions. The student is expected to:
+(A) solve linear equations in one variable, including those for which the application of the distributive property is necessary and for which variables are included on both sides;
+(B) solve linear inequalities in one variable, including those for which the application of the distributive property is necessary and for which variables are included on both sides; and
+(C) solve systems of two linear equations with two variables for mathematical and real-world problems.

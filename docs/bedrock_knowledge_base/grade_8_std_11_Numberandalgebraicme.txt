@@ -1,0 +1,5 @@
+TEKS Standard: Grade 8, Section 11
+Title: Number and algebraic methods. The student applies the mathematical process standards and algebraic methods to rewrite algebraic expressions into equivalent forms. The student is expected to:
+Description: (11) Number and algebraic methods. The student applies the mathematical process standards and algebraic methods to rewrite algebraic expressions into equivalent forms. The student is expected to:
+(A) simplify numerical radical expressions involving square roots; and
+(B) simplify numeric and algebraic expressions using the laws of exponents, including integral and rational exponents.

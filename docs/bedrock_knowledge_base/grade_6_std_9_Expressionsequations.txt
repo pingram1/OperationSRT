@@ -1,0 +1,6 @@
+TEKS Standard: Grade 6, Section 9
+Title: Expressions, equations, and relationships. The student applies mathematical process standards to use equations and inequalities to represent situations. The student is expected to:
+Description: (9) Expressions, equations, and relationships. The student applies mathematical process standards to use equations and inequalities to represent situations. The student is expected to:
+(A) write one-variable, one-step equations and inequalities to represent constraints or conditions within problems;
+(B) represent solutions for one-variable, one-step equations and inequalities on number lines; and
+(C) write corresponding real-world problems given one-variable, one-step equations or inequalities.

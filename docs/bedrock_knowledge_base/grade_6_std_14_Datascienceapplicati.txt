@@ -1,0 +1,9 @@
+TEKS Standard: Grade 6, Section 14
+Title: Data science--applications of measurement and data. The student applies mathematical process standards to use numerical or graphical representations to analyze and solve problems. The student is expected to:
+Description: (14) Data science--applications of measurement and data. The student applies mathematical process standards to use numerical or graphical representations to analyze and solve problems. The student is expected to:
+(A) use the graphical representation of numeric data to describe the center, spread, and shape of the data distribution;
+(B) summarize numeric data with numerical summaries, including the mean and median (measures of center) and the range and interquartile range (IQR) (measures of spread), and use these summaries to describe the center, spread, and shape of the data distribution;
+(C) interpret numeric data summarized in dot plots, stem-and-leaf plots, histograms, and box plots;
+(D) solve problems using data represented in bar graphs, dot plots, and circle graphs, including part-to-whole and part-to-part comparisons and equivalents;
+(E) compare two groups of numeric data using comparative dot plots or box plots by comparing their shapes, centers, and spreads; and
+(F) summarize categorical data with numerical and graphical summaries, including the mode, the percent of values in each category (relative frequency table), and the percent bar graph, and use these summaries to describe the data distribution.

@@ -1,0 +1,12 @@
+TEKS Standard: Grade 8, Section 5
+Title: Proportionality. The student applies mathematical process standards to use proportional and non- proportional relationships to develop foundational concepts of functions. The student is expected to:
+Description: (5) Proportionality. The student applies mathematical process standards to use proportional and non- proportional relationships to develop foundational concepts of functions. The student is expected to:
+(A) represent linear proportional situations with tables, graphs, and equations in the form of y = kx;
+(B) represent linear non-proportional situations with tables, graphs, and equations in the form of y = mx + b, where b ≠ 0;
+(C) contrast bivariate sets of data that suggest a linear relationship with bivariate sets of data that do not suggest a linear relationship from a graphical representation;
+(D) use a trend line that approximates the linear relationship between bivariate sets of data to make predictions;
+(E) solve problems involving direct variation;
+(F) distinguish between proportional and non-proportional situations using tables, graphs, and equations in the form y = kx or y = mx + b, where b ≠ 0;
+(G) identify functions using sets of ordered pairs, tables, mappings, and graphs;
+(H) identify examples of proportional and non-proportional functions that arise from mathematical and real-world problems; and
+(I) write an equation in the form y = mx + b to model a linear relationship between two quantities using verbal, numerical, tabular, and graphical representations.

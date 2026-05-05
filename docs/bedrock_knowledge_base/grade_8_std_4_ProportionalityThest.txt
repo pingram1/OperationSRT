@@ -1,0 +1,6 @@
+TEKS Standard: Grade 8, Section 4
+Title: Proportionality. The student applies mathematical process standards to explain proportional and non-proportional relationships involving slope. The student is expected to:
+Description: (4) Proportionality. The student applies mathematical process standards to explain proportional and non-proportional relationships involving slope. The student is expected to:
+(A) use similar right triangles to develop an understanding that slope, m, given as the rate comparing the change in y-values to the change in x-values, (y2 - y1)/ (x2 - x1), is the same for any two points (x1, y1) and (x2, y2) on the same line;
+(B) graph proportional relationships, interpreting the unit rate as the slope of the line that models the relationship; and
+(C) use data from a table or graph to determine the rate of change or slope and y-intercept in mathematical and real-world problems.
