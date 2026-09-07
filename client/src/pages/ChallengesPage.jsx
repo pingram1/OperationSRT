@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { getSubjects } from '../api/systemConfig';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Trophy, Zap, BrainCircuit, BookCopy, ChevronRight, Filter, Award, TrendingUp } from 'lucide-react';
+import { Trophy, Zap, ChevronRight, Award, TrendingUp } from 'lucide-react';
 import { getAllChallenges, getLeaderboard } from '../api/challenges.js';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { useToast } from '../components/common/Toast.jsx';
 import SharedCard from '../components/common/Card.jsx';
+import ActivityRewardBadge from '../components/activities/ActivityRewardBadge.jsx';
+import ActivityFilterBar from '../components/activities/ActivityFilterBar.jsx';
+import { EMPTY_ACTIVITY_FILTERS } from '../constants/activityFilters';
 
 // --- Reusable Components ---
 // Challenge cards lift on hover to advertise interactivity.
@@ -24,12 +26,7 @@ export default function ChallengesPage() {
     const [challenges, setChallenges] = useState([]);
     const [leaderboard, setLeaderboard] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [subjects, setSubjects] = useState([]);
-    const [filters, setFilters] = useState({
-        subject: '',
-        difficulty: '',
-    });
-    const [showFilters, setShowFilters] = useState(false);
+    const [filters, setFilters] = useState({ ...EMPTY_ACTIVITY_FILTERS });
 
     // Fetch challenges - refetch when filters change or when component becomes visible
     useEffect(() => {
@@ -177,7 +174,10 @@ export default function ChallengesPage() {
             Easy: 'bg-green-100 text-green-700',
             Medium: 'bg-yellow-100 text-yellow-700',
             Hard: 'bg-red-100 text-red-700',
+            'Post-Grad': 'bg-purple-100 text-purple-700',
         };
+        const baseXp = challenge.baseXp ?? challenge.xpReward;
+        const grades = Array.isArray(challenge.gradeLevels) ? challenge.gradeLevels : [];
 
         return (
             <Card className="flex flex-col">
@@ -187,11 +187,18 @@ export default function ChallengesPage() {
                         <Pill text={challenge.difficulty} className={difficultyColors[challenge.difficulty]} />
                     </div>
                     <h3 className="text-xl font-bold text-gray-800 mb-1">{challenge.title}</h3>
-                    <p className="text-sm font-semibold text-blue-600 mb-3">{challenge.subject}</p>
+                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mb-3">
+                        <span className="text-sm font-semibold text-blue-600">{challenge.subject}</span>
+                        {grades.length > 0 && (
+                            <span className="text-xs text-gray-400">· Grades {grades.join(', ')}</span>
+                        )}
+                    </div>
                     <p className="text-gray-600 text-sm mb-4">{challenge.description}</p>
-                    
+
+                    <ActivityRewardBadge reward={challenge.reward} baseXp={baseXp} className="mb-2" />
+
                     {challenge.status === 'inprogress' && (
-                        <div className="mb-4">
+                        <div className="mb-4 mt-2">
                             <div className="w-full bg-gray-200 rounded-full h-2.5">
                                 <div className="bg-blue-500 h-2.5 rounded-full" style={{ width: `${challenge.progress}%` }}></div>
                             </div>
@@ -201,9 +208,9 @@ export default function ChallengesPage() {
                 </div>
 
                 <div className="flex justify-between items-center mt-4 pt-4 border-t">
-                    <div className="flex items-center">
+                    <div className="flex items-center" title="Full reward for a first-time completion">
                         <Zap className="w-4 h-4 text-yellow-400 mr-1" />
-                        <span className="text-sm font-semibold">{challenge.xpReward} XP</span>
+                        <span className="text-sm font-semibold">{baseXp} XP</span>
                     </div>
                     <button 
                         onClick={() => navigate(`/challenges/${challenge._id}`)}
@@ -211,15 +218,13 @@ export default function ChallengesPage() {
                     >
                         {challenge.status === 'new' && 'Start Challenge'}
                         {challenge.status === 'inprogress' && 'Continue'}
-                        {challenge.status === 'completed' && 'View Results'}
+                        {challenge.status === 'completed' && (challenge.reward?.state === 'practice' ? 'Practice Again' : 'Play Again')}
                         <ChevronRight className="w-4 h-4 ml-1" />
                     </button>
                 </div>
             </Card>
         );
     };
-
-    const difficulties = ['Easy', 'Medium', 'Hard'];
 
     return (
         <div>
@@ -267,59 +272,18 @@ export default function ChallengesPage() {
                 </Card>
             )}
 
-            {/* Filters and Tabs */}
-            <div className="mb-6">
-                <div className="flex justify-between items-center mb-4">
-                    {isAuthenticated && (
-                        <div className="flex border-b">
-                            <button onClick={() => setActiveTab('new')} className={`px-4 py-2 text-sm font-semibold ${activeTab === 'new' ? 'border-b-2 border-blue-500 text-blue-600' : 'text-gray-500'}`}>New</button>
-                            <button onClick={() => setActiveTab('inprogress')} className={`px-4 py-2 text-sm font-semibold ${activeTab === 'inprogress' ? 'border-b-2 border-blue-500 text-blue-600' : 'text-gray-500'}`}>In Progress</button>
-                            <button onClick={() => setActiveTab('completed')} className={`px-4 py-2 text-sm font-semibold ${activeTab === 'completed' ? 'border-b-2 border-blue-500 text-blue-600' : 'text-gray-500'}`}>Completed</button>
-                        </div>
-                    )}
-                    <button 
-                        onClick={() => setShowFilters(!showFilters)}
-                        className="flex items-center px-4 py-2 text-sm font-semibold text-gray-600 hover:text-blue-600"
-                    >
-                        <Filter className="w-4 h-4 mr-2" />
-                        Filters
-                    </button>
+            {/* Status Tabs */}
+            {isAuthenticated && (
+                <div className="mb-4">
+                    <div className="flex border-b">
+                        <button onClick={() => setActiveTab('new')} className={`px-4 py-2 text-sm font-semibold ${activeTab === 'new' ? 'border-b-2 border-blue-500 text-blue-600' : 'text-gray-500'}`}>New</button>
+                        <button onClick={() => setActiveTab('inprogress')} className={`px-4 py-2 text-sm font-semibold ${activeTab === 'inprogress' ? 'border-b-2 border-blue-500 text-blue-600' : 'text-gray-500'}`}>In Progress</button>
+                        <button onClick={() => setActiveTab('completed')} className={`px-4 py-2 text-sm font-semibold ${activeTab === 'completed' ? 'border-b-2 border-blue-500 text-blue-600' : 'text-gray-500'}`}>Completed</button>
+                    </div>
                 </div>
+            )}
 
-                {/* Filter Dropdown */}
-                {showFilters && (
-                    <Card className="mb-4">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">Subject</label>
-                                <select
-                                    value={filters.subject}
-                                    onChange={(e) => setFilters({ ...filters, subject: e.target.value })}
-                                    className="w-full p-2 border rounded-lg"
-                                >
-                                    <option value="">All Subjects</option>
-                                    {subjects.map(subject => (
-                                        <option key={subject} value={subject}>{subject}</option>
-                                    ))}
-                                </select>
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">Difficulty</label>
-                                <select
-                                    value={filters.difficulty}
-                                    onChange={(e) => setFilters({ ...filters, difficulty: e.target.value })}
-                                    className="w-full p-2 border rounded-lg"
-                                >
-                                    <option value="">All Difficulties</option>
-                                    {difficulties.map(diff => (
-                                        <option key={diff} value={diff}>{diff}</option>
-                                    ))}
-                                </select>
-                            </div>
-                        </div>
-                    </Card>
-                )}
-            </div>
+            <ActivityFilterBar filters={filters} onChange={setFilters} />
 
             {/* Challenges Grid */}
             {isLoading ? (

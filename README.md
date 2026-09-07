@@ -187,9 +187,20 @@ OperationSRT-1/
 
 ### Authentication
 - `POST /api/auth/register` - Register new user (students/parents)
-- `POST /api/auth/login` - User login
+- `POST /api/auth/login` - User login. Returns `{ token, user }`, or, when the
+  account has 2FA enabled, `{ twoFactorRequired: true, challengeToken }`.
+- `POST /api/auth/2fa/verify` - Complete a 2FA-gated login by exchanging
+  `{ challengeToken, token }` for real session tokens.
 - `POST /api/auth/refresh` - Refresh access token
 - `GET /api/auth/user` - Get current user
+
+### Two-Factor Authentication (TOTP)
+- `POST /api/users/profile/2fa/enable` - Begin enrollment; returns an
+  `otpauthUrl` (rendered as a QR code client-side) and a `manualEntryKey`.
+  2FA is **not** active until a code is verified.
+- `POST /api/users/profile/2fa/verify` - Verify a code `{ token }` to activate 2FA.
+- `POST /api/users/profile/2fa/disable` - Disable 2FA; requires a current
+  code `{ token }` while 2FA is active.
 
 ### Bookings
 - `GET /api/bookings` - Get user's bookings (paginated)
@@ -249,6 +260,45 @@ The application uses Winston for structured logging:
 - Verify `MONGO_URI` format is correct
 - Check network connectivity to MongoDB
 - Ensure MongoDB user has proper permissions
+
+## Beta Hardening Changelog (P0 Remediation)
+
+> **Maintenance cadence:** Update this section at the close of **every P0/P1
+> work item** (and at minimum **weekly** while in active beta hardening). Each
+> entry: date, area, and a one-line summary. This keeps the README an accurate
+> single source of truth for beta readiness. See `P0_BETA_REMEDIATION_EPIC.md`
+> and `BETA_AUDIT_REPORT.md` for the full audit trail.
+
+This work tracks the critical findings from the beta security/architecture
+audit. Tasks are executed in dependency order: data model → tenancy enforcement
+→ auth hardening → 2FA.
+
+### 2026-06-15 — Multi-tenant / sector data model
+- Added canonical `sector` vocabulary (`public`, `private`, `charter`) in
+  `server/utils/tenancy.js` with `buildTenantFilter` / `assertSameTenant` helpers.
+- Denormalized `schoolId` + `sector` onto `User` and `Booking`; added
+  `accountStatus` lifecycle and tenant-scoped indexes.
+- Idempotent backfill migration: `server/scripts/migrations/20260614_add_tenancy.js`.
+
+### 2026-06-15 — Tenancy enforcement & auth hardening
+- New `tenantScope` middleware resolves `req.tenant` by role; wired into
+  `schoolRoutes`.
+- `AuthMiddleware` now reloads the user from the DB each request (fresh role,
+  `schoolId`, `sector`, `accountStatus`) — stale/suspended sessions are rejected
+  immediately.
+- Centralized + idempotent bcrypt password hashing in the `User` pre-save hook.
+
+### 2026-06-15 — Two-Factor Authentication (TOTP)
+- Zero-dependency, RFC 6238 TOTP on the server (`server/utils/twoFactor.js`).
+- **Client wiring (this change):**
+  - Login challenge flow: `LoginPage` and `EmployeeLoginPage` now route 2FA
+    accounts through `TwoFactorChallenge`, which calls `/api/auth/2fa/verify`.
+  - Self-contained enrollment/disable modal in `Settings` (QR + manual key +
+    code verification; code-gated disable).
+  - Zero-dependency client QR generator (`client/src/utils/qrcode.js` +
+    `components/common/QRCode.jsx`) so the TOTP secret never leaves the browser.
+- **Cleanup:** removed the duplicate `{ email: 1 }` index declaration on the
+  `User` model (the `unique: true` path already creates it).
 
 ## Contributing
 

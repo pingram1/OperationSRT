@@ -62,6 +62,16 @@ const ChallengeAttemptSchema = new Schema({
         type: Number,
         default: 0,
     },
+    // Reward engine bookkeeping — ensures one evaluation per attempt.
+    rewardEvaluated: {
+        type: Boolean,
+        default: false,
+    },
+    payoutType: {
+        type: String,
+        enum: ['first_completion', 'weekly_partial', 'practice_only', null],
+        default: null,
+    },
     // Streak tracking (for accuracy challenges)
     currentStreak: {
         type: Number,

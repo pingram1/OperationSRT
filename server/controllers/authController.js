@@ -5,6 +5,32 @@ const jwt = require('jsonwebtoken');
 const { createParentLinkRequestFromSignup } = require('./parentLinkController');
 const logger = require('../utils/logger');
 const { trackEvent } = require('../services/telemetryService');
+const { verifyToken: verifyTotp } = require('../utils/twoFactor');
+
+/**
+ * Secret for the short-lived 2FA login-challenge token. Derived from JWT_SECRET
+ * so it rotates with it, but namespaced so a challenge token can never be used
+ * as an access token (different signing key + different claims).
+ */
+function getTwoFactorChallengeSecret() {
+    return `${process.env.JWT_SECRET}_2fa_challenge`;
+}
+
+/**
+ * Issue the access + refresh token pair for a fully authenticated user and
+ * persist the refresh token. Returns the tokens; callers shape the response.
+ */
+async function issueAuthTokens(user) {
+    const payload = { user: { id: user.id, role: user.role } };
+    const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '8h' });
+
+    const refreshToken = jwt.sign({ userId: user.id }, getRefreshSecret(), { expiresIn: '7d' });
+    user.refreshToken = refreshToken;
+    user.refreshTokenExpiry = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    await user.save();
+
+    return { token, refreshToken };
+}
 
 /**
  * Returns the refresh-token signing secret. Prefers the dedicated
@@ -205,11 +231,36 @@ const loginUser = async (req, res) => {
                 message: 'This account uses Google authentication. Please sign in with Google.' 
             });
         }
+
+        // Block suspended/disabled accounts at the door.
+        if (user.accountStatus && user.accountStatus !== 'active') {
+            logger.warn('Login failed - account not active', { email: user.email, status: user.accountStatus });
+            return res.status(403).json({ message: 'Account is not active. Contact an administrator.' });
+        }
         
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
             logger.warn('Login failed - password mismatch', { email: user.email });
             return res.status(400).json({ message: 'Invalid credentials' });
+        }
+
+        // Second factor gate: if 2FA is genuinely active (enabled AND a secret
+        // exists), do NOT issue tokens yet. Return a short-lived challenge that
+        // must be exchanged via /api/auth/2fa/verify with a valid TOTP code.
+        // The `&& twoFactorSecret` guard protects legacy "fake 2FA" accounts
+        // (enabled flag set but no secret) from being locked out.
+        if (user.twoFactorEnabled && user.twoFactorSecret) {
+            const challengeToken = jwt.sign(
+                { userId: user.id, twoFactorPending: true },
+                getTwoFactorChallengeSecret(),
+                { expiresIn: '5m' },
+            );
+            logger.info('Login requires 2FA', { userId: user.id });
+            return res.status(200).json({
+                twoFactorRequired: true,
+                challengeToken,
+                message: 'Enter the code from your authenticator app to complete sign-in.',
+            });
         }
 
         logger.info('Login successful', { userId: user.id, email: user.email });
@@ -220,44 +271,17 @@ const loginUser = async (req, res) => {
             { actorUserId: user._id },
         ).catch(() => {});
 
-        const payload = {
-            user: { id: user.id, role: user.role },
-        };
-
-        // Generate access token (short-lived)
-        jwt.sign(
-            payload,
-            process.env.JWT_SECRET,
-            { expiresIn: '8h' },
-            async (err, token) => {
-                if (err) throw err;
-                
-                // Generate refresh token (long-lived, 7 days)
-                const refreshTokenPayload = { userId: user.id };
-                const refreshToken = jwt.sign(
-                    refreshTokenPayload,
-                    getRefreshSecret(),
-                    { expiresIn: '7d' }
-                );
-                
-                // Store refresh token in database
-                user.refreshToken = refreshToken;
-                user.refreshTokenExpiry = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
-                await user.save();
-                
-                // Send back the tokens and user info (excluding password)
-                res.json({
-                    token,
-                    refreshToken,
-                    user: {
-                        id: user.id,
-                        name: user.name,
-                        email: user.email,
-                        role: user.role,
-                    },
-                });
-            }
-        );
+        const { token, refreshToken } = await issueAuthTokens(user);
+        return res.json({
+            token,
+            refreshToken,
+            user: {
+                id: user.id,
+                name: user.name,
+                email: user.email,
+                role: user.role,
+            },
+        });
     } catch (err) {
         logger.error('Login error', { error: err.message, stack: err.stack });
         
@@ -553,6 +577,8 @@ const registerWithCode = async (req, res) => {
             password: hashed,
             role: 'student',
             schoolId: school._id,
+            // Snapshot the sector so tenant filters work without a join.
+            sector: school.sector || null,
         });
 
         trackEvent(
@@ -599,6 +625,65 @@ const registerWithCode = async (req, res) => {
     }
 };
 
+/**
+ * @desc    Complete login by verifying a TOTP code against a 2FA challenge.
+ * @route   POST /api/auth/2fa/verify
+ * @access  Public (requires a valid, unexpired challenge token from /login)
+ */
+const verifyTwoFactorLogin = async (req, res) => {
+    try {
+        const { challengeToken, token } = req.body;
+        if (!challengeToken || !token) {
+            return res.status(400).json({ message: 'challengeToken and token are required' });
+        }
+
+        let decoded;
+        try {
+            decoded = jwt.verify(challengeToken, getTwoFactorChallengeSecret());
+        } catch (err) {
+            return res.status(401).json({ message: 'Invalid or expired 2FA challenge. Please log in again.' });
+        }
+
+        if (!decoded.twoFactorPending || !decoded.userId) {
+            return res.status(401).json({ message: 'Invalid 2FA challenge' });
+        }
+
+        const user = await User.findById(decoded.userId);
+        if (!user || !user.twoFactorEnabled || !user.twoFactorSecret) {
+            return res.status(401).json({ message: 'Invalid 2FA challenge' });
+        }
+
+        if (user.accountStatus && user.accountStatus !== 'active') {
+            return res.status(403).json({ message: 'Account is not active. Contact an administrator.' });
+        }
+
+        if (!verifyTotp(token, user.twoFactorSecret)) {
+            return res.status(400).json({ message: 'Invalid verification code' });
+        }
+
+        trackEvent(
+            'auth_login_success',
+            { authMethod: 'password_2fa' },
+            { actorUserId: user._id },
+        ).catch(() => {});
+
+        const { token: accessToken, refreshToken: newRefreshToken } = await issueAuthTokens(user);
+        return res.json({
+            token: accessToken,
+            refreshToken: newRefreshToken,
+            user: {
+                id: user.id,
+                name: user.name,
+                email: user.email,
+                role: user.role,
+            },
+        });
+    } catch (err) {
+        logger.error('verifyTwoFactorLogin error', { error: err.message });
+        return res.status(500).json({ message: 'Server error during 2FA verification' });
+    }
+};
+
 module.exports = {
     refreshToken,
     registerUser,
@@ -607,4 +692,5 @@ module.exports = {
     loginUser,
     logoutUser,
     getLoggedInUser,
+    verifyTwoFactorLogin,
 };

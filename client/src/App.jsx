@@ -18,6 +18,8 @@ const ProgressReportsPage = lazy(() => import('./pages/ProgressReportsPage'));
 const ResourcesPage = lazy(() => import('./pages/ResourcesPage'));
 const ChallengesPage = lazy(() => import('./pages/ChallengesPage'));
 const ChallengePlayPage = lazy(() => import('./pages/ChallengePlayPage'));
+const ConceptVisualizersPage = lazy(() => import('./pages/ConceptVisualizersPage'));
+const ConceptVisualizerPlayPage = lazy(() => import('./pages/ConceptVisualizerPlayPage'));
 const ScholarshipFundPage = lazy(() => import('./pages/ScholarshipFundPage'));
 const TutorAppointmentsPage = lazy(() => import('./pages/TutorAppointmentsPage'));
 const MyStudentsPage = lazy(() => import('./pages/MyStudentsPage'));
@@ -113,6 +115,8 @@ export default function App() {
             <Route path="resources" element={<ResourcesPage />} />
             <Route path="challenges" element={<ChallengesPage />} />
             <Route path="challenges/:id" element={<ChallengePlayPage />} />
+            <Route path="visualizers" element={<ConceptVisualizersPage />} />
+            <Route path="visualizers/:gameId" element={<ConceptVisualizerPlayPage />} />
             <Route path="scholarship-fund" element={<ScholarshipFundPage />} />
             
             {/* Video Call Route */}

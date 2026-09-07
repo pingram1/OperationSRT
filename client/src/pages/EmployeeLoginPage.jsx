@@ -7,6 +7,7 @@ import { setSecureToken } from '../api/authStorage.js';
 import { getGoogleAuthUrl } from '../api/googleAuth';
 import logoUrl from '../assets/logo.jpg';
 import Button from '../components/common/Button.jsx';
+import TwoFactorChallenge from '../components/auth/TwoFactorChallenge.jsx';
 
 /**
  * Employee Login Page - For Tutors and Administrators
@@ -17,6 +18,7 @@ export default function EmployeeLoginPage() {
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const [challengeToken, setChallengeToken] = useState('');
     const { login } = useAuth();
     
     const navigate = useNavigate();
@@ -82,6 +84,27 @@ export default function EmployeeLoginPage() {
         }
     };
 
+    // Shared post-credential completion: applies the employee-only role gate,
+    // stores the session token, and routes into the app. Used by both the
+    // direct login path and the 2FA-verified path.
+    const completeLogin = (data) => {
+        // Verify that the user is an employee (tutor, admin, or super_admin)
+        if (data.user && (data.user.role === 'tutor' || data.user.role === 'admin' || data.user.role === 'super_admin')) {
+            if (data.token) {
+                setSecureToken(data.token);
+            }
+            login(data.user);
+            navigate('/dashboard');
+        } else if (data.user) {
+            // User is a student or parent - redirect them to client login
+            setChallengeToken('');
+            setError('This portal is for employees only. Please use the client login portal.');
+        } else {
+            setChallengeToken('');
+            setError('Login successful but no user data received');
+        }
+    };
+
     const handleSubmit = async e => {
         e.preventDefault();
         setError('');
@@ -98,24 +121,15 @@ export default function EmployeeLoginPage() {
             }
             
             const data = await loginUser(normalizedEmail, password);
-            
-            // Verify that the user is an employee (tutor, admin, or super_admin)
-            if (data.user && (data.user.role === 'tutor' || data.user.role === 'admin' || data.user.role === 'super_admin')) {
-                // Store the token securely
-                if (data.token) {
-                    setSecureToken(data.token);
-                }
-                
-                // Update auth context with user data
-                login(data.user);
-                navigate('/dashboard');
-            } else if (data.user) {
-                // User is a student or parent - redirect them to client login
-                setError('This portal is for employees only. Please use the client login portal.');
+
+            // 2FA-enabled account: defer completion to the verification step.
+            if (data.twoFactorRequired && data.challengeToken) {
+                setChallengeToken(data.challengeToken);
                 setIsLoading(false);
-            } else {
-                throw new Error('Login successful but no user data received');
+                return;
             }
+
+            completeLogin(data);
         } catch (err) {
             let errorMessage = 'Login failed. Please try again.';
             
@@ -139,6 +153,17 @@ export default function EmployeeLoginPage() {
         <div className="bg-gradient-to-r from-slate-900 to-gray-800 min-h-screen flex items-center justify-center p-4 font-sans">
             <div className="w-full max-w-md">
                 <div className="bg-white rounded-2xl shadow-2xl p-8 md:p-12">
+                    {challengeToken ? (
+                        <TwoFactorChallenge
+                            challengeToken={challengeToken}
+                            onSuccess={completeLogin}
+                            onBack={() => {
+                                setChallengeToken('');
+                                setError('');
+                            }}
+                        />
+                    ) : (
+                    <>
                     <div className="text-center mb-8">
                         <div className="flex justify-center mb-4">
                             <div className="bg-blue-100 p-3 rounded-full">
@@ -250,6 +275,8 @@ export default function EmployeeLoginPage() {
                             </p>
                         </div>
                     </div>
+                    </>
+                    )}
                 </div>
             </div>
         </div>

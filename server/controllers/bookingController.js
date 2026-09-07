@@ -294,6 +294,10 @@ const createBooking = async (req, res) => {
         const bookingData = {
             user,
             student,
+            // Snapshot the student's tenant context so this session can be
+            // isolated by school/sector without a join on every read.
+            schoolId: studentUser?.schoolId || null,
+            sector: studentUser?.sector || null,
             tutor: assignedTutor || null,
             subject,
             gradeLevel: gradeLevel || null,

@@ -35,6 +35,7 @@ const ROUTE_TO_IMPORT = {
     '/progress-reports': () => import('../pages/ProgressReportsPage'),
     '/resources': () => import('../pages/ResourcesPage'),
     '/challenges': () => import('../pages/ChallengesPage'),
+    '/visualizers': () => import('../pages/ConceptVisualizersPage'),
     '/scholarship-fund': () => import('../pages/ScholarshipFundPage'),
     '/admin-panel': () => import('../pages/AdminPanel.jsx'),
     '/admin-bookings': () => import('../pages/AdminBookingPage.jsx'),

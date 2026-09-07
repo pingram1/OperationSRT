@@ -93,8 +93,11 @@ export const updatePassword = (currentPassword, newPassword) => {
 };
 
 /**
- * Enables two-factor authentication for the current user.
- * @returns {Promise<object>} Success message with 2FA status.
+ * Begins TOTP 2FA enrollment. 2FA is NOT active until a code is verified via
+ * verifyTwoFactorSetup.
+ * @returns {Promise<{message: string, otpauthUrl: string, manualEntryKey: string}>}
+ *   The otpauth:// URL (rendered as a QR client-side) and the raw secret for
+ *   manual entry. The secret is only ever returned during enrollment.
  * @throws {Error} If the API call fails or returns an error.
  */
 export const enableTwoFactor = () => {
@@ -104,13 +107,34 @@ export const enableTwoFactor = () => {
 };
 
 /**
- * Disables two-factor authentication for the current user.
- * @returns {Promise<object>} Success message with 2FA status.
+ * Verifies a TOTP code and activates 2FA (promotes the pending secret).
+ * @param {string} token - The 6-digit code from the authenticator app.
+ * @returns {Promise<{message: string, twoFactorEnabled: boolean}>}
+ * @throws {Error} If the API call fails or the code is invalid.
+ */
+export const verifyTwoFactorSetup = (token) => {
+  if (!token) {
+    throw new Error('A verification code is required.');
+  }
+
+  return apiRequest('/api/users/profile/2fa/verify', {
+    method: 'POST',
+    body: JSON.stringify({ token: String(token).trim() })
+  });
+};
+
+/**
+ * Disables two-factor authentication for the current user. Requires a current
+ * code when 2FA is active (prevents a hijacked session from silently removing
+ * the factor).
+ * @param {string} [token] - The current 6-digit code (required when 2FA is active).
+ * @returns {Promise<{message: string, twoFactorEnabled: boolean}>}
  * @throws {Error} If the API call fails or returns an error.
  */
-export const disableTwoFactor = () => {
+export const disableTwoFactor = (token) => {
   return apiRequest('/api/users/profile/2fa/disable', {
-    method: 'POST'
+    method: 'POST',
+    body: JSON.stringify({ token: token ? String(token).trim() : undefined })
   });
 };
 

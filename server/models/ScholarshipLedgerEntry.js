@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
-const SOURCE = ['challenge_xp', 'tutoring_session', 'adjustment', 'payout_request', 'payout_reversal'];
+const SOURCE = ['challenge_xp', 'visualizer_xp', 'tutoring_session', 'adjustment', 'payout_request', 'payout_reversal'];
 
 const ScholarshipLedgerEntrySchema = new Schema(
     {

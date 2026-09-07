@@ -2,8 +2,75 @@ const Challenge = require('../models/Challenge');
 const ChallengeAttempt = require('../models/ChallengeAttempt');
 const User = require('../models/User');
 const { checkAnswer } = require('../utils/challengeAnswerCheck');
-const { creditChallengeXp } = require('../services/scholarshipService');
+const { creditActivityXp } = require('../services/scholarshipService');
 const { trackEvent } = require('../services/telemetryService');
+const {
+    evaluateActivityAttempt,
+    previewActivityReward,
+    getProgressMap,
+} = require('../services/activityRewardService');
+const { baseXpForDifficulty } = require('../constants/activityRewards');
+
+/**
+ * Resolve the effective base XP for a challenge (new baseXp field, with
+ * fallbacks for legacy docs that predate the reward-engine migration).
+ */
+function challengeBaseXp(challenge) {
+    if (challenge.baseXp != null) return challenge.baseXp;
+    return baseXpForDifficulty(challenge.difficulty, challenge.xpReward || 0);
+}
+
+/**
+ * Evaluate + apply a challenge completion through the time-throttled engine.
+ * Mutates `attempt` (xpEarned/payoutType/rewardEvaluated) but does not save it.
+ * Returns the engine decision.
+ */
+async function applyChallengeReward(userId, challenge, attempt) {
+    const baseXp = challengeBaseXp(challenge);
+    const result = await evaluateActivityAttempt({
+        userId,
+        activityType: 'challenge',
+        activityId: challenge._id,
+        baseXp,
+    });
+
+    attempt.xpEarned = result.xpAwarded;
+    attempt.payoutType = result.payoutType;
+    attempt.rewardEvaluated = true;
+
+    if (result.xpAwarded > 0) {
+        const user = await User.findById(userId);
+        if (user) {
+            user.xp += result.xpAwarded;
+            if (result.isFirstCompletion) {
+                user.challengesCompleted += 1;
+            }
+            user.level = Math.floor(user.xp / 100) + 1;
+            await user.save();
+
+            const dayStamp = new Date().toISOString().slice(0, 10);
+            const idempotencyKey = result.isFirstCompletion
+                ? `challenge_attempt:${attempt._id}`
+                : `challenge_partial:${challenge._id}:${userId}:${dayStamp}`;
+
+            try {
+                await creditActivityXp({
+                    userId: user._id,
+                    idempotencyKey,
+                    source: 'challenge_xp',
+                    title: 'Challenge XP reward',
+                    xpReward: result.xpAwarded,
+                    userXpAfterAward: user.xp,
+                    metadata: { payoutType: result.payoutType, challengeId: String(challenge._id) },
+                });
+            } catch (schErr) {
+                console.error('[scholarship] creditActivityXp', schErr.message);
+            }
+        }
+    }
+
+    return result;
+}
 
 function emitChallengeAttemptCompleted(actorUserId, challenge, attempt) {
     const outcome = attempt.status === 'completed' ? 'success' : 'fail';
@@ -50,7 +117,17 @@ const getAllChallenges = async (req, res) => {
         if (gradeLevel) query.gradeLevels = { $in: [gradeLevel] };
 
         const challenges = await Challenge.find(query).sort({ createdAt: -1 });
-        
+
+        // Per-activity reward ledger for the current user (for badge previews)
+        let progressByActivity = {};
+        if (req.user) {
+            progressByActivity = await getProgressMap(
+                req.user.id,
+                'challenge',
+                challenges.map((c) => c._id),
+            );
+        }
+
         // Always return challenges with status field
         // If user is logged in, get their attempt status for each challenge
         // IMPORTANT: Get the most relevant attempt for each challenge, prioritizing completed attempts
@@ -219,10 +296,13 @@ const getAllChallenges = async (req, res) => {
                 }
             }
 
+            const baseXp = challengeBaseXp(challenge);
             const result = {
                 ...challenge.toObject(),
                 status,
                 progress,
+                baseXp,
+                reward: previewActivityReward(progressByActivity[challengeIdStr], baseXp),
             };
             
             // CRITICAL DEBUG: Log final status for Punctuation Pro
@@ -298,9 +378,18 @@ const getChallengeById = async (req, res) => {
             }
         }
 
+        const baseXp = challengeBaseXp(challenge);
+        let reward = previewActivityReward(null, baseXp);
+        if (req.user) {
+            const progressMap = await getProgressMap(req.user.id, 'challenge', [challenge._id]);
+            reward = previewActivityReward(progressMap[challenge._id.toString()], baseXp);
+        }
+
         res.json({
             challenge,
             attempt,
+            baseXp,
+            reward,
         });
     } catch (err) {
         console.error('Error fetching challenge:', err);
@@ -440,34 +529,9 @@ const submitAnswer = async (req, res) => {
                 }
             }
 
-            // Award XP if completed (only once)
-            if (attempt.status === 'completed' && !attempt.xpEarned) {
-                attempt.xpEarned = challenge.xpReward;
-                
-                // Update user XP (check if XP was already awarded)
-                const user = await User.findById(req.user.id);
-                // Only award XP if this attempt hasn't awarded XP before
-                // This prevents double-awarding if completeChallenge is called multiple times
-                const existingCompletedAttempt = await ChallengeAttempt.findOne({
-                    user: req.user.id,
-                    challenge: challenge._id,
-                    status: 'completed',
-                    xpEarned: { $gt: 0 },
-                }).sort({ createdAt: -1 });
-                
-                if (!existingCompletedAttempt || existingCompletedAttempt._id.toString() === attempt._id.toString()) {
-                    user.xp += challenge.xpReward;
-                    user.challengesCompleted += 1;
-                    
-                    // Calculate level (100 XP per level)
-                    user.level = Math.floor(user.xp / 100) + 1;
-                    await user.save();
-                    try {
-                        await creditChallengeXp(user._id, attempt._id, challenge.xpReward, user.xp);
-                    } catch (schErr) {
-                        console.error('[scholarship] creditChallengeXp', schErr.message);
-                    }
-                }
+            // Award XP via the time-throttled reward engine (once per attempt)
+            if (attempt.status === 'completed' && !attempt.rewardEvaluated) {
+                await applyChallengeReward(req.user.id, challenge, attempt);
             }
         }
 
@@ -556,34 +620,9 @@ const completeChallenge = async (req, res) => {
                 attempt.timeSpent = Math.floor((attempt.endTime - attempt.startTime) / 1000);
             }
 
-            // Award XP if completed (only once, check if already awarded)
-            if (attempt.status === 'completed' && !attempt.xpEarned) {
-                attempt.xpEarned = challenge.xpReward;
-                
-                const user = await User.findById(req.user.id);
-                // Double-check that we haven't already awarded XP for this challenge
-                const existingCompletedAttempt = await ChallengeAttempt.findOne({
-                    user: req.user.id,
-                    challenge: req.params.id,
-                    status: 'completed',
-                    xpEarned: { $gt: 0 },
-                    _id: { $ne: attempt._id }, // Exclude current attempt
-                }).sort({ createdAt: -1 });
-                
-                if (!existingCompletedAttempt) {
-                    user.xp += challenge.xpReward;
-                    user.challengesCompleted += 1;
-                    user.level = Math.floor(user.xp / 100) + 1;
-                    await user.save();
-                    try {
-                        await creditChallengeXp(user._id, attempt._id, challenge.xpReward, user.xp);
-                    } catch (schErr) {
-                        console.error('[scholarship] creditChallengeXp', schErr.message);
-                    }
-                } else {
-                    // XP was already awarded, don't award again
-                    attempt.xpEarned = 0;
-                }
+            // Award XP via the time-throttled reward engine (once per attempt)
+            if (attempt.status === 'completed' && !attempt.rewardEvaluated) {
+                await applyChallengeReward(req.user.id, challenge, attempt);
             }
 
             transitionedTerminal = true;

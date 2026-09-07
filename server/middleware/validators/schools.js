@@ -2,6 +2,7 @@
  * Validators for /api/schools/* endpoints.
  */
 const { body, param } = require('express-validator');
+const { SECTORS } = require('../../utils/tenancy');
 
 const objectIdParam = (name) => param(name)
     .matches(/^[a-fA-F0-9]{24}$/)
@@ -26,6 +27,10 @@ const create = [
         .optional({ nullable: true, checkFalsy: true })
         .isEmail().withMessage('primaryContactEmail must be a valid email')
         .isLength({ max: 254 }),
+    body('sector')
+        .optional({ nullable: true, checkFalsy: true })
+        .isIn(SECTORS)
+        .withMessage(`sector must be one of: ${SECTORS.join(' | ')}`),
     body('status')
         .optional({ nullable: true })
         .isIn(['pending', 'active_pilot', 'completed', 'inactive'])

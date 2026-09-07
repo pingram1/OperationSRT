@@ -4,6 +4,31 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const path = require('path');
 const fs = require('fs').promises;
+const { generateSecret, buildOtpAuthUrl, verifyToken } = require('../utils/twoFactor');
+
+/**
+ * Build a tenant-isolation filter for user-list endpoints.
+ *
+ * - admin / super_admin  → {} (all tenants)
+ * - school_admin         → { schoolId: <their school> }
+ * - school_admin w/o a school binding → null (caller should return an empty list)
+ *
+ * Returning a filter object (vs null) lets callers distinguish "no restriction"
+ * from "restricted to nothing" without leaking cross-tenant rows.
+ */
+const tenantUserFilter = async (req) => {
+    if (req.user.role === 'admin' || req.user.role === 'super_admin') {
+        return {};
+    }
+    if (req.user.role === 'school_admin') {
+        const schoolId = req.user.schoolId
+            || (await User.findById(req.user.id).select('schoolId').lean())?.schoolId;
+        return schoolId ? { schoolId } : null;
+    }
+    // Non-privileged roles should never reach these admin endpoints; deny by
+    // default if they somehow do.
+    return null;
+};
 
 /**
  * @desc    Get the profile of the currently logged-in user
@@ -216,10 +241,16 @@ const updateUserProfile = async (req, res) => {
  */
 const getAllUsers = async (req, res) => {
     try {
-        const users = await User.find({})
+        // Tenant isolation: a global admin sees everyone; a school_admin only
+        // ever sees users bound to their own school cohort.
+        const filter = await tenantUserFilter(req);
+        if (filter === null) {
+            return res.json([]);
+        }
+        const users = await User.find(filter)
             .select('-password')
             .populate('children', 'name email avatar role')
-            .populate('schoolId', 'name district status');
+            .populate('schoolId', 'name district status sector');
         console.log(`[getAllUsers] Found ${users.length} users`);
         res.json(users);
     } catch (err) {
@@ -301,6 +332,7 @@ const updateUser = async (req, res) => {
         if (schoolId !== undefined) {
             if (schoolId === null || schoolId === '') {
                 user.schoolId = null;
+                user.sector = null;
             } else {
                 if (!mongoose.Types.ObjectId.isValid(schoolId)) {
                     return res.status(400).json({ message: 'Invalid schoolId' });
@@ -310,6 +342,8 @@ const updateUser = async (req, res) => {
                     return res.status(400).json({ message: 'Invalid schoolId' });
                 }
                 user.schoolId = school._id;
+                // Keep the denormalized sector in lockstep with the school binding.
+                user.sector = school.sector || null;
             }
         }
         if (avatar !== undefined) user.avatar = avatar;
@@ -425,7 +459,8 @@ const updatePassword = async (req, res) => {
 };
 
 /**
- * @desc    Enable two-factor authentication
+ * @desc    Begin TOTP 2FA enrollment: generate a pending secret + QR code.
+ *          2FA is NOT active until the user verifies a code (verifyTwoFactorSetup).
  * @route   POST /api/users/profile/2fa/enable
  * @access  Private
  */
@@ -437,25 +472,73 @@ const enableTwoFactor = async (req, res) => {
             return res.status(404).json({ message: 'User not found' });
         }
 
-        // For now, we'll just enable 2FA without actual TOTP implementation
-        // In production, you would generate a secret and QR code here
-        user.twoFactorEnabled = true;
+        if (user.twoFactorEnabled) {
+            return res.status(400).json({ message: 'Two-factor authentication is already enabled' });
+        }
+
+        const secret = generateSecret();
+        user.twoFactorPendingSecret = secret;
         await user.save();
 
-        console.log(`[enableTwoFactor] 2FA enabled for user: ${req.user.id}`);
-        res.json({ 
-            message: 'Two-factor authentication enabled successfully',
-            twoFactorEnabled: user.twoFactorEnabled 
-        });
+        const otpauthUrl = buildOtpAuthUrl(user.email, secret);
 
+        console.log(`[enableTwoFactor] 2FA enrollment started for user: ${req.user.id}`);
+        return res.json({
+            message: 'Add this to your authenticator app (scan the otpauth URL as a QR or enter the key), then verify a code to activate 2FA.',
+            // Client renders the QR from this standard otpauth:// URL.
+            otpauthUrl,
+            // The raw secret is returned once for manual entry; never returned
+            // again after activation.
+            manualEntryKey: secret,
+        });
     } catch (error) {
         console.error('[enableTwoFactor] Error:', error);
-        res.status(500).json({ message: 'Server error while enabling 2FA' });
+        res.status(500).json({ message: 'Server error while starting 2FA enrollment' });
     }
 };
 
 /**
- * @desc    Disable two-factor authentication
+ * @desc    Verify a TOTP code and activate 2FA (promotes pending secret).
+ * @route   POST /api/users/profile/2fa/verify
+ * @access  Private
+ */
+const verifyTwoFactorSetup = async (req, res) => {
+    try {
+        const { token } = req.body;
+        if (!token) {
+            return res.status(400).json({ message: 'A verification code is required' });
+        }
+
+        const user = await User.findById(req.user.id);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+        if (!user.twoFactorPendingSecret) {
+            return res.status(400).json({ message: 'No pending 2FA enrollment. Start enrollment first.' });
+        }
+
+        if (!verifyToken(token, user.twoFactorPendingSecret)) {
+            return res.status(400).json({ message: 'Invalid verification code' });
+        }
+
+        user.twoFactorSecret = user.twoFactorPendingSecret;
+        user.twoFactorPendingSecret = null;
+        user.twoFactorEnabled = true;
+        await user.save();
+
+        console.log(`[verifyTwoFactorSetup] 2FA activated for user: ${req.user.id}`);
+        return res.json({
+            message: 'Two-factor authentication is now active',
+            twoFactorEnabled: true,
+        });
+    } catch (error) {
+        console.error('[verifyTwoFactorSetup] Error:', error);
+        res.status(500).json({ message: 'Server error while verifying 2FA' });
+    }
+};
+
+/**
+ * @desc    Disable two-factor authentication (requires a current code).
  * @route   POST /api/users/profile/2fa/disable
  * @access  Private
  */
@@ -467,8 +550,18 @@ const disableTwoFactor = async (req, res) => {
             return res.status(404).json({ message: 'User not found' });
         }
 
+        // If 2FA is active, require a valid code to turn it off (prevents an
+        // attacker with a hijacked session from silently removing the factor).
+        if (user.twoFactorEnabled && user.twoFactorSecret) {
+            const { token } = req.body;
+            if (!verifyToken(token, user.twoFactorSecret)) {
+                return res.status(400).json({ message: 'A valid 2FA code is required to disable 2FA' });
+            }
+        }
+
         user.twoFactorEnabled = false;
         user.twoFactorSecret = null;
+        user.twoFactorPendingSecret = null;
         await user.save();
 
         console.log(`[disableTwoFactor] 2FA disabled for user: ${req.user.id}`);
@@ -585,9 +678,13 @@ const unlinkChildFromParent = async (req, res) => {
  */
 const getStudents = async (req, res) => {
     try {
-        const students = await User.find({ role: 'student' })
+        const tenantFilter = await tenantUserFilter(req);
+        if (tenantFilter === null) {
+            return res.json([]);
+        }
+        const students = await User.find({ ...tenantFilter, role: 'student' })
             .select('-password')
-            .select('name email avatar role createdAt');
+            .select('name email avatar role createdAt schoolId sector');
         
         console.log(`[getStudents] Found ${students.length} students`);
         res.json(students);
@@ -859,6 +956,7 @@ module.exports = {
     deleteUser,
     updatePassword,
     enableTwoFactor,
+    verifyTwoFactorSetup,
     disableTwoFactor,
     linkChildToParent,
     unlinkChildFromParent,

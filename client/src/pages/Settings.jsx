@@ -1,13 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, BellRing, Shield, CreditCard, Save, AlertTriangle, CheckCircle, AlertCircle as AlertIcon, Lock, Key, GraduationCap, BookOpen, Target, Eye, EyeOff, Clock, Users, Mail, UserPlus, UserCheck, UserX, Send, Brain, ArrowRight, Award, Upload, Trash2, Edit2, Image as ImageIcon, Building2 } from 'lucide-react';
+import { User, BellRing, Shield, CreditCard, Save, AlertTriangle, CheckCircle, AlertCircle as AlertIcon, Lock, Key, GraduationCap, BookOpen, Target, Eye, EyeOff, Clock, Users, Mail, UserPlus, UserCheck, UserX, Send, Brain, ArrowRight, Award, Upload, Trash2, Edit2, Image as ImageIcon, Building2, Copy, Check, Smartphone } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext.jsx';
-import { updateUserProfile, updatePassword, enableTwoFactor, disableTwoFactor, sendParentLinkRequest, getParentLinkRequests, acceptParentLinkRequest, rejectParentLinkRequest, cancelParentLinkRequest, updateStudentPaymentPermission, uploadCertificationBadge, deleteCertificationBadge, updateCertificationBadge } from '../api/users.js';
+import { updateUserProfile, updatePassword, enableTwoFactor, verifyTwoFactorSetup, disableTwoFactor, sendParentLinkRequest, getParentLinkRequests, acceptParentLinkRequest, rejectParentLinkRequest, cancelParentLinkRequest, updateStudentPaymentPermission, uploadCertificationBadge, deleteCertificationBadge, updateCertificationBadge } from '../api/users.js';
 import { getSubjects } from '../api/systemConfig.js';
 import { getMyAvailability, updateMyAvailability } from '../api/availability.js';
 import { getSecureToken } from '../api/authStorage.js';
 import Card from '../components/common/Card.jsx';
 import Dialog from '../components/common/Dialog.jsx';
+import QRCode from '../components/common/QRCode.jsx';
 import { getAllMembershipPlans, getCurrentMembership } from '../api/memberships.js';
 import { AuthenticatedImage } from '../components/common/AuthenticatedImage.jsx';
 import { useToast } from '../components/common/Toast.jsx';
@@ -225,7 +226,127 @@ const PasswordChangeModal = ({ isOpen, onClose, onSave, error, isLoading }) => {
 };
 
 // Two-Factor Authentication Modal
-const TwoFactorModal = ({ isOpen, onClose, isEnabled, onEnable, onDisable, isLoading, error }) => {
+// Formats a base32 secret into space-separated groups of 4 for readable
+// manual entry into an authenticator app.
+const formatSecret = (secret) => (secret || '').replace(/(.{4})/g, '$1 ').trim();
+
+const CodeInput = ({ value, onChange, autoFocus = false }) => {
+    const ref = useRef(null);
+    useEffect(() => {
+        if (autoFocus) ref.current?.focus();
+    }, [autoFocus]);
+    return (
+        <input
+            ref={ref}
+            type="text"
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            value={value}
+            onChange={(e) => onChange(e.target.value.replace(/\D/g, '').slice(0, 6))}
+            placeholder="000000"
+            className="w-full px-4 py-3 text-center text-2xl tracking-[0.5em] font-mono border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+        />
+    );
+};
+
+/**
+ * Self-contained 2FA management modal. Handles the full TOTP enrollment flow
+ * (start -> scan/enter secret -> verify code -> activate) and the code-gated
+ * disable flow. Notifies the parent via `onChanged(state)` after a successful
+ * enable/disable so it can refresh the user and surface a success message.
+ */
+const TwoFactorModal = ({ isOpen, onClose, isEnabled, onChanged }) => {
+    const [step, setStep] = useState('overview'); // overview | setup | disable
+    const [enrollment, setEnrollment] = useState(null); // { otpauthUrl, manualEntryKey }
+    const [code, setCode] = useState('');
+    const [error, setError] = useState('');
+    const [loading, setLoading] = useState(false);
+    const [copied, setCopied] = useState(false);
+
+    useEffect(() => {
+        if (isOpen) {
+            setStep('overview');
+            setEnrollment(null);
+            setCode('');
+            setError('');
+            setLoading(false);
+            setCopied(false);
+        }
+    }, [isOpen]);
+
+    const startEnrollment = async () => {
+        setLoading(true);
+        setError('');
+        try {
+            const data = await enableTwoFactor();
+            setEnrollment({ otpauthUrl: data.otpauthUrl, manualEntryKey: data.manualEntryKey });
+            setStep('setup');
+        } catch (err) {
+            setError(err.message || 'Could not start two-factor setup. Please try again.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const confirmEnrollment = async (e) => {
+        e.preventDefault();
+        if (code.length !== 6) {
+            setError('Enter the 6-digit code from your authenticator app.');
+            return;
+        }
+        setLoading(true);
+        setError('');
+        try {
+            await verifyTwoFactorSetup(code);
+            await onChanged?.('enabled');
+            onClose();
+        } catch (err) {
+            setError(err.message || 'That code was not valid. Please try again.');
+            setCode('');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const confirmDisable = async (e) => {
+        e.preventDefault();
+        if (code.length !== 6) {
+            setError('Enter a current 6-digit code to turn off two-factor authentication.');
+            return;
+        }
+        setLoading(true);
+        setError('');
+        try {
+            await disableTwoFactor(code);
+            await onChanged?.('disabled');
+            onClose();
+        } catch (err) {
+            setError(err.message || 'Could not disable two-factor authentication.');
+            setCode('');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const copyKey = async () => {
+        if (!enrollment?.manualEntryKey) return;
+        try {
+            await navigator.clipboard.writeText(enrollment.manualEntryKey);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+        } catch {
+            // Clipboard API unavailable (e.g. non-secure context) — the key is
+            // already visible for manual copy, so this is non-fatal.
+        }
+    };
+
+    const errorBanner = error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start">
+            <AlertIcon className="w-5 h-5 text-red-600 mr-2 flex-shrink-0 mt-0.5" />
+            <p className="text-sm text-red-800">{error}</p>
+        </div>
+    );
+
     return (
         <Dialog
             isOpen={isOpen}
@@ -238,29 +359,55 @@ const TwoFactorModal = ({ isOpen, onClose, isEnabled, onEnable, onDisable, isLoa
                 </span>
             }
         >
-            <div className="space-y-4">
-                    <p className="text-gray-600">
-                        {isEnabled
-                            ? 'Two-factor authentication is currently enabled. This adds an extra layer of security to your account.'
-                            : 'Two-factor authentication adds an extra layer of security to your account by requiring a second form of verification when you log in.'}
+            {/* --- OVERVIEW (enabled): offer code-gated disable --- */}
+            {step === 'overview' && isEnabled && (
+                <div className="space-y-4">
+                    <div className="flex items-center gap-2 bg-green-50 border border-green-200 rounded-lg p-4">
+                        <Check className="w-5 h-5 text-green-600 flex-shrink-0" aria-hidden="true" />
+                        <p className="text-sm text-green-800">
+                            Two-factor authentication is <strong>active</strong> on your account.
+                        </p>
+                    </div>
+                    <p className="text-gray-600 text-sm">
+                        To turn it off, enter a current code from your authenticator app. This
+                        prevents anyone else from removing this protection.
                     </p>
+                    {errorBanner}
+                    <div className="flex justify-end gap-3 pt-2">
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 font-medium"
+                        >
+                            Close
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => { setStep('disable'); setError(''); setCode(''); }}
+                            className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium"
+                        >
+                            Disable 2FA
+                        </button>
+                    </div>
+                </div>
+            )}
 
-                    {!isEnabled && (
-                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                            <p className="text-sm text-blue-800">
-                                <strong>Note:</strong> When you enable two-factor authentication, you'll need to verify your identity with a code from an authenticator app when logging in.
-                            </p>
-                        </div>
-                    )}
-
-                    {error && (
-                        <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start">
-                            <AlertIcon className="w-5 h-5 text-red-600 mr-2 flex-shrink-0 mt-0.5" />
-                            <p className="text-sm text-red-800">{error}</p>
-                        </div>
-                    )}
-
-                    <div className="flex justify-end gap-3 pt-4">
+            {/* --- OVERVIEW (disabled): explain + begin setup --- */}
+            {step === 'overview' && !isEnabled && (
+                <div className="space-y-4">
+                    <p className="text-gray-600">
+                        Add an extra layer of security by requiring a one-time code from an
+                        authenticator app (Google Authenticator, Authy, 1Password, etc.) each
+                        time you sign in.
+                    </p>
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-start gap-2">
+                        <Smartphone className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" aria-hidden="true" />
+                        <p className="text-sm text-blue-800">
+                            You&apos;ll need an authenticator app installed on your phone before you begin.
+                        </p>
+                    </div>
+                    {errorBanner}
+                    <div className="flex justify-end gap-3 pt-2">
                         <button
                             type="button"
                             onClick={onClose}
@@ -268,43 +415,110 @@ const TwoFactorModal = ({ isOpen, onClose, isEnabled, onEnable, onDisable, isLoa
                         >
                             Cancel
                         </button>
-                        {isEnabled ? (
-                            <button
-                                onClick={async () => {
-                                    try {
-                                        await onDisable();
-                                        // Only close on success
-                                        setTimeout(() => onClose(), 100);
-                                    } catch (err) {
-                                        // Error handled by parent, don't close modal
-                                        console.error('Failed to disable 2FA:', err);
-                                    }
-                                }}
-                                disabled={isLoading}
-                                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:bg-red-300 font-medium"
-                            >
-                                {isLoading ? 'Disabling...' : 'Disable 2FA'}
-                            </button>
-                        ) : (
-                            <button
-                                onClick={async () => {
-                                    try {
-                                        await onEnable();
-                                        // Only close on success
-                                        setTimeout(() => onClose(), 100);
-                                    } catch (err) {
-                                        // Error handled by parent, don't close modal
-                                        console.error('Failed to enable 2FA:', err);
-                                    }
-                                }}
-                                disabled={isLoading}
-                                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-blue-300 font-medium"
-                            >
-                                {isLoading ? 'Enabling...' : 'Enable 2FA'}
-                            </button>
-                        )}
+                        <button
+                            type="button"
+                            onClick={startEnrollment}
+                            disabled={loading}
+                            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-blue-300 font-medium"
+                        >
+                            {loading ? 'Starting…' : 'Begin Setup'}
+                        </button>
                     </div>
                 </div>
+            )}
+
+            {/* --- SETUP: QR + manual key + verify --- */}
+            {step === 'setup' && enrollment && (
+                <form onSubmit={confirmEnrollment} className="space-y-4">
+                    <ol className="text-sm text-gray-600 space-y-1 list-decimal list-inside">
+                        <li>Scan the QR code with your authenticator app.</li>
+                        <li>Can&apos;t scan? Enter the key below manually.</li>
+                        <li>Enter the 6-digit code your app shows to activate.</li>
+                    </ol>
+
+                    <div className="flex justify-center">
+                        <div className="p-3 bg-white border border-gray-200 rounded-lg">
+                            <QRCode value={enrollment.otpauthUrl} size={192} />
+                        </div>
+                    </div>
+
+                    <div>
+                        <label className="block text-xs font-medium text-gray-500 mb-1">Manual entry key</label>
+                        <div className="flex items-center gap-2">
+                            <code className="flex-1 px-3 py-2 bg-gray-100 rounded-lg text-sm font-mono tracking-wide break-all">
+                                {formatSecret(enrollment.manualEntryKey)}
+                            </code>
+                            <button
+                                type="button"
+                                onClick={copyKey}
+                                className="flex-shrink-0 p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg"
+                                aria-label="Copy manual entry key"
+                            >
+                                {copied ? <Check className="w-5 h-5 text-green-600" /> : <Copy className="w-5 h-5" />}
+                            </button>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label htmlFor="enroll-code" className="block text-sm font-medium text-gray-700 mb-1">
+                            Verification code
+                        </label>
+                        <CodeInput value={code} onChange={(v) => { setCode(v); if (error) setError(''); }} autoFocus />
+                    </div>
+
+                    {errorBanner}
+
+                    <div className="flex justify-end gap-3 pt-2">
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 font-medium"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            type="submit"
+                            disabled={loading}
+                            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-blue-300 font-medium"
+                        >
+                            {loading ? 'Verifying…' : 'Activate 2FA'}
+                        </button>
+                    </div>
+                </form>
+            )}
+
+            {/* --- DISABLE: require a current code --- */}
+            {step === 'disable' && (
+                <form onSubmit={confirmDisable} className="space-y-4">
+                    <p className="text-gray-600 text-sm">
+                        Enter a current code from your authenticator app to confirm turning off
+                        two-factor authentication.
+                    </p>
+                    <div>
+                        <label htmlFor="disable-code" className="block text-sm font-medium text-gray-700 mb-1">
+                            Verification code
+                        </label>
+                        <CodeInput value={code} onChange={(v) => { setCode(v); if (error) setError(''); }} autoFocus />
+                    </div>
+                    {errorBanner}
+                    <div className="flex justify-end gap-3 pt-2">
+                        <button
+                            type="button"
+                            onClick={() => { setStep('overview'); setError(''); setCode(''); }}
+                            className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 font-medium"
+                        >
+                            Back
+                        </button>
+                        <button
+                            type="submit"
+                            disabled={loading}
+                            className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:bg-red-300 font-medium"
+                        >
+                            {loading ? 'Disabling…' : 'Confirm Disable'}
+                        </button>
+                    </div>
+                </form>
+            )}
         </Dialog>
     );
 };
@@ -365,7 +579,6 @@ export default function SettingsPage() {
     const [passwordError, setPasswordError] = useState('');
     const [passwordLoading, setPasswordLoading] = useState(false);
     const [twoFactorModalOpen, setTwoFactorModalOpen] = useState(false);
-    const [twoFactorLoading, setTwoFactorLoading] = useState(false);
     
     // Certification badges state
     const [badgeUploading, setBadgeUploading] = useState(false);
@@ -699,42 +912,6 @@ export default function SettingsPage() {
             setPasswordError(err.message || 'Failed to update password.');
         } finally {
             setPasswordLoading(false);
-        }
-    };
-
-    const handleEnable2FA = async () => {
-        setTwoFactorLoading(true);
-        setError('');
-        try {
-            await enableTwoFactor();
-            await refreshUser();
-            setSuccess('Two-factor authentication enabled successfully!');
-            setTimeout(() => setSuccess(''), 3000);
-            return true; // Return success
-        } catch (err) {
-            console.error('Failed to enable 2FA:', err);
-            setError(err.message || 'Failed to enable two-factor authentication.');
-            throw err; // Re-throw to prevent modal from closing
-        } finally {
-            setTwoFactorLoading(false);
-        }
-    };
-
-    const handleDisable2FA = async () => {
-        setTwoFactorLoading(true);
-        setError('');
-        try {
-            await disableTwoFactor();
-            await refreshUser();
-            setSuccess('Two-factor authentication disabled successfully!');
-            setTimeout(() => setSuccess(''), 3000);
-            return true; // Return success
-        } catch (err) {
-            console.error('Failed to disable 2FA:', err);
-            setError(err.message || 'Failed to disable two-factor authentication.');
-            throw err; // Re-throw to prevent modal from closing
-        } finally {
-            setTwoFactorLoading(false);
         }
     };
 
@@ -2208,15 +2385,17 @@ export default function SettingsPage() {
 
             <TwoFactorModal
                 isOpen={twoFactorModalOpen}
-                onClose={() => {
-                    setTwoFactorModalOpen(false);
-                    setError('');
-                }}
+                onClose={() => setTwoFactorModalOpen(false)}
                 isEnabled={user?.twoFactorEnabled || false}
-                onEnable={handleEnable2FA}
-                onDisable={handleDisable2FA}
-                isLoading={twoFactorLoading}
-                error={error}
+                onChanged={async (state) => {
+                    await refreshUser();
+                    setSuccess(
+                        state === 'enabled'
+                            ? 'Two-factor authentication enabled successfully!'
+                            : 'Two-factor authentication disabled successfully!',
+                    );
+                    setTimeout(() => setSuccess(''), 3000);
+                }}
             />
         </div>
     );

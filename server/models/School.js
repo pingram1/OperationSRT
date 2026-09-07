@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { SECTORS } = require('../utils/tenancy');
 const Schema = mongoose.Schema;
 
 /**
@@ -20,6 +21,18 @@ const SchoolSchema = new Schema({
         type: String,
         trim: true,
         default: '',
+    },
+    /**
+     * Education sector this cohort belongs to. Drives cross-tenant isolation:
+     * public / private / charter data must never commingle in scoped views.
+     * Nullable only to allow legacy rows before backfill (see migration
+     * 20260614_add_tenancy.js); new schools should always set this.
+     */
+    sector: {
+        type: String,
+        enum: [...SECTORS, null],
+        default: null,
+        index: true,
     },
     primaryContactName: {
         type: String,

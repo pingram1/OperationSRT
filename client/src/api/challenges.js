@@ -9,6 +9,8 @@ export const getAllChallenges = (filters = {}) => {
   const params = new URLSearchParams();
   if (filters.subject) params.append('subject', filters.subject);
   if (filters.difficulty) params.append('difficulty', filters.difficulty);
+  const gradeLevel = filters.gradeLevel || filters.grade;
+  if (gradeLevel) params.append('gradeLevel', gradeLevel);
   if (filters.includeInactive) params.append('includeInactive', filters.includeInactive);
   
   const queryString = params.toString();

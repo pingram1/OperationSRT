@@ -9,12 +9,14 @@ import logoUrl from '../assets/logo.jpg';
 
 // Import the new reusable Button component
 import Button from '../components/common/Button.jsx';
+import TwoFactorChallenge from '../components/auth/TwoFactorChallenge.jsx';
 
 export default function LoginPage() {
     const [formData, setFormData] = useState({ email: '', password: '' });
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const [challengeToken, setChallengeToken] = useState('');
     const { login } = useAuth();
     
     const navigate = useNavigate();
@@ -84,6 +86,32 @@ export default function LoginPage() {
         }
     };
 
+    // Shared post-credential completion: applies the client-portal role gate,
+    // stores the session token, and routes into the app. Used by both the
+    // direct login path and the 2FA-verified path.
+    const completeLogin = (data) => {
+        // Check if user is an employee (tutor/admin/super_admin) trying to use client portal
+        if (data.user && (data.user.role === 'tutor' || data.user.role === 'admin' || data.user.role === 'super_admin')) {
+            setChallengeToken('');
+            setError('This portal is for clients only. Employees should use the Employee Portal.');
+            return;
+        }
+
+        // Store the token securely
+        if (data.token) {
+            setSecureToken(data.token);
+        }
+
+        // Update auth context with user data
+        if (data.user) {
+            login(data.user);
+            navigate('/dashboard');
+        } else {
+            setChallengeToken('');
+            setError('Login successful but no user data received');
+        }
+    };
+
     const handleSubmit = async e => {
         e.preventDefault();
         setError('');
@@ -101,26 +129,15 @@ export default function LoginPage() {
             }
             
             const data = await loginUser(normalizedEmail, password);
-            
-            // Check if user is an employee (tutor/admin/super_admin) trying to use client portal
-            if (data.user && (data.user.role === 'tutor' || data.user.role === 'admin' || data.user.role === 'super_admin')) {
-                setError('This portal is for clients only. Employees should use the Employee Portal.');
+
+            // 2FA-enabled account: defer completion to the verification step.
+            if (data.twoFactorRequired && data.challengeToken) {
+                setChallengeToken(data.challengeToken);
                 setIsLoading(false);
                 return;
             }
-            
-            // Store the token securely
-            if (data.token) {
-                setSecureToken(data.token);
-            }
-            
-            // Update auth context with user data
-            if (data.user) {
-                login(data.user);
-            navigate('/dashboard');
-            } else {
-                throw new Error('Login successful but no user data received');
-            }
+
+            completeLogin(data);
         } catch (err) {
             // Handle different error types
             let errorMessage = 'Login failed. Please try again.';
@@ -148,6 +165,20 @@ export default function LoginPage() {
                 <div className="bg-white rounded-2xl shadow-2xl p-8 md:p-12">
                     <div className="text-center mb-8">
                         <img src={logoUrl} alt="Start Right Tutoring Logo" className="w-40 mx-auto mb-6" />
+                    </div>
+
+                    {challengeToken ? (
+                        <TwoFactorChallenge
+                            challengeToken={challengeToken}
+                            onSuccess={completeLogin}
+                            onBack={() => {
+                                setChallengeToken('');
+                                setError('');
+                            }}
+                        />
+                    ) : (
+                    <>
+                    <div className="text-center mb-8">
                         <h1 className="text-3xl font-bold text-gray-800">Welcome Back</h1>
                         <p className="text-gray-500 mt-2">Sign in to continue.</p>
                     </div>
@@ -248,6 +279,8 @@ export default function LoginPage() {
                             </Link>
                         </p>
                     </div>
+                    </>
+                    )}
                 </div>
             </div>
         </div>

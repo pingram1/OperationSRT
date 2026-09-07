@@ -295,6 +295,41 @@ async function creditChallengeXp(userId, attemptId, xpReward, userXpAfterAward) 
     });
 }
 
+async function creditVisualizerXp(userId, sessionId, xpReward, userXpAfterAward) {
+    const config = await getActiveConfig();
+    if (!config) return { skipped: true };
+    const base = Math.floor(xpReward / config.xpRequiredForOneCent);
+    return applyCredit({
+        userId,
+        idempotencyKey: `visualizer_session:${sessionId}`,
+        source: 'visualizer_xp',
+        title: 'Concept Visualizer XP reward',
+        baseCentsBeforeTier: base,
+        userXpForTier: userXpAfterAward,
+        metadata: { xpReward },
+    });
+}
+
+/**
+ * Generic activity XP credit with a caller-supplied idempotency key.
+ * Used by the time-throttled reward engine for both first completions and
+ * weekly partial replay claims across challenges and visualizers.
+ */
+async function creditActivityXp({ userId, idempotencyKey, source, title, xpReward, userXpAfterAward, metadata = {} }) {
+    const config = await getActiveConfig();
+    if (!config) return { skipped: true };
+    const base = Math.floor(xpReward / config.xpRequiredForOneCent);
+    return applyCredit({
+        userId,
+        idempotencyKey,
+        source,
+        title,
+        baseCentsBeforeTier: base,
+        userXpForTier: userXpAfterAward,
+        metadata: { xpReward, ...metadata },
+    });
+}
+
 async function creditTutoringSession(studentId, bookingId) {
     const config = await getActiveConfig();
     if (!config) return { skipped: true };
@@ -579,6 +614,8 @@ module.exports = {
     getOrCreateWallet,
     applyCredit,
     creditChallengeXp,
+    creditVisualizerXp,
+    creditActivityXp,
     creditTutoringSession,
     createPayoutRequest,
     rejectPayoutRequest,

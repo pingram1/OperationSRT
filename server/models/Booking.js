@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { SECTORS } = require('../utils/tenancy');
 const Schema = mongoose.Schema;
 
 /**
@@ -35,6 +36,23 @@ const BookingSchema = new Schema({
         type: Schema.Types.ObjectId,
         ref: 'User',
         required: false, // Optional for consultations where tutor can be assigned later
+    },
+
+    /**
+     * Denormalized tenant keys, snapshotted from the student at booking
+     * creation. Lets booking/analytics queries enforce tenant isolation
+     * directly (e.g. a school_admin only ever sees their cohort's sessions)
+     * without joining back through the User collection on every read.
+     */
+    schoolId: {
+        type: Schema.Types.ObjectId,
+        ref: 'School',
+        default: null,
+    },
+    sector: {
+        type: String,
+        enum: [...SECTORS, null],
+        default: null,
     },
 
     /**
@@ -404,6 +422,9 @@ BookingSchema.index({ tutor: 1, sessionDate: -1 });
 BookingSchema.index({ status: 1, sessionDate: -1 });
 BookingSchema.index({ sessionDate: 1 });
 BookingSchema.index({ createdAt: -1 });
+// Tenant isolation: scope a cohort's sessions efficiently.
+BookingSchema.index({ schoolId: 1, sessionDate: -1 });
+BookingSchema.index({ sector: 1, sessionDate: -1 });
 
 // Create and export the Booking model
 // Mongoose will create a collection named 'bookings' (plural and lowercase) in MongoDB.

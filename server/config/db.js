@@ -27,6 +27,13 @@ const connectDB = async () => {
       logger.info(`MongoDB Connected: ${conn.connection.host}`, { database: conn.connection.name });
       console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
       console.log(`📊 Database: ${conn.connection.name}`);
+
+      try {
+        const { ensureLaunchVisualizers } = require('../services/visualizerCatalogService');
+        await ensureLaunchVisualizers();
+      } catch (catalogErr) {
+        logger.error('[visualizers] Failed to ensure launch catalog', { error: catalogErr.message });
+      }
       
       // Reset retry counter on successful connection
       retries = 0;

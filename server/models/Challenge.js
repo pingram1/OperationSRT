@@ -1,5 +1,9 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
+const {
+    DIFFICULTY_LEVELS,
+    baseXpForDifficulty,
+} = require('../constants/activityRewards');
 
 /**
  * Challenge Schema - Defines the structure for challenges
@@ -23,13 +27,20 @@ const ChallengeSchema = new Schema({
     difficulty: {
         type: String,
         required: true,
-        enum: ['Easy', 'Medium', 'Hard'],
+        enum: DIFFICULTY_LEVELS, // Easy | Medium | Hard | Post-Grad
     },
     challengeType: {
         type: String,
         required: true,
         enum: ['speed-run', 'accuracy', 'identification', 'matching', 'troubleshooting', 'analysis'],
     },
+    // Base XP for a first-time completion. Defaulted from difficulty via the
+    // pre-validate hook unless explicitly overridden by an author.
+    baseXp: {
+        type: Number,
+        min: 0,
+    },
+    // Legacy alias kept in sync with baseXp for backward-compatible reads.
     xpReward: {
         type: Number,
         required: true,
@@ -115,6 +126,21 @@ const ChallengeSchema = new Schema({
 
 // Index for efficient queries
 ChallengeSchema.index({ subject: 1, difficulty: 1, isActive: 1 });
+ChallengeSchema.index({ gradeLevels: 1 });
+
+/**
+ * Default baseXp from difficulty when not explicitly set, and keep the legacy
+ * xpReward alias synced so existing controllers/readers keep working.
+ */
+ChallengeSchema.pre('validate', function setActivityRewardDefaults(next) {
+    if (this.baseXp == null && this.difficulty) {
+        this.baseXp = baseXpForDifficulty(this.difficulty, this.xpReward || 0);
+    }
+    if (this.baseXp != null) {
+        this.xpReward = this.baseXp;
+    }
+    next();
+});
 
 module.exports = mongoose.model('Challenge', ChallengeSchema);
 

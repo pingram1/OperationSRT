@@ -1,0 +1,1381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Samy's Vowel Team Adventure</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts for Friendly Look -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@300..700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Nunito', sans-serif;
+    }
+    .friendly-title {
+      font-family: 'Fredoka', sans-serif;
+    }
+    /* Simple pop animation */
+    @keyframes pop {
+      0% { transform: scale(0.95); }
+      50% { transform: scale(1.05); }
+      100% { transform: scale(1); }
+    }
+    .pop-effect {
+      animation: pop 0.3s ease-out;
+    }
+    /* Snail wiggle animation */
+    @keyframes wiggle {
+      0%, 100% { transform: rotate(-3deg) translateY(0); }
+      50% { transform: rotate(3deg) translateY(-5px); }
+    }
+    .snail-wiggle {
+      animation: wiggle 3s ease-in-out infinite;
+    }
+    /* Snail correct jump animation */
+    @keyframes jump {
+      0%, 100% { transform: scale(1) translateY(0); }
+      40% { transform: scale(1.1, 0.9) translateY(-20px); }
+      60% { transform: scale(0.9, 1.1) translateY(-10px); }
+    }
+    .snail-jump {
+      animation: jump 0.6s ease-out;
+    }
+    /* Snail shy hide animation */
+    @keyframes hideSnail {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(0.8) translateY(10px); opacity: 0.8; }
+    }
+    .snail-hide {
+      animation: hideSnail 0.8s ease-in-out;
+    }
+  </style>
+</head>
+<body class="bg-gradient-to-b from-sky-100 via-teal-50 to-emerald-100 min-h-screen text-slate-800 flex flex-col justify-between">
+
+  <!-- Confetti Canvas -->
+  <canvas id="confetti-canvas" class="fixed inset-0 pointer-events-none z-50 w-full h-full"></canvas>
+
+  <!-- Top Navigation & Scoreboard -->
+  <header class="bg-white/85 backdrop-blur-md border-b-2 border-sky-200 sticky top-0 z-30 px-4 py-3 shadow-sm">
+    <div class="max-w-4xl mx-auto flex justify-between items-center">
+      <!-- Logo & Mascot mini-badge -->
+      <div class="flex items-center space-x-3 cursor-pointer" onclick="goToScreen('start')">
+        <div class="bg-teal-100 p-1.5 rounded-full border border-teal-300">
+          <svg class="w-8 h-8 text-teal-600" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M70 70C75 70 85 60 85 50C85 40 75 35 65 40C55 45 45 45 35 40C25 35 15 40 15 50C15 60 25 70 30 70" stroke="currentColor" stroke-width="8" stroke-linecap="round"/>
+            <path d="M35 55C45 65 55 65 65 55" stroke="currentColor" stroke-width="6" stroke-linecap="round"/>
+            <circle cx="35" cy="35" r="5" fill="currentColor"/>
+            <circle cx="65" cy="35" r="5" fill="currentColor"/>
+          </svg>
+        </div>
+        <div>
+          <h1 class="friendly-title text-xl md:text-2xl font-bold text-teal-700 tracking-tight leading-none">Samy's Vowel Team</h1>
+          <span class="text-xs font-bold text-sky-600 tracking-widest uppercase">The "ai" & "ay" Adventure</span>
+        </div>
+      </div>
+
+      <!-- Live Stats Panel -->
+      <div class="flex items-center space-x-4">
+        <!-- Sound Button -->
+        <button id="sound-btn" onclick="toggleSound()" class="p-2 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 transition-all text-slate-600" title="Toggle Sound">
+          <svg id="sound-icon-on" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+          </svg>
+          <svg id="sound-icon-off" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
+          </svg>
+        </button>
+
+        <!-- Words Mastered Quick View -->
+        <button onclick="openWordWall()" class="hidden md:flex items-center space-x-1.5 bg-emerald-50 text-emerald-700 px-3 py-1.5 rounded-full border border-emerald-200 text-sm font-semibold hover:bg-emerald-100 transition-all">
+          <span>🌟 Word Wall</span>
+        </button>
+
+        <!-- Current Score -->
+        <div class="bg-amber-100 border border-amber-300 text-amber-800 px-3 py-1.5 rounded-full font-extrabold text-sm flex items-center space-x-1 shadow-sm">
+          <span>⭐ Score:</span>
+          <span id="current-score" class="text-base text-amber-900">0</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Game Container -->
+  <main class="flex-grow max-w-4xl w-full mx-auto p-4 flex flex-col justify-center">
+    
+    <!-- ================= START SCREEN ================= -->
+    <section id="screen-start" class="bg-white rounded-3xl border-3 border-teal-100 shadow-xl p-6 md:p-10 text-center max-w-2xl mx-auto w-full pop-effect">
+      <!-- Decorative Badges -->
+      <div class="flex justify-center space-x-3 mb-6">
+        <span class="bg-sky-100 text-sky-700 text-sm font-bold px-3 py-1 rounded-full border border-sky-300">-ai- spelling</span>
+        <span class="bg-teal-100 text-teal-700 text-sm font-bold px-3 py-1 rounded-full border border-teal-300">-ay- spelling</span>
+      </div>
+
+      <!-- Main Animated Snail SVG -->
+      <div class="relative w-40 h-40 mx-auto mb-6 snail-wiggle" id="main-mascot">
+        <svg viewBox="0 0 200 200" class="w-full h-full drop-shadow-md">
+          <!-- Shell -->
+          <ellipse cx="90" cy="110" rx="45" ry="40" fill="#f59e0b" stroke="#d97706" stroke-width="6"/>
+          <path d="M90 85 C115 85 125 110 110 125 C100 135 75 125 85 110 C90 105 100 110 95 115" stroke="#d97706" stroke-width="4" fill="none" stroke-linecap="round"/>
+          <!-- Body -->
+          <path d="M40 140 C55 140 65 140 85 140 C115 140 145 130 155 110 C165 90 170 65 155 60 C145 55 135 75 135 90 C135 110 115 115 90 115" stroke="#10b981" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+          <!-- Eyes on Antennas -->
+          <line x1="145" y1="60" x2="140" y2="35" stroke="#10b981" stroke-width="5" stroke-linecap="round"/>
+          <line x1="155" y1="60" x2="160" y2="35" stroke="#10b981" stroke-width="5" stroke-linecap="round"/>
+          <circle cx="140" cy="32" r="8" fill="#10b981"/>
+          <circle cx="160" cy="32" r="8" fill="#10b981"/>
+          <!-- Little pupils -->
+          <circle cx="140" cy="32" r="3" fill="#ffffff"/>
+          <circle cx="160" cy="32" r="3" fill="#ffffff"/>
+          <!-- Mouth -->
+          <path d="M148 78 Q152 82 150 85" stroke="#047857" stroke-width="3" fill="none" stroke-linecap="round"/>
+          <!-- Rosy Cheeks -->
+          <circle cx="143" cy="81" r="3" fill="#f43f5e" opacity="0.6"/>
+          <circle cx="155" cy="80" r="3" fill="#f43f5e" opacity="0.6"/>
+          <!-- Small cute wizard hat -->
+          <path d="M142 30 L158 30 L150 10 Z" fill="#6366f1"/>
+          <circle cx="150" cy="10" r="3" fill="#fbbf24"/>
+        </svg>
+      </div>
+
+      <h2 class="friendly-title text-3xl md:text-4xl font-extrabold text-teal-800 mb-2">Samy's Phonics Quest!</h2>
+      <p class="text-slate-600 mb-8 max-w-md mx-auto text-base md:text-lg">
+        Help Samy slide along his garden path by spelling and identifying tricky vowel team words!
+      </p>
+
+      <!-- Modes Selection Panel -->
+      <h3 class="text-sm font-bold uppercase tracking-widest text-teal-600 mb-4">Choose Your Adventure Mode:</h3>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <!-- Mode 1 -->
+        <button onclick="startGame(1)" class="group bg-gradient-to-br from-sky-50 to-sky-100 hover:from-sky-100 hover:to-sky-200 border-2 border-sky-300 hover:border-sky-400 rounded-2xl p-5 text-left transition-all hover:-translate-y-1 shadow-sm active:translate-y-0">
+          <div class="bg-sky-500 text-white w-10 h-10 rounded-xl flex items-center justify-center font-extrabold mb-3 group-hover:scale-110 transition-transform shadow-md">1</div>
+          <h4 class="font-bold text-sky-900 text-base">Vowel Team Lab</h4>
+          <p class="text-xs text-sky-700 mt-1">Fill in <strong>ai</strong> vs <strong>ay</strong> and master the spelling rules.</p>
+        </button>
+
+        <!-- Mode 2 -->
+        <button onclick="startGame(2)" class="group bg-gradient-to-br from-teal-50 to-teal-100 hover:from-teal-100 hover:to-teal-200 border-2 border-teal-300 hover:border-teal-400 rounded-2xl p-5 text-left transition-all hover:-translate-y-1 shadow-sm active:translate-y-0">
+          <div class="bg-teal-500 text-white w-10 h-10 rounded-xl flex items-center justify-center font-extrabold mb-3 group-hover:scale-110 transition-transform shadow-md">2</div>
+          <h4 class="font-bold text-teal-900 text-base">Context Kingdom</h4>
+          <p class="text-xs text-teal-700 mt-1">Read custom sentences and find the perfect word that fits the context!</p>
+        </button>
+
+        <!-- Mode 3 -->
+        <button onclick="startGame(3)" class="group bg-gradient-to-br from-emerald-50 to-emerald-100 hover:from-emerald-100 hover:to-emerald-200 border-2 border-emerald-300 hover:border-emerald-400 rounded-2xl p-5 text-left transition-all hover:-translate-y-1 shadow-sm active:translate-y-0">
+          <div class="bg-emerald-500 text-white w-10 h-10 rounded-xl flex items-center justify-center font-extrabold mb-3 group-hover:scale-110 transition-transform shadow-md">3</div>
+          <h4 class="font-bold text-emerald-900 text-base">Imposter Hunt</h4>
+          <p class="text-xs text-emerald-700 mt-1">Which word is spelled with a different long A pattern? Find the imposter!</p>
+        </button>
+      </div>
+
+      <!-- Quick Word Wall / Teacher Links inside Start Screen -->
+      <div class="mt-8 pt-6 border-t border-slate-100 flex flex-wrap justify-center gap-4">
+        <button onclick="openWordWall()" class="text-teal-700 font-bold hover:text-teal-800 text-sm hover:underline flex items-center gap-1.5 bg-teal-50 px-4 py-2 rounded-xl">
+          📖 Study Word Wall (31 Words)
+        </button>
+        <button onclick="openTeacherDashboard()" class="text-indigo-700 font-bold hover:text-indigo-800 text-sm hover:underline flex items-center gap-1.5 bg-indigo-50 px-4 py-2 rounded-xl">
+          🎓 Teacher's Report Card
+        </button>
+      </div>
+    </section>
+
+    <!-- ================= GAME BOARD SCREEN ================= -->
+    <section id="screen-game" class="hidden bg-white rounded-3xl border-3 border-teal-100 shadow-xl p-5 md:p-8 max-w-3xl mx-auto w-full pop-effect">
+      
+      <!-- Score and Progress Bar -->
+      <div class="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-3">
+        <div class="flex items-center space-x-2">
+          <span id="game-mode-badge" class="bg-sky-100 text-sky-800 text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full border border-sky-300">Mode 1: Vowel Lab</span>
+          <!-- Level/Progress tag -->
+          <span id="level-badge" class="bg-purple-100 text-purple-800 text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full border border-purple-300">Normal</span>
+        </div>
+        <div class="flex items-center space-x-3 w-full md:w-auto">
+          <span class="text-sm font-bold text-slate-500">Progress:</span>
+          <!-- Progress container -->
+          <div class="bg-slate-100 h-4 rounded-full flex-grow md:w-36 overflow-hidden border border-slate-200">
+            <div id="progress-fill" class="bg-gradient-to-r from-teal-400 to-emerald-500 h-full w-[0%] transition-all duration-300"></div>
+          </div>
+          <span id="progress-text" class="text-sm font-bold text-slate-700">0/10</span>
+        </div>
+      </div>
+
+      <!-- Main Layout: Question Area + Mascot Side Row -->
+      <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
+        
+        <!-- Game Area (3 Cols) -->
+        <div class="lg:col-span-3 space-y-6">
+          
+          <!-- Question Box -->
+          <div class="bg-slate-50 rounded-2xl p-6 border-2 border-slate-200/60 shadow-inner text-center relative overflow-hidden">
+            <!-- Decorative light pattern -->
+            <div class="absolute inset-0 bg-[radial-gradient(#e2e8f0_1px,transparent_1px)] [background-size:16px_16px] opacity-40"></div>
+            
+            <div class="relative z-10 space-y-3">
+              <span id="question-prompt" class="text-xs font-extrabold uppercase tracking-widest text-slate-400">Complete the spelling</span>
+              
+              <!-- Giant Target Word (For Mode 1) -->
+              <div id="target-word-display" class="friendly-title text-4xl md:text-5xl font-extrabold text-slate-800 tracking-wide select-none">
+                Sn<span class="text-red-500 border-b-4 border-red-400 px-1 mx-0.5 font-black bg-yellow-50 rounded">_ _</span>l
+              </div>
+
+              <!-- Clue Context Helper -->
+              <div id="target-clue-display" class="text-slate-500 text-sm italic max-w-md mx-auto">
+                "A tiny crawler carrying its home!"
+              </div>
+            </div>
+          </div>
+
+          <!-- Answer Interactive Buttons -->
+          <div id="answers-container" class="grid grid-cols-2 gap-4">
+            <!-- Dynamically generated buttons go here -->
+          </div>
+
+          <!-- Explanation & Rule Pop Banner (Hidden by default, slide/fade-in on answer) -->
+          <div id="feedback-banner" class="hidden rounded-2xl p-4 border-2 flex items-start space-x-3 transition-all duration-300 transform translate-y-2 opacity-0">
+            <div id="feedback-icon" class="text-2xl mt-0.5"></div>
+            <div>
+              <h4 id="feedback-title" class="font-extrabold text-base">Perfect Job!</h4>
+              <p id="feedback-desc" class="text-xs md:text-sm text-slate-700 mt-0.5">Explanation explanation explanation.</p>
+              <button id="next-btn" onclick="nextQuestion()" class="mt-3 bg-slate-800 text-white font-bold text-xs py-1.5 px-4 rounded-lg hover:bg-slate-700 transition shadow-sm flex items-center space-x-1">
+                <span>Continue</span>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Mascot Reaction Sidebar (1 Col) -->
+        <div class="bg-sky-50 rounded-2xl border border-sky-100 p-4 flex flex-col items-center justify-between text-center min-h-[220px]">
+          <span class="text-[10px] uppercase font-black text-sky-600 tracking-widest">Samy Says:</span>
+          
+          <!-- Smaller mascot that changes based on correct/incorrect states -->
+          <div id="game-mascot-container" class="w-24 h-24 my-2 transition-all">
+            <!-- Snail SVG embedded -->
+            <svg viewBox="0 0 200 200" class="w-full h-full drop-shadow-sm">
+              <!-- Shell -->
+              <ellipse cx="90" cy="110" rx="45" ry="40" fill="#f59e0b" stroke="#d97706" stroke-width="6"/>
+              <path d="M90 85 C115 85 125 110 110 125 C100 135 75 125 85 110 C90 105 100 110 95 115" stroke="#d97706" stroke-width="4" fill="none" stroke-linecap="round"/>
+              <!-- Body -->
+              <path d="M40 140 C55 140 65 140 85 140 C115 140 145 130 155 110 C165 90 170 65 155 60 C145 55 135 75 135 90 C135 110 115 115 90 115" stroke="#10b981" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+              <!-- Eyes -->
+              <line x1="145" y1="60" x2="140" y2="35" stroke="#10b981" stroke-width="5" stroke-linecap="round"/>
+              <line x1="155" y1="60" x2="160" y2="35" stroke="#10b981" stroke-width="5" stroke-linecap="round"/>
+              <circle cx="140" cy="32" r="8" fill="#10b981"/>
+              <circle cx="160" cy="32" r="8" fill="#10b981"/>
+              <!-- Pupils (Samy Eyes State) -->
+              <circle id="mascot-pupil-left" cx="140" cy="32" r="3" fill="#ffffff"/>
+              <circle id="mascot-pupil-right" cx="160" cy="32" r="3" fill="#ffffff"/>
+              <!-- Mouth (Samy Mouth State) -->
+              <path id="mascot-mouth" d="M148 78 Q152 82 150 85" stroke="#047857" stroke-width="3" fill="none" stroke-linecap="round"/>
+              <!-- Rosy cheeks -->
+              <circle cx="143" cy="81" r="3" fill="#f43f5e" opacity="0.6"/>
+              <circle cx="155" cy="80" r="3" fill="#f43f5e" opacity="0.6"/>
+            </svg>
+          </div>
+
+          <!-- Bubble Text -->
+          <div class="bg-white rounded-xl p-2.5 border border-sky-200 text-xs text-sky-800 font-semibold shadow-sm w-full leading-relaxed" id="mascot-speech">
+            "We can do this! Think carefully!"
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Quick back button -->
+      <div class="mt-8 pt-4 border-t border-slate-100 flex justify-between items-center text-sm">
+        <button onclick="goToScreen('start')" class="text-slate-500 hover:text-slate-700 font-bold flex items-center space-x-1">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+          <span>Quit Game</span>
+        </button>
+        <span id="bonus-notification" class="text-amber-600 font-extrabold hidden flex items-center gap-1">
+          🔥 Bonus Challenge Active!
+        </span>
+      </div>
+
+    </section>
+
+    <!-- ================= SCORE / REPORT SCREEN ================= -->
+    <section id="screen-report" class="hidden bg-white rounded-3xl border-3 border-teal-100 shadow-xl p-6 md:p-8 text-center max-w-xl mx-auto w-full pop-effect">
+      <div class="text-5xl mb-3">🏆</div>
+      <h2 class="friendly-title text-3xl font-extrabold text-teal-800">Adventure Completed!</h2>
+      <p class="text-slate-500 text-sm mt-1" id="report-mode-text">Vowel Team Lab Performance</p>
+
+      <!-- Score Rings & Stats -->
+      <div class="my-6 bg-slate-50 rounded-2xl p-6 border border-slate-200 flex justify-around items-center max-w-md mx-auto">
+        <div class="text-center">
+          <span class="block text-3xl font-black text-amber-500" id="report-score">0</span>
+          <span class="text-xs text-slate-500 font-bold uppercase tracking-wider">Points Gained</span>
+        </div>
+        <div class="h-10 w-[1px] bg-slate-200"></div>
+        <div class="text-center">
+          <span class="block text-3xl font-black text-emerald-500" id="report-accuracy">0%</span>
+          <span class="text-xs text-slate-500 font-bold uppercase tracking-wider">Accuracy</span>
+        </div>
+        <div class="h-10 w-[1px] bg-slate-200"></div>
+        <div class="text-center">
+          <span class="block text-3xl font-black text-indigo-500" id="report-correct-count">0/0</span>
+          <span class="text-xs text-slate-500 font-bold uppercase tracking-wider">Correct Words</span>
+        </div>
+      </div>
+
+      <!-- Samy Trophy Feedback -->
+      <div class="bg-sky-50 rounded-2xl p-4 border border-sky-100 flex items-center space-x-4 text-left max-w-md mx-auto mb-6">
+        <span class="text-4xl">🐌</span>
+        <div>
+          <h4 class="font-extrabold text-sm text-sky-900">Samy's Graduation Note:</h4>
+          <p class="text-xs text-sky-700 leading-relaxed mt-0.5" id="report-graduation-text">
+            "Sensational job! You spelled 'snail', 'brain' and other words with incredible accuracy!"
+          </p>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex flex-col sm:flex-row gap-3 justify-center">
+        <button onclick="goToScreen('start')" class="bg-teal-600 hover:bg-teal-700 active:bg-teal-800 text-white font-bold py-3 px-6 rounded-2xl transition shadow-md hover:shadow-lg flex items-center justify-center space-x-2">
+          <span>Choose Another Mode</span>
+        </button>
+        <button onclick="openWordWall()" class="bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 font-bold py-3 px-6 rounded-2xl transition flex items-center justify-center space-x-2">
+          <span>Explore Word Wall</span>
+        </button>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ================= INLINE DIALOGUE: WORD WALL MODAL ================= -->
+  <div id="modal-wordwall" class="fixed inset-0 z-50 overflow-y-auto hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl w-full max-w-3xl shadow-2xl overflow-hidden border border-slate-200 flex flex-col max-h-[85vh] pop-effect">
+      
+      <!-- Modal Header -->
+      <div class="bg-gradient-to-r from-teal-600 to-emerald-600 text-white p-5 flex justify-between items-center shrink-0">
+        <div class="flex items-center space-x-3">
+          <span class="text-3xl">📖</span>
+          <div>
+            <h3 class="friendly-title text-2xl font-bold">The Interactive Word Wall</h3>
+            <p class="text-teal-100 text-xs">Explore all 31 words from your study session with lessons and clues</p>
+          </div>
+        </div>
+        <button onclick="closeWordWall()" class="bg-white/20 hover:bg-white/30 text-white rounded-full p-1.5 transition">
+          <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Filter Categories -->
+      <div class="bg-slate-50 px-5 py-3 border-b border-slate-200 flex flex-wrap gap-2 shrink-0 items-center">
+        <span class="text-xs font-bold text-slate-500 uppercase tracking-widest mr-2">Filter Category:</span>
+        <button id="filter-btn-all" onclick="filterWordWall('all')" class="bg-slate-800 text-white text-xs font-bold px-3 py-1.5 rounded-lg border border-slate-800 shadow-sm transition">All (31)</button>
+        <button id="filter-btn-ai" onclick="filterWordWall('ai')" class="bg-white text-slate-700 hover:bg-slate-100 text-xs font-bold px-3 py-1.5 rounded-lg border border-slate-200 shadow-sm transition">"ai" pattern (14)</button>
+        <button id="filter-btn-ay" onclick="filterWordWall('ay')" class="bg-white text-slate-700 hover:bg-slate-100 text-xs font-bold px-3 py-1.5 rounded-lg border border-slate-200 shadow-sm transition">"ay" pattern (14)</button>
+        <button id="filter-btn-bonus" onclick="filterWordWall('bonus')" class="bg-white text-slate-700 hover:bg-slate-100 text-xs font-bold px-3 py-1.5 rounded-lg border border-slate-200 shadow-sm transition">Bonus Words (9)</button>
+      </div>
+
+      <!-- Quick Explanation Rule Panel -->
+      <div class="bg-amber-50 px-5 py-2.5 border-b border-amber-200 text-xs text-amber-800 leading-relaxed shrink-0">
+        💡 <strong>Quick Rule:</strong> The spelling <strong class="bg-amber-100 px-1 py-0.5 rounded">ai</strong> sits in the <strong>middle</strong> of a syllable (e.g. <em>rain</em>, <em>nail</em>). The spelling <strong class="bg-amber-100 px-1 py-0.5 rounded">ay</strong> likes to play at the <strong>end</strong> of a word or syllable (e.g. <em>stay</em>, <em>away</em>)!
+      </div>
+
+      <!-- Scrollable Word Grid -->
+      <div class="p-5 overflow-y-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3" id="wordwall-grid-container">
+        <!-- Filled dynamically -->
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="bg-slate-50 border-t border-slate-200 p-4 flex justify-end shrink-0">
+        <button onclick="closeWordWall()" class="bg-slate-800 hover:bg-slate-700 text-white font-bold px-6 py-2 rounded-xl transition text-sm">
+          Close Word Wall
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ================= INLINE DIALOGUE: TEACHER DASHBOARD ================= -->
+  <div id="modal-teacher" class="fixed inset-0 z-50 overflow-y-auto hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl w-full max-w-2xl shadow-2xl overflow-hidden border border-slate-200 flex flex-col max-h-[85vh] pop-effect">
+      
+      <!-- Modal Header -->
+      <div class="bg-gradient-to-r from-indigo-600 to-violet-600 text-white p-5 flex justify-between items-center shrink-0">
+        <div class="flex items-center space-x-3">
+          <span class="text-3xl">🎓</span>
+          <div>
+            <h3 class="friendly-title text-2xl font-bold">Teacher's Progress Report</h3>
+            <p class="text-indigo-100 text-xs">Phonics mastery analytical card for the active session</p>
+          </div>
+        </div>
+        <button onclick="closeTeacherDashboard()" class="bg-white/20 hover:bg-white/30 text-white rounded-full p-1.5 transition">
+          <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Statistics Body -->
+      <div class="p-6 overflow-y-auto space-y-6">
+        
+        <!-- Interactive statistics cards -->
+        <div class="grid grid-cols-3 gap-4">
+          <div class="bg-indigo-50 border border-indigo-200 rounded-2xl p-4 text-center">
+            <span class="text-xs font-bold text-indigo-700 uppercase tracking-widest block">Total Answers</span>
+            <span id="stat-total-answers" class="text-3xl font-black text-indigo-900">0</span>
+          </div>
+          <div class="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 text-center">
+            <span class="text-xs font-bold text-emerald-700 uppercase tracking-widest block">Success Rate</span>
+            <span id="stat-accuracy-rate" class="text-3xl font-black text-emerald-900">0%</span>
+          </div>
+          <div class="bg-amber-50 border border-amber-200 rounded-2xl p-4 text-center">
+            <span class="text-xs font-bold text-amber-700 uppercase tracking-widest block">Mastered (No mistakes)</span>
+            <span id="stat-mastered" class="text-3xl font-black text-amber-900">0/31</span>
+          </div>
+        </div>
+
+        <!-- Mastered words vs Trouble Words lists -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- Mastered/Practiced Column -->
+          <div class="border border-emerald-100 rounded-2xl p-4 bg-emerald-50/20">
+            <h4 class="font-extrabold text-sm text-emerald-800 flex items-center gap-1.5 mb-2">
+              <span class="text-emerald-500">✔</span> Word Wall Mastered Words
+            </h4>
+            <div id="list-mastered-words" class="text-xs text-emerald-700 flex flex-wrap gap-1.5 max-h-[150px] overflow-y-auto">
+              <!-- Filled with tags -->
+              <span class="text-slate-400 italic">No words completed perfectly yet. Start playing a game!</span>
+            </div>
+          </div>
+
+          <!-- Troubled Column -->
+          <div class="border border-red-100 rounded-2xl p-4 bg-red-50/20">
+            <h4 class="font-extrabold text-sm text-red-800 flex items-center gap-1.5 mb-2">
+              <span class="text-red-500">⚠</span> Challenging Words (Made Mistakes)
+            </h4>
+            <div id="list-troubled-words" class="text-xs text-red-700 flex flex-wrap gap-1.5 max-h-[150px] overflow-y-auto">
+              <!-- Filled with tags -->
+              <span class="text-slate-400 italic">Excellent! No mistakes tracked yet.</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Custom Phonics Words Injection Form -->
+        <div class="border border-slate-200 rounded-2xl p-5 bg-slate-50 space-y-3">
+          <h4 class="font-extrabold text-slate-800 text-sm">Add Custom Word to Lesson</h4>
+          <p class="text-xs text-slate-500">Teachers can dynamically add custom target vocabulary words to expand the practice lists on the fly.</p>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <input id="input-word" type="text" placeholder="Word (e.g. Clay)" class="bg-white border border-slate-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            <select id="input-pattern" class="bg-white border border-slate-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+              <option value="ai">"ai" pattern</option>
+              <option value="ay">"ay" pattern</option>
+              <option value="bonus">Bonus / Magic E</option>
+            </select>
+            <button onclick="addCustomWord()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl px-4 py-2 text-sm transition">
+              ➕ Add Word
+            </button>
+          </div>
+          <div id="custom-word-toast" class="hidden text-xs text-emerald-600 font-semibold"></div>
+        </div>
+
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="bg-slate-50 border-t border-slate-200 p-4 flex justify-between shrink-0">
+        <button onclick="resetStats()" class="text-red-600 hover:text-red-700 font-bold text-xs hover:underline">
+          🔄 Clear Progress Statistics
+        </button>
+        <button onclick="closeTeacherDashboard()" class="bg-slate-800 hover:bg-slate-700 text-white font-bold px-6 py-2 rounded-xl transition text-sm">
+          Close Report
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Footer Info block -->
+  <footer class="bg-slate-900 text-slate-400 text-center py-4 text-xs border-t-2 border-slate-950 mt-10">
+    <div class="max-w-4xl mx-auto px-4 flex flex-col sm:flex-row justify-between items-center gap-3">
+      <p>&copy; 2026 Phonics Fun: Samy's Vowel Team Adventure.</p>
+      <div class="flex space-x-4">
+        <button onclick="openWordWall()" class="hover:text-white transition">Word Wall Explorer</button>
+        <span>|</span>
+        <button onclick="openTeacherDashboard()" class="hover:text-white transition">Teacher Portal</button>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ================= JAVASCRIPT GAME LOGIC ================= -->
+  <script>
+    // Audio Context Setup for synthetic sounds (no external asset errors!)
+    let audioCtx = null;
+    let isMuted = false;
+
+    function initAudio() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+    }
+
+    function toggleSound() {
+      isMuted = !isMuted;
+      document.getElementById('sound-icon-on').classList.toggle('hidden', isMuted);
+      document.getElementById('sound-icon-off').classList.toggle('hidden', !isMuted);
+      playSynthSound('click');
+    }
+
+    function playSynthSound(type) {
+      if (isMuted) return;
+      initAudio();
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+
+      const now = audioCtx.currentTime;
+
+      if (type === 'correct') {
+        // High cheery upward sound
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(440, now); // A4
+        osc.frequency.exponentialRampToValueAtTime(880, now + 0.15); // A5
+        gain.gain.setValueAtTime(0.15, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+        osc.start(now);
+        osc.stop(now + 0.3);
+      } else if (type === 'wrong') {
+        // Sad downward slide
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(220, now); // A3
+        osc.frequency.linearRampToValueAtTime(110, now + 0.3); // A2
+        gain.gain.setValueAtTime(0.15, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+        osc.start(now);
+        osc.stop(now + 0.3);
+      } else if (type === 'victory') {
+        // Star arpeggio
+        const notes = [261.63, 329.63, 392.00, 523.25]; // C E G C
+        notes.forEach((freq, idx) => {
+          const o = audioCtx.createOscillator();
+          const g = audioCtx.createGain();
+          o.connect(g);
+          g.connect(audioCtx.destination);
+          o.type = 'sine';
+          o.frequency.setValueAtTime(freq, now + idx * 0.08);
+          g.gain.setValueAtTime(0.12, now + idx * 0.08);
+          g.gain.exponentialRampToValueAtTime(0.01, now + idx * 0.08 + 0.25);
+          o.start(now + idx * 0.08);
+          o.stop(now + idx * 0.08 + 0.25);
+        });
+      } else if (type === 'click') {
+        // Neutral clean click
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(600, now);
+        gain.gain.setValueAtTime(0.08, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+        osc.start(now);
+        osc.stop(now + 0.08);
+      }
+    }
+
+    // Interactive Word List compiled directly from user's handwritten paper
+    const wordDatabase = [
+      // Column 1 (mainly -ai- spellings and core words)
+      { word: "Air", type: "ai", clue: "The clean, invisible gas that wraps all around the Earth for us to breathe.", sentence: "The crisp cool ___ felt lovely on my face during our walk.", frequency: "core" },
+      { word: "Aim", type: "ai", clue: "To carefully point a toy arrow, camera, or game dart towards the target.", sentence: "Close one eye, focus, and take your ___ at the yellow balloon.", frequency: "core" },
+      { word: "Snail", type: "ai", clue: "A slow-moving gardener friend carrying a beautiful spiral shell on its back.", sentence: "Samy the garden ___ left a shiny, glittery trail on the green leaf.", frequency: "core" },
+      { word: "Straight", type: "ai", clue: "Moving directly in one path without bending, curving, or wiggling.", sentence: "Use a clean wooden ruler to draw a perfectly ___ line.", frequency: "core" },
+      { word: "Brain", type: "ai", clue: "The wonderful, powerful thinking center inside your head.", sentence: "Reading helps exercise your clever ___ and makes you smarter.", frequency: "core" },
+      { word: "Rain", type: "ai", clue: "Fresh water droplets falling all the way down from gray storm clouds.", sentence: "Let's put on colorful boots and jump in the wet puddles of ___.", frequency: "core" },
+      { word: "Paint", type: "ai", clue: "A colorful, slick liquid that artists brush onto papers and walls.", sentence: "We can mix yellow and blue ___ together to create grass-green.", frequency: "core" },
+      { word: "Pair", type: "ai", clue: "A set of two things matching or meant to go together (like clean socks).", sentence: "Grandpa bought a warm, comfy new ___ of wool slippers.", frequency: "core" },
+      { word: "Main", type: "ai", clue: "The most important, leading, or biggest part of something.", sentence: "The hero had to overcome the ___ challenge in the fairy tale.", frequency: "core" },
+      { word: "Afraid", type: "ai", clue: "Feeling a bit scared, nervous, or frightened of something.", sentence: "The brave puppy was not ___ of the giant squeaky vacuum.", frequency: "core" },
+      { word: "Stair", type: "ai", clue: "A single steps to walk upwards or downwards to another floor.", sentence: "Carefully place your foot on each wooden ___ as you climb.", frequency: "core" },
+
+      // Column 2 (mainly -ay- spellings and exceptions)
+      { word: "Chair", type: "ai", clue: "A piece of furniture with a flat back and seat designed for one person.", sentence: "Sit comfortably in the soft blue ___ at the reading corner.", frequency: "core" },
+      { word: "Away", type: "ay", clue: "Moving to a different location or leaving the current place.", sentence: "The red robin spread its wings and flew far ___ into the sky.", frequency: "core" },
+      { word: "Clay", type: "ay", clue: "A thick, earthy mud that is fun to squeeze, mold, and sculpt.", sentence: "We molded a small, shiny bowl out of sticky green ___.", frequency: "core" },
+      { word: "Say", type: "ay", clue: "To speak words out loud using your voice.", sentence: "What polite words should you ___ when someone gives you a gift?", frequency: "core" },
+      { word: "Stray", type: "ay", clue: "An animal that is lost or wandering without a home.", sentence: "The kind veterinarian fed and rescued a friendly ___ kitten.", frequency: "core" },
+      { word: "Tray", type: "ay", clue: "A wide, flat board used to hold, carry, or serve items securely.", sentence: "The teacher placed scissors and glue on a plastic craft ___.", frequency: "core" },
+      { word: "Jay", type: "ay", clue: "A beautiful, noisy bird known for its brilliant blue feathers.", sentence: "A bright blue ___ chirped happily from the tree branch.", frequency: "core" },
+      { word: "Spray", type: "ay", clue: "To sprinkle or squirt tiny mist drops of liquid quickly.", sentence: "___ some cool water onto the tropical garden plants.", frequency: "core" },
+      { word: "Day", type: "ay", clue: "The bright time of light between sunrise and the stars coming out.", sentence: "Every single ___ is a brand new chance to learn and play.", frequency: "core" },
+      { word: "May", type: "ay", clue: "The fifth month of the calendar year, or a polite way to ask permission.", sentence: "___ I please play on the playground swings next?", frequency: "core" },
+      { word: "Stay", type: "ay", clue: "To remain in one stable place instead of leaving.", sentence: "Samy loves to ___ close to the fresh green lettuce.", frequency: "core" },
+
+      // Column 3 (including play/gray and Bonus Words)
+      { word: "Play", type: "ay", clue: "To have fun, play games, explore, or build toys together.", sentence: "Let's assemble a cardboard fort and ___ spaceships inside.", frequency: "core" },
+      { word: "Gray", type: "ay", clue: "A cool color created by mixing bright white and dark black.", sentence: "When rain clouds gather in the sky, they turn a dark ___.", frequency: "core" },
+      
+      // Bonus Words (Advanced Column)
+      { word: "Portray", type: "ay", clue: "To act as or sketch a character or story to show what they are like.", sentence: "The children will ___ busy workers in the class play.", isBonus: true },
+      { word: "Dismay", type: "ay", clue: "A sudden feeling of disappointment, shock, or sadness.", sentence: "To our huge ___, the beautiful chocolate cake was dropped.", isBonus: true },
+      { word: "Grape", type: "bonus", clue: "A sweet, round purple or green fruit that grows in clusters.", sentence: "I popped a juicy green ___ straight into my mouth.", isBonus: true },
+      { word: "Drape", type: "bonus", clue: "To loosely cover or hang cloth over furniture or windows.", sentence: "Let's ___ the white sheets over the chairs to make a fort.", isBonus: true },
+      { word: "Vapor", type: "bonus", clue: "Mist, steam, or tiny water drops floating warm in the air.", sentence: "Hot water ___ rose slowly from the steaming cocoa mug.", isBonus: true },
+      { word: "Strain", type: "ai", clue: "To stretch very tightly, overwork, or separate liquid from solid food.", sentence: "Use a metal colander to ___ the water from the hot pasta.", isBonus: true },
+      { word: "Constrain", type: "ai", clue: "To hold back, limit, or restrict movement or freedom.", sentence: "We shouldn't let tiny cages ___ active wild animals.", isBonus: true }
+    ];
+
+    // Tracker for active custom words added by teachers
+    let dynamicWords = [];
+
+    // Helper to fetch entire list (core + dynamic)
+    function getAllWords() {
+      return [...wordDatabase, ...dynamicWords];
+    }
+
+    // Active Game State
+    let gameState = {
+      activeMode: null,
+      score: 0,
+      totalQuestions: 10,
+      currentIndex: 0,
+      accuracyPoints: 0,
+      questionList: [],
+      currentCorrectAnswer: "",
+      hasAnsweredCurrent: false,
+      nextTimeout: null
+    };
+
+    // Session Statistics for Dashboard
+    let statsState = {
+      totalAnswers: 0,
+      correctAnswers: 0,
+      history: {} // tracks mistakes per word
+    };
+
+    // Initialize application on load
+    window.onload = function() {
+      // Load saved statistics if any (in-memory for the session)
+      resetStats(true);
+      
+      // Initially show start screen
+      goToScreen('start');
+
+      // Populate interactive Word Wall once
+      renderWordWallGrid('all');
+    };
+
+    // Simple screen router
+    function goToScreen(screenId) {
+      playSynthSound('click');
+      
+      // Hide all screens
+      document.getElementById('screen-start').classList.add('hidden');
+      document.getElementById('screen-game').classList.add('hidden');
+      document.getElementById('screen-report').classList.add('hidden');
+
+      // Show selected screen
+      if (screenId === 'start') {
+        document.getElementById('screen-start').classList.remove('hidden');
+      } else if (screenId === 'game') {
+        document.getElementById('screen-game').classList.remove('hidden');
+      } else if (screenId === 'report') {
+        document.getElementById('screen-report').classList.remove('hidden');
+        generateReportCard();
+      }
+    }
+
+    // Initiate Game Mode
+    function startGame(modeNum) {
+      gameState.activeMode = modeNum;
+      gameState.currentIndex = 0;
+      gameState.score = 0;
+      gameState.accuracyPoints = 0;
+      gameState.hasAnsweredCurrent = false;
+
+      // Update Header Score display
+      document.getElementById('current-score').innerText = "0";
+
+      // Select 10 questions randomly from database
+      const pool = getAllWords();
+      // Shuffle pool
+      const shuffled = [...pool].sort(() => 0.5 - Math.random());
+      
+      // Make sure we have a mix of regular and bonus words if possible
+      gameState.questionList = shuffled.slice(0, gameState.totalQuestions);
+
+      // Set Badge titles depending on Mode selection
+      const badge = document.getElementById('game-mode-badge');
+      if (modeNum === 1) {
+        badge.innerText = "Mode 1: Vowel Team Lab";
+        badge.className = "bg-sky-100 text-sky-800 text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full border border-sky-300";
+      } else if (modeNum === 2) {
+        badge.innerText = "Mode 2: Context Kingdom";
+        badge.className = "bg-teal-100 text-teal-800 text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full border border-teal-300";
+      } else if (modeNum === 3) {
+        badge.innerText = "Mode 3: Imposter Hunt";
+        badge.className = "bg-emerald-100 text-emerald-800 text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full border border-emerald-300";
+      }
+
+      // Hide active feedback banner
+      const banner = document.getElementById('feedback-banner');
+      banner.classList.add('hidden');
+      banner.className = "hidden rounded-2xl p-4 border-2 flex items-start space-x-3 transition-all duration-300 transform translate-y-2 opacity-0";
+
+      // Mascot start greeting
+      setMascotExpression('normal', "Ready to play! Let's conquer these words!");
+
+      // Go to Game view
+      goToScreen('game');
+      
+      // Load first question
+      loadQuestion();
+    }
+
+    // Generate current Question Interface
+    function loadQuestion() {
+      gameState.hasAnsweredCurrent = false;
+      const currentWordObj = gameState.questionList[gameState.currentIndex];
+
+      // Hide Next button until answered
+      document.getElementById('feedback-banner').classList.add('hidden');
+      document.getElementById('feedback-banner').style.opacity = '0';
+      document.getElementById('feedback-banner').style.transform = 'translateY(8px)';
+
+      // Check for Bonus Label decoration
+      const levelBadge = document.getElementById('level-badge');
+      const bonusNotif = document.getElementById('bonus-notification');
+      if (currentWordObj.isBonus) {
+        levelBadge.innerText = "🔥 BONUS WORD";
+        levelBadge.className = "bg-amber-100 text-amber-800 text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full border border-amber-300 animate-pulse";
+        bonusNotif.classList.remove('hidden');
+      } else {
+        levelBadge.innerText = "Level " + (gameState.currentIndex + 1);
+        levelBadge.className = "bg-purple-100 text-purple-800 text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full border border-purple-300";
+        bonusNotif.classList.add('hidden');
+      }
+
+      // Update Progress counters
+      const fillPercentage = (gameState.currentIndex / gameState.totalQuestions) * 100;
+      document.getElementById('progress-fill').style.width = fillPercentage + "%";
+      document.getElementById('progress-text').innerText = (gameState.currentIndex) + "/" + gameState.totalQuestions;
+
+      // Select elements
+      const prompt = document.getElementById('question-prompt');
+      const targetDisplay = document.getElementById('target-word-display');
+      const targetClue = document.getElementById('target-clue-display');
+      const container = document.getElementById('answers-container');
+      
+      // Clear container and displays
+      container.innerHTML = "";
+
+      // Dynamic Mode generation
+      if (gameState.activeMode === 1) {
+        // --- MODE 1: VOWEL TEAM LAB ---
+        prompt.innerText = "Pick the missing vowel team to complete the word:";
+        targetClue.innerHTML = `"${currentWordObj.clue}"`;
+
+        // Draw blank word
+        let displayWord = "";
+        if (currentWordObj.type === "ai") {
+          displayWord = currentWordObj.word.replace(/ai/i, ` <span class="text-teal-600 border-b-4 border-teal-400 px-2 font-black bg-teal-50/60 rounded">_ _</span> `);
+          gameState.currentCorrectAnswer = "ai";
+        } else if (currentWordObj.type === "ay") {
+          displayWord = currentWordObj.word.replace(/ay/i, ` <span class="text-teal-600 border-b-4 border-teal-400 px-2 font-black bg-teal-50/60 rounded">_ _</span> `);
+          gameState.currentCorrectAnswer = "ay";
+        } else {
+          // Fallback / Bonus like Grape, drape, vapor
+          if (currentWordObj.word.toLowerCase().includes("v")) {
+            displayWord = "V_por";
+            gameState.currentCorrectAnswer = "a";
+          } else {
+            // drape / grape split digraph
+            displayWord = currentWordObj.word.charAt(0) + `<span class="text-teal-600 border-b-4 border-teal-400 px-2 font-black bg-teal-50/60 rounded">_</span>` + currentWordObj.word.substring(2, 4) + `<span class="text-teal-600 border-b-4 border-teal-400 px-2 font-black bg-teal-50/60 rounded">_</span>`;
+            gameState.currentCorrectAnswer = "a_e";
+          }
+        }
+        targetDisplay.innerHTML = displayWord;
+
+        // Interactive Options Buttons
+        const options = ["ai", "ay"];
+        if (currentWordObj.type === "bonus") {
+          options.push("a_e", "a");
+        }
+        
+        options.forEach(opt => {
+          const btn = document.createElement('button');
+          btn.className = "bg-white hover:bg-sky-50 active:scale-95 border-2 border-sky-200 hover:border-sky-400 rounded-2xl py-5 px-4 font-bold text-2xl text-sky-800 transition-all shadow-sm focus:outline-none focus:ring-4 focus:ring-sky-100 flex flex-col items-center justify-center space-y-1";
+          btn.innerHTML = `<span class="friendly-title text-3xl font-black">${opt}</span> <span class="text-xs text-sky-500 font-bold uppercase tracking-widest">${opt === 'ai' ? 'Middle team' : opt === 'ay' ? 'Ending team' : 'Magic team'}</span>`;
+          btn.onclick = () => submitAnswer(opt);
+          container.appendChild(btn);
+        });
+
+      } else if (gameState.activeMode === 2) {
+        // --- MODE 2: CONTEXT KINGDOM ---
+        prompt.innerText = "Which word matches and fits correctly in the sentence blank?";
+        
+        // Draw the sentence with the word replaced by blank lines
+        const displaySentence = currentWordObj.sentence.replace(new RegExp(currentWordObj.word, 'gi'), `<span class="text-emerald-700 border-b-4 border-emerald-400 px-3 font-bold bg-emerald-50 rounded">_________</span>`);
+        targetDisplay.innerHTML = `<p class="text-xl md:text-2xl font-semibold text-slate-700 tracking-wide leading-relaxed px-4">${displaySentence}</p>`;
+        targetClue.innerHTML = `🌟 Hint Clue: <em>"${currentWordObj.clue}"</em>`;
+        
+        gameState.currentCorrectAnswer = currentWordObj.word;
+
+        // Generate choices: 1 correct, 2 distractors from word wall
+        const distractors = getAllWords().filter(w => w.word !== currentWordObj.word);
+        const shuffledDistractors = distractors.sort(() => 0.5 - Math.random());
+        
+        // Create 3 choices
+        const choices = [currentWordObj.word, shuffledDistractors[0].word, shuffledDistractors[1].word];
+        choices.sort(() => 0.5 - Math.random()); // randomize buttons positions
+
+        // Create large buttons for easy choice
+        container.className = "grid grid-cols-1 sm:grid-cols-3 gap-4";
+        choices.forEach(choice => {
+          const btn = document.createElement('button');
+          btn.className = "bg-white hover:bg-emerald-50 active:scale-95 border-2 border-emerald-200 hover:border-emerald-400 rounded-2xl py-4 px-4 font-bold text-lg text-emerald-800 transition-all shadow-sm focus:outline-none focus:ring-4 focus:ring-emerald-100 flex justify-center items-center";
+          btn.innerHTML = `<span class="friendly-title text-xl font-bold">${choice}</span>`;
+          btn.onclick = () => submitAnswer(choice);
+          container.appendChild(btn);
+        });
+
+      } else if (gameState.activeMode === 3) {
+        // --- MODE 3: IMPOSTER HUNT ---
+        prompt.innerText = "Identify the imposter word that uses a DIFFERENT spelling pattern:";
+        
+        // Target word container is converted to instructional display
+        targetDisplay.innerHTML = `<div class="text-lg md:text-xl font-bold text-slate-700 flex justify-center items-center gap-2"><span class="text-3xl">🕵️‍♂️</span> Search the Group below!</div>`;
+        targetClue.innerHTML = "Three cards share the same vowel team rule, but one is an imposter!";
+
+        // Logic to construct a gorgeous imposter puzzle
+        // We decide pattern grouping: either AI or AY is the majority
+        let puzzleGroup = [];
+        let ruleExplanation = "";
+
+        const coin = Math.random() > 0.5;
+        if (coin) {
+          // AI is the main majority group (needs 3 AI words, 1 AY word as imposter)
+          const aiPool = getAllWords().filter(w => w.type === 'ai' && !w.isBonus);
+          const ayPool = getAllWords().filter(w => w.type === 'ay' && !w.isBonus);
+          
+          const sortedAi = aiPool.sort(() => 0.5 - Math.random()).slice(0, 3);
+          const sortedAy = ayPool.sort(() => 0.5 - Math.random()).slice(0, 1);
+          
+          puzzleGroup = [...sortedAi, ...sortedAy];
+          gameState.currentCorrectAnswer = sortedAy[0].word;
+          ruleExplanation = `<strong>${sortedAy[0].word}</strong> is the imposter because it uses the <strong class="bg-amber-100 px-1">ay</strong> spelling at the end! The other words (${sortedAi.map(w => w.word).join(', ')}) use the <strong class="bg-sky-100 px-1">ai</strong> spelling in the middle!`;
+        } else {
+          // AY is the main majority group (needs 3 AY words, 1 AI/Bonus word as imposter)
+          const ayPool = getAllWords().filter(w => w.type === 'ay' && !w.isBonus);
+          const aiPool = getAllWords().filter(w => w.type === 'ai' && !w.isBonus);
+          
+          const sortedAy = ayPool.sort(() => 0.5 - Math.random()).slice(0, 3);
+          const sortedAi = aiPool.sort(() => 0.5 - Math.random()).slice(0, 1);
+          
+          puzzleGroup = [...sortedAy, ...sortedAi];
+          gameState.currentCorrectAnswer = sortedAi[0].word;
+          ruleExplanation = `<strong>${sortedAi[0].word}</strong> is the imposter because it uses the <strong class="bg-sky-100 px-1">ai</strong> spelling in the middle! The other words (${sortedAy.map(w => w.word).join(', ')}) use the <strong class="bg-amber-100 px-1">ay</strong> spelling at the end!`;
+        }
+
+        // Shuffle buttons positioning
+        puzzleGroup.sort(() => 0.5 - Math.random());
+
+        // Cache explanation inside currentWordObj
+        currentWordObj.customExplanation = ruleExplanation;
+
+        // Render card layout
+        container.className = "grid grid-cols-2 gap-4";
+        puzzleGroup.forEach(item => {
+          const btn = document.createElement('button');
+          btn.className = "bg-white hover:bg-amber-50 active:scale-95 border-2 border-slate-200 hover:border-amber-400 rounded-2xl py-6 px-4 font-bold text-xl text-slate-800 transition-all shadow-sm focus:outline-none focus:ring-4 focus:ring-amber-100 flex flex-col items-center justify-center space-y-1";
+          btn.innerHTML = `<span class="friendly-title text-2xl font-extrabold text-slate-700">${item.word}</span><span class="text-xs text-slate-400">pattern search</span>`;
+          btn.onclick = () => submitAnswer(item.word);
+          container.appendChild(btn);
+        });
+      }
+    }
+
+    // Submit Answer & Evaluate
+    function submitAnswer(chosenOpt) {
+      if (gameState.hasAnsweredCurrent) return; // ignore multiple rapid clicks
+      gameState.hasAnsweredCurrent = true;
+
+      const currentWordObj = gameState.questionList[gameState.currentIndex];
+      const isCorrect = (chosenOpt === gameState.currentCorrectAnswer);
+
+      // Track general statistics for report card
+      statsState.totalAnswers++;
+      if (!statsState.history[currentWordObj.word]) {
+        statsState.history[currentWordObj.word] = 0;
+      }
+
+      // Banner Elements
+      const banner = document.getElementById('feedback-banner');
+      const fIcon = document.getElementById('feedback-icon');
+      const fTitle = document.getElementById('feedback-title');
+      const fDesc = document.getElementById('feedback-desc');
+
+      // Play visuals & Audio
+      if (isCorrect) {
+        statsState.correctAnswers++;
+        gameState.score += currentWordObj.isBonus ? 20 : 10;
+        gameState.accuracyPoints++;
+        
+        playSynthSound('correct');
+        triggerConfettiPop();
+
+        // Update UI Header Score
+        document.getElementById('current-score').innerText = gameState.score;
+
+        // Active Banner styling for success
+        banner.className = "bg-emerald-50 border-emerald-300 rounded-2xl p-4 border-2 flex items-start space-x-3 transition-all duration-300 transform translate-y-0 opacity-100";
+        fIcon.innerText = "🎉";
+        fTitle.className = "font-extrabold text-base text-emerald-800";
+        fTitle.innerText = currentWordObj.isBonus ? "Brilliant! Bonus Correct (+20 pts)!" : "Terrific! Correct!";
+        
+        // Explanation context
+        if (gameState.activeMode === 1) {
+          fDesc.innerHTML = `<strong>${currentWordObj.word}</strong> is correct! <br><span class="text-xs text-slate-500">${currentWordObj.type === 'ai' ? 'Rule: The <strong>ai</strong> spelling goes in the <strong>middle</strong> of a word.' : 'Rule: The <strong>ay</strong> spelling goes at the <strong>end</strong> of a word.'}</span>`;
+        } else if (gameState.activeMode === 2) {
+          fDesc.innerHTML = `Perfect fit! "${currentWordObj.sentence}"`;
+        } else if (gameState.activeMode === 3) {
+          fDesc.innerHTML = currentWordObj.customExplanation;
+        }
+
+        // Mascot happy bounce
+        setMascotExpression('happy', "Wow! You're super smart! Let's keep going!");
+        triggerMascotJump();
+
+      } else {
+        // Record mistake to display inside report card
+        statsState.history[currentWordObj.word]++;
+
+        playSynthSound('wrong');
+
+        // Active Banner styling for failure
+        banner.className = "bg-rose-50 border-rose-300 rounded-2xl p-4 border-2 flex items-start space-x-3 transition-all duration-300 transform translate-y-0 opacity-100";
+        fIcon.innerText = "🐌";
+        fTitle.className = "font-extrabold text-base text-rose-800";
+        fTitle.innerText = "Oops! Not quite.";
+
+        if (gameState.activeMode === 1) {
+          fDesc.innerHTML = `The correct answer was <strong>${gameState.currentCorrectAnswer}</strong> to spell <strong>${currentWordObj.word}</strong>. <br><span class="text-xs text-slate-500">${currentWordObj.type === 'ai' ? 'Rule: <strong>ai</strong> is always in the middle.' : 'Rule: <strong>ay</strong> is always at the end.'}</span>`;
+        } else if (gameState.activeMode === 2) {
+          fDesc.innerHTML = `The correct matching word was <strong>${currentWordObj.word}</strong>. <br>Sentence: <em>"${currentWordObj.sentence}"</em>`;
+        } else if (gameState.activeMode === 3) {
+          fDesc.innerHTML = currentWordObj.customExplanation || `The imposter was <strong>${gameState.currentCorrectAnswer}</strong>. Keep practicing patterns!`;
+        }
+
+        // Mascot retreating expression
+        setMascotExpression('hide', "Don't worry! Learning is all about trying again!");
+        triggerMascotHide();
+      }
+
+      // Show the feedback banner smoothly
+      banner.classList.remove('hidden');
+      
+      // Auto-advance to the next question automatically!
+      gameState.nextTimeout = setTimeout(() => {
+        nextQuestion();
+      }, isCorrect ? 2500 : 4500); // 2.5s delay for correct, 4.5s for incorrect to allow reading time
+    }
+
+    // Move to next question or complete game
+    function nextQuestion() {
+      // Clear the timeout in case the user manually clicked the 'Continue' button early
+      if (gameState.nextTimeout) {
+        clearTimeout(gameState.nextTimeout);
+        gameState.nextTimeout = null;
+      }
+      
+      playSynthSound('click');
+      gameState.currentIndex++;
+      if (gameState.currentIndex < gameState.totalQuestions) {
+        loadQuestion();
+      } else {
+        // Game completed! Celebrate and trigger summary
+        playSynthSound('victory');
+        triggerConfettiShower();
+        goToScreen('report');
+      }
+    }
+
+    // Set Mascot visual states and dialog bubble
+    function setMascotExpression(expression, text) {
+      const leftPupil = document.getElementById('mascot-pupil-left');
+      const rightPupil = document.getElementById('mascot-pupil-right');
+      const mouth = document.getElementById('mascot-mouth');
+      const speech = document.getElementById('mascot-speech');
+
+      speech.innerText = `"${text}"`;
+
+      if (expression === 'happy') {
+        // Starry happy eyes & big curved smile
+        leftPupil.setAttribute('r', '5');
+        leftPupil.setAttribute('fill', '#fbbf24');
+        rightPupil.setAttribute('r', '5');
+        rightPupil.setAttribute('fill', '#fbbf24');
+        mouth.setAttribute('d', 'M145 80 Q150 90 155 80');
+      } else if (expression === 'hide') {
+        // Sad squinty eyes & upside down mouth
+        leftPupil.setAttribute('r', '2.5');
+        leftPupil.setAttribute('fill', '#047857');
+        rightPupil.setAttribute('r', '2.5');
+        rightPupil.setAttribute('fill', '#047857');
+        mouth.setAttribute('d', 'M148 85 Q152 79 154 85');
+      } else {
+        // Standard eyes & clean smile
+        leftPupil.setAttribute('r', '3');
+        leftPupil.setAttribute('fill', '#ffffff');
+        rightPupil.setAttribute('r', '3');
+        rightPupil.setAttribute('fill', '#ffffff');
+        mouth.setAttribute('d', 'M148 78 Q152 82 150 85');
+      }
+    }
+
+    // Mascot animation helpers
+    function triggerMascotJump() {
+      const container = document.getElementById('game-mascot-container');
+      container.classList.add('snail-jump');
+      setTimeout(() => {
+        container.classList.remove('snail-jump');
+      }, 600);
+    }
+
+    function triggerMascotHide() {
+      const container = document.getElementById('game-mascot-container');
+      container.classList.add('snail-hide');
+      setTimeout(() => {
+        container.classList.remove('snail-hide');
+      }, 800);
+    }
+
+    // Generate completion results
+    function generateReportCard() {
+      // Points
+      document.getElementById('report-score').innerText = gameState.score;
+      // Accuracy percentage
+      const accuracy = Math.round((gameState.accuracyPoints / gameState.totalQuestions) * 100);
+      document.getElementById('report-accuracy').innerText = accuracy + "%";
+      // Correct Count
+      document.getElementById('report-correct-count').innerText = `${gameState.accuracyPoints}/${gameState.totalQuestions}`;
+
+      // Title & note adjustment based on performance
+      const modeText = document.getElementById('report-mode-text');
+      if (gameState.activeMode === 1) modeText.innerText = "Mode 1: Vowel Team Lab Results";
+      if (gameState.activeMode === 2) modeText.innerText = "Mode 2: Context Kingdom Results";
+      if (gameState.activeMode === 3) modeText.innerText = "Mode 3: Imposter Hunt Results";
+
+      const gradText = document.getElementById('report-graduation-text');
+      if (accuracy === 100) {
+        gradText.innerText = `"Absoulutely flawless! 100% spelling precision! Samy is immensely proud of your phonics mastery! Try the other modes to keep going."`;
+      } else if (accuracy >= 80) {
+        gradText.innerText = `"Splendid work! You hit almost every target. Keep utilizing the 'ai' and 'ay' guidelines and you will score a perfect streak in no time!"`;
+      } else {
+        gradText.innerText = `"Great attempt! Let's explore the Word Wall together to review definitions, then give it another try. You can do it!"`;
+      }
+
+      // Re-render teacher stats automatically behind the scenes
+      updateTeacherDashboardDOM();
+    }
+
+    // ================= WORD WALL CONTROLLER =================
+    function openWordWall() {
+      playSynthSound('click');
+      document.getElementById('modal-wordwall').classList.remove('hidden');
+      filterWordWall('all');
+    }
+
+    function closeWordWall() {
+      playSynthSound('click');
+      document.getElementById('modal-wordwall').classList.add('hidden');
+    }
+
+    function filterWordWall(pattern) {
+      playSynthSound('click');
+      
+      // Toggle button active states
+      const btns = ['all', 'ai', 'ay', 'bonus'];
+      btns.forEach(b => {
+        const el = document.getElementById('filter-btn-' + b);
+        if (b === pattern) {
+          el.className = "bg-slate-800 text-white text-xs font-bold px-3 py-1.5 rounded-lg border border-slate-800 shadow-sm transition";
+        } else {
+          el.className = "bg-white text-slate-700 hover:bg-slate-100 text-xs font-bold px-3 py-1.5 rounded-lg border border-slate-200 shadow-sm transition";
+        }
+      });
+
+      renderWordWallGrid(pattern);
+    }
+
+    function renderWordWallGrid(filterPattern) {
+      const grid = document.getElementById('wordwall-grid-container');
+      grid.innerHTML = "";
+
+      let list = getAllWords();
+      if (filterPattern === 'ai') {
+        list = list.filter(w => w.type === 'ai');
+      } else if (filterPattern === 'ay') {
+        list = list.filter(w => w.type === 'ay');
+      } else if (filterPattern === 'bonus') {
+        list = list.filter(w => w.isBonus);
+      }
+
+      if (list.length === 0) {
+        grid.innerHTML = `<div class="col-span-full text-center py-10 text-slate-400 font-medium text-sm">No custom words match this category yet.</div>`;
+        return;
+      }
+
+      list.forEach(item => {
+        const card = document.createElement('div');
+        // Define color borders depending on vowel group
+        let borderClass = "border-sky-200 hover:border-sky-400 bg-sky-50/20";
+        let typeBadge = `<span class="bg-sky-100 text-sky-800 px-2 py-0.5 rounded text-[10px] font-extrabold uppercase">ai team</span>`;
+        if (item.type === 'ay') {
+          borderClass = "border-amber-200 hover:border-amber-400 bg-amber-50/20";
+          typeBadge = `<span class="bg-amber-100 text-amber-800 px-2 py-0.5 rounded text-[10px] font-extrabold uppercase">ay team</span>`;
+        } else if (item.isBonus) {
+          borderClass = "border-indigo-200 hover:border-indigo-400 bg-indigo-50/20";
+          typeBadge = `<span class="bg-indigo-100 text-indigo-800 px-2 py-0.5 rounded text-[10px] font-extrabold uppercase">Bonus Word</span>`;
+        }
+
+        // Check if student has struggled with this word
+        const mistakes = statsState.history[item.word] || 0;
+        const masteredLabel = mistakes === 0 && statsState.totalAnswers > 0 ? 
+          `<span class="text-emerald-600 font-black text-xs" title="Mastered with 0 errors">⭐ Perfect</span>` : 
+          mistakes > 0 ? `<span class="text-rose-500 font-bold text-xs" title="Mistakes made">⚠️ Needs Review (${mistakes})</span>` : "";
+
+        card.className = `border-2 ${borderClass} rounded-2xl p-4 transition duration-200 hover:shadow-md space-y-2 flex flex-col justify-between`;
+        card.innerHTML = `
+          <div>
+            <div class="flex justify-between items-start">
+              <h4 class="friendly-title text-xl font-bold text-slate-800">${item.word}</h4>
+              <div class="flex flex-col items-end gap-1">
+                ${typeBadge}
+                ${masteredLabel}
+              </div>
+            </div>
+            <p class="text-xs text-slate-500 mt-1 leading-relaxed italic">"${item.clue}"</p>
+          </div>
+          <div class="pt-2 border-t border-slate-100/80 text-xs text-slate-600">
+            <strong>Example:</strong> ${item.sentence}
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    // ================= TEACHER DASHBOARD CONTROLLER =================
+    function openTeacherDashboard() {
+      playSynthSound('click');
+      document.getElementById('modal-teacher').classList.remove('hidden');
+      updateTeacherDashboardDOM();
+    }
+
+    function closeTeacherDashboard() {
+      playSynthSound('click');
+      document.getElementById('modal-teacher').classList.add('hidden');
+    }
+
+    function updateTeacherDashboardDOM() {
+      const accuracy = statsState.totalAnswers > 0 ? Math.round((statsState.correctAnswers / statsState.totalAnswers) * 100) : 0;
+      document.getElementById('stat-total-answers').innerText = statsState.totalAnswers;
+      document.getElementById('stat-accuracy-rate').innerText = accuracy + "%";
+
+      // Calculate perfect words
+      const coreAndDynamic = getAllWords();
+      let masteredCount = 0;
+      let troubledWordsList = [];
+      let masteredWordsList = [];
+
+      coreAndDynamic.forEach(item => {
+        const mistakeCount = statsState.history[item.word];
+        if (mistakeCount === 0) {
+          masteredCount++;
+          masteredWordsList.push(item.word);
+        } else if (mistakeCount > 0) {
+          troubledWordsList.push({ word: item.word, count: mistakeCount });
+        }
+      });
+
+      document.getElementById('stat-mastered').innerText = `${masteredCount}/${coreAndDynamic.length}`;
+
+      // Populate mastered lists
+      const masteredDiv = document.getElementById('list-mastered-words');
+      if (masteredWordsList.length === 0) {
+        masteredDiv.innerHTML = `<span class="text-slate-400 italic">No words completed perfectly yet. Get started!</span>`;
+      } else {
+        masteredDiv.innerHTML = masteredWordsList.map(w => `<span class="bg-emerald-100 text-emerald-800 font-bold px-2 py-1 rounded border border-emerald-200">${w}</span>`).join('');
+      }
+
+      // Populate trouble list
+      const troubledDiv = document.getElementById('list-troubled-words');
+      if (troubledWordsList.length === 0) {
+        troubledDiv.innerHTML = `<span class="text-slate-400 italic">Excellent! No spelling mistakes tracked.</span>`;
+      } else {
+        troubledDiv.innerHTML = troubledWordsList.map(item => `
+          <span class="bg-rose-100 text-rose-800 font-bold px-2 py-1 rounded border border-rose-200 flex items-center gap-1">
+            ${item.word} <strong class="bg-rose-200 text-rose-900 rounded-full w-4 h-4 text-[10px] flex items-center justify-center">${item.count}</strong>
+          </span>
+        `).join('');
+      }
+    }
+
+    // Clear stats
+    function resetStats(silence = false) {
+      if (!silence) {
+        if (!confirm("Are you sure you want to clear your current progress score and statistics?")) return;
+        playSynthSound('click');
+      }
+      statsState.totalAnswers = 0;
+      statsState.correctAnswers = 0;
+      statsState.history = {};
+      
+      // Initialize zero-history stats for database words so we can track "Perfect" statuses
+      getAllWords().forEach(item => {
+        // null means unattempted, 0 means attempted with zero mistakes
+      });
+
+      updateTeacherDashboardDOM();
+    }
+
+    // Dynamic Injecting words for customizable curriculum
+    function addCustomWord() {
+      const wordInput = document.getElementById('input-word');
+      const patternInput = document.getElementById('input-pattern');
+      const toast = document.getElementById('custom-word-toast');
+
+      const rawWord = wordInput.value.trim();
+      if (!rawWord) {
+        playSynthSound('wrong');
+        toast.innerText = "⚠️ Please type a word first!";
+        toast.className = "text-xs text-rose-600 font-semibold";
+        toast.classList.remove('hidden');
+        return;
+      }
+
+      // Capitalize first letter
+      const cleanWord = rawWord.charAt(0).toUpperCase() + rawWord.slice(1).toLowerCase();
+
+      // Check if duplicate
+      const match = getAllWords().find(w => w.word.toLowerCase() === cleanWord.toLowerCase());
+      if (match) {
+        playSynthSound('wrong');
+        toast.innerText = `⚠️ "${cleanWord}" is already on your Word Wall!`;
+        toast.className = "text-xs text-rose-600 font-semibold";
+        toast.classList.remove('hidden');
+        return;
+      }
+
+      const patternType = patternInput.value;
+      const isBonus = patternType === 'bonus';
+
+      const customWordObj = {
+        word: cleanWord,
+        type: patternType,
+        clue: "Custom spelling list word added during class session.",
+        sentence: `The student successfully learned the custom word ${cleanWord}!`,
+        isBonus: isBonus
+      };
+
+      dynamicWords.push(customWordObj);
+      playSynthSound('victory');
+
+      // Clear input & flash Toast
+      wordInput.value = "";
+      toast.innerText = `✔ Success! "${cleanWord}" has been successfully added to practice lists!`;
+      toast.className = "text-xs text-emerald-600 font-semibold";
+      toast.classList.remove('hidden');
+
+      // Update UI components
+      updateTeacherDashboardDOM();
+      renderWordWallGrid('all');
+
+      setTimeout(() => {
+        toast.classList.add('hidden');
+      }, 4000);
+    }
+
+
+    // ================= VISUAL EFFECTS: CONFETTI CONTROLLER =================
+    const canvas = document.getElementById('confetti-canvas');
+    const ctx = canvas.getContext('2d');
+    let confettiActive = false;
+    let particles = [];
+
+    // Resize canvas
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    function triggerConfettiPop() {
+      initConfetti(45);
+    }
+
+    function triggerConfettiShower() {
+      initConfetti(150);
+    }
+
+    function initConfetti(count) {
+      if (!confettiActive) {
+        confettiActive = true;
+        requestAnimationFrame(updateConfetti);
+      }
+      
+      const colors = ['#38bdf8', '#0ea5e9', '#0d9488', '#10b981', '#f59e0b', '#84cc16'];
+      for (let i = 0; i < count; i++) {
+        particles.push({
+          x: canvas.width / 2 + (Math.random() - 0.5) * 150,
+          y: canvas.height / 2 + (Math.random() - 0.5) * 150,
+          vx: (Math.random() - 0.5) * 12,
+          vy: -Math.random() * 12 - 5,
+          color: colors[Math.floor(Math.random() * colors.length)],
+          size: Math.random() * 6 + 6,
+          rotation: Math.random() * 360,
+          rotationSpeed: (Math.random() - 0.5) * 10,
+          opacity: 1
+        });
+      }
+    }
+
+    function updateConfetti() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += 0.35; // gravity
+        p.vx *= 0.98; // wind drag
+        p.rotation += p.rotationSpeed;
+        p.opacity -= 0.015;
+
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.rotation * Math.PI / 180);
+        ctx.fillStyle = p.color;
+        ctx.globalAlpha = p.opacity;
+        ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size);
+        ctx.restore();
+
+        if (p.opacity <= 0 || p.y > canvas.height) {
+          particles.splice(i, 1);
+        }
+      }
+
+      if (particles.length > 0) {
+        requestAnimationFrame(updateConfetti);
+      } else {
+        confettiActive = false;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+      }
+    }
+  </script>
+</body>
+</html>

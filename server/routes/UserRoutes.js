@@ -13,6 +13,7 @@ const {
     deleteUser,
     updatePassword,
     enableTwoFactor,
+    verifyTwoFactorSetup,
     disableTwoFactor,
     linkChildToParent,
     unlinkChildFromParent,
@@ -62,6 +63,13 @@ router.put('/profile/password', authMiddleware, updatePassword);
  * @access  Private
  */
 router.post('/profile/2fa/enable', authMiddleware, enableTwoFactor);
+
+/**
+ * @route   POST /api/users/profile/2fa/verify
+ * @desc    Verify a TOTP code and activate 2FA
+ * @access  Private
+ */
+router.post('/profile/2fa/verify', authMiddleware, verifyTwoFactorSetup);
 
 /**
  * @route   POST /api/users/profile/2fa/disable

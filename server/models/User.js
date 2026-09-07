@@ -72,7 +72,17 @@ const UserSchema = new Schema({
 
 module.exports = mongoose.model('User', UserSchema);*/
 const mongoose = require('mongoose');
+const bcrypt = require('bcryptjs');
+const { SECTORS } = require('../utils/tenancy');
 const Schema = mongoose.Schema;
+
+/**
+ * A bcrypt hash always starts with one of these version prefixes. We use this
+ * to make the password-hashing pre-save hook idempotent: if a controller has
+ * already hashed the value inline (legacy call sites), we skip re-hashing so we
+ * never double-hash and break login.
+ */
+const BCRYPT_HASH_RE = /^\$2[aby]\$\d{2}\$/;
 
 const UserSchema = new Schema({
     name: {
@@ -84,7 +94,11 @@ const UserSchema = new Schema({
         required: [true, 'Please provide an email'],
         unique: true,
         lowercase: true,
-        // The 'match' property has been completely removed for debugging.
+        trim: true,
+        match: [
+            /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+            'Please provide a valid email address',
+        ],
     },
     password: {
         type: String,
@@ -132,6 +146,26 @@ const UserSchema = new Schema({
         type: Schema.Types.ObjectId,
         ref: 'School',
         default: null,
+    },
+    /**
+     * Denormalized education sector (public/private/charter) for this user,
+     * copied from their School at link time. Enables direct tenant filtering
+     * without a join. Kept in sync by tenancy backfill + roster/registration.
+     */
+    sector: {
+        type: String,
+        enum: [...SECTORS, null],
+        default: null,
+    },
+    /**
+     * Account lifecycle status. `suspended`/`disabled` accounts are rejected by
+     * authMiddleware on their next request (no waiting for token expiry).
+     */
+    accountStatus: {
+        type: String,
+        enum: ['active', 'suspended', 'disabled'],
+        default: 'active',
+        index: true,
     },
     // For super_admin: allow them to function as a tutor
     availableAsTutor: {
@@ -236,7 +270,7 @@ const UserSchema = new Schema({
         },
         sector: {
             type: String,
-            enum: ['public', 'private', null],
+            enum: ['public', 'private', 'charter', null],
             default: null,
         },
     },
@@ -263,6 +297,10 @@ const UserSchema = new Schema({
         default: 1,
     },
     challengesCompleted: {
+        type: Number,
+        default: 0,
+    },
+    visualizerSessionsCompleted: {
         type: Number,
         default: 0,
     },
@@ -336,6 +374,13 @@ const UserSchema = new Schema({
         default: false,
     },
     twoFactorSecret: {
+        type: String,
+        default: null,
+    },
+    // Holds a freshly generated TOTP secret during enrollment, BEFORE the user
+    // proves possession with a valid code. Promoted to twoFactorSecret only on
+    // successful verification; never used for login while pending.
+    twoFactorPendingSecret: {
         type: String,
         default: null,
     },
@@ -446,10 +491,44 @@ const UserSchema = new Schema({
     timestamps: true,
 });
 
+/**
+ * Defense-in-depth password hashing. Re-enabled (the previous version was
+ * commented out) so hashing is GUARANTEED at the data layer regardless of which
+ * controller writes the password. The BCRYPT_HASH_RE guard makes it idempotent:
+ * legacy call sites that already hash inline pass through untouched (no
+ * double-hash), while any new path that assigns a plaintext password is hashed
+ * automatically.
+ */
+UserSchema.pre('save', async function hashPasswordIfNeeded(next) {
+    if (!this.isModified('password') || !this.password) {
+        return next();
+    }
+    // Already a bcrypt hash (inline-hashed by a controller) → don't re-hash.
+    if (BCRYPT_HASH_RE.test(this.password)) {
+        return next();
+    }
+    try {
+        const salt = await bcrypt.genSalt(10);
+        this.password = await bcrypt.hash(this.password, salt);
+        return next();
+    } catch (err) {
+        return next(err);
+    }
+});
+
+/**
+ * Compare a candidate plaintext password against the stored hash.
+ * Returns false when the account has no password (e.g. Google SSO users).
+ */
+UserSchema.methods.comparePassword = async function comparePassword(candidate) {
+    if (!this.password) return false;
+    return bcrypt.compare(candidate, this.password);
+};
+
 // Defense-in-depth: never serialize secrets to JSON, even if a controller forgets
 // to .select('-password ...'). Applies to res.json(user), JSON.stringify(user),
 // and any populate target. Mongoose calls this transform on toJSON / toObject.
-const SENSITIVE_USER_FIELDS = ['password', 'refreshToken', 'refreshTokenExpiry', 'twoFactorSecret'];
+const SENSITIVE_USER_FIELDS = ['password', 'refreshToken', 'refreshTokenExpiry', 'twoFactorSecret', 'twoFactorPendingSecret'];
 function stripSensitiveUserFields(_doc, ret) {
     for (const field of SENSITIVE_USER_FIELDS) {
         delete ret[field];
@@ -459,10 +538,14 @@ function stripSensitiveUserFields(_doc, ret) {
 UserSchema.set('toJSON', { transform: stripSensitiveUserFields });
 UserSchema.set('toObject', { transform: stripSensitiveUserFields });
 
-// Add indexes for frequently queried fields
-UserSchema.index({ email: 1 }, { unique: true });
+// Add indexes for frequently queried fields.
+// NOTE: `email` already declares `unique: true` on the path, which creates the
+// unique index. Do NOT re-declare it here or Mongoose emits a duplicate-index warning.
 UserSchema.index({ role: 1 });
 UserSchema.index({ 'tutorInfo.status': 1 });
 UserSchema.index({ 'learningStyleProfile.assessmentCompleted': 1 });
+// Tenant isolation: scope student/admin lists by school + role efficiently.
+UserSchema.index({ schoolId: 1, role: 1 });
+UserSchema.index({ sector: 1 });
 
 module.exports = mongoose.model('User', UserSchema);

@@ -4,7 +4,7 @@ import {
     BarChart2, Briefcase, BookOpen, Settings, Users, UserCheck, 
     LogOut, ChevronDown, Bell, Calendar as CalendarIcon, Trophy,
     LineChart, UserPlus, Megaphone, Edit3, CreditCard, Sliders, DollarSign, FileText,
-    X, Brain, Wallet, School as SchoolIcon
+    X, Brain, Wallet, School as SchoolIcon, Sparkles
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext.jsx';
 import { getUserAnnouncements } from '../../api/announcements.js';
@@ -37,6 +37,7 @@ const Sidebar = () => {
         
         // Challenges - Only for students
         { path: '/challenges', label: 'Challenges', icon: Trophy, roles: ['student'] },
+        { path: '/visualizers', label: 'Concept Visualizers', icon: Sparkles, roles: ['student'] },
         { path: '/scholarship-fund', label: 'Scholarship fund', icon: Wallet, roles: ['student'] },
         { path: '/resources', label: 'Resources', icon: BookOpen, roles: ['student', 'tutor', 'admin', 'super_admin'] },
         

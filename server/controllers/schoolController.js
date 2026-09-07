@@ -49,6 +49,7 @@ const createSchool = async (req, res) => {
             district,
             primaryContactName,
             primaryContactEmail,
+            sector,
             status,
             pilotStartDate,
             pilotEndDate,
@@ -59,6 +60,7 @@ const createSchool = async (req, res) => {
             district,
             primaryContactName,
             primaryContactEmail,
+            sector: sector || null,
             status,
             pilotStartDate,
             pilotEndDate,
@@ -81,7 +83,16 @@ const createSchool = async (req, res) => {
  */
 const getAllSchools = async (req, res) => {
     try {
-        const schools = await School.find().sort({ createdAt: -1 });
+        // Global admins see every cohort; a school_admin only ever sees their own.
+        const filter = {};
+        if (req.user.role === 'school_admin') {
+            const schoolAdmin = await User.findById(req.user.id).select('schoolId').lean();
+            if (!schoolAdmin?.schoolId) {
+                return res.json([]);
+            }
+            filter._id = schoolAdmin.schoolId;
+        }
+        const schools = await School.find(filter).sort({ createdAt: -1 });
         res.json(schools);
     } catch (error) {
         console.error('[getAllSchools] Error:', error);
@@ -99,6 +110,10 @@ const getSchoolById = async (req, res) => {
         const { id } = req.params;
         if (!isValidObjectId(id)) {
             return res.status(400).json({ message: 'Invalid school ID' });
+        }
+
+        if (!(await canAccessSchool(req, id))) {
+            return res.status(403).json({ message: 'Not authorized to access this school cohort' });
         }
 
         const school = await School.findById(id);
@@ -171,6 +186,10 @@ const rosterUpload = async (req, res) => {
             return res.status(400).json({ message: 'Invalid school ID' });
         }
 
+        if (!(await canAccessSchool(req, schoolId))) {
+            return res.status(403).json({ message: 'Not authorized to upload a roster for this school cohort' });
+        }
+
         const school = await School.findById(schoolId);
         if (!school) {
             return res.status(404).json({ message: 'School not found' });
@@ -221,6 +240,7 @@ const rosterUpload = async (req, res) => {
                     password: hashed,
                     role: 'student',
                     schoolId: school._id,
+                    sector: school.sector || null,
                 });
 
                 trackEvent(
@@ -401,6 +421,140 @@ const getSchoolMetrics = async (req, res) => {
     }
 };
 
+/**
+ * @desc    Cohort-vs-cohort global leaderboard.
+ *          Groups all linked students by schoolId, sums their XP, and ranks
+ *          schools in descending order of total cohort XP.
+ * @route   GET /api/schools/leaderboards/cohorts
+ * @access  Private (Admin, Super Admin, School Admin)
+ *
+ * Query params:
+ *   limit  - optional cap on the number of cohorts returned (default 50)
+ */
+const getCohortLeaderboards = async (req, res) => {
+    try {
+        const parsedLimit = Math.min(Math.max(parseInt(req.query.limit, 10) || 50, 1), 200);
+
+        const rows = await User.aggregate([
+            { $match: { role: 'student', schoolId: { $ne: null } } },
+            {
+                $group: {
+                    _id: '$schoolId',
+                    cohortTotalXp: { $sum: '$xp' },
+                    studentCount: { $sum: 1 },
+                    averageXp: { $avg: '$xp' },
+                },
+            },
+            { $sort: { cohortTotalXp: -1, _id: 1 } },
+            { $limit: parsedLimit },
+            {
+                $lookup: {
+                    from: 'schools',
+                    localField: '_id',
+                    foreignField: '_id',
+                    as: 'school',
+                },
+            },
+            { $unwind: '$school' },
+            {
+                $project: {
+                    _id: 0,
+                    schoolId: '$_id',
+                    schoolName: '$school.name',
+                    district: '$school.district',
+                    sector: '$school.sector',
+                    cohortTotalXp: 1,
+                    studentCount: 1,
+                    averageXp: { $round: ['$averageXp', 1] },
+                },
+            },
+        ]);
+
+        // Attach a 1-based rank reflecting the descending XP sort.
+        const cohorts = rows.map((row, index) => ({ rank: index + 1, ...row }));
+
+        return res.json({
+            count: cohorts.length,
+            generatedAt: new Date().toISOString(),
+            cohorts,
+        });
+    } catch (error) {
+        console.error('[getCohortLeaderboards] Error:', error);
+        return res.status(500).json({ message: 'Server error while building cohort leaderboard' });
+    }
+};
+
+/**
+ * @desc    Internal student ranking within a single cohort.
+ * @route   GET /api/schools/:schoolId/leaderboard
+ * @access  Private (Student for own cohort, School Admin for own cohort, Admins)
+ *
+ * Authorization:
+ *   - admin / super_admin : any cohort
+ *   - school_admin        : their own cohort (canAccessSchool)
+ *   - student             : their own cohort only (schoolId must match)
+ */
+const getSchoolLeaderboard = async (req, res) => {
+    try {
+        const { schoolId } = req.params;
+        if (!isValidObjectId(schoolId)) {
+            return res.status(400).json({ message: 'Invalid school ID' });
+        }
+
+        const role = req.user.role;
+        let authorized = false;
+
+        if (role === 'student') {
+            // A student may only ever read their OWN cohort's board.
+            authorized = Boolean(
+                req.user.schoolId &&
+                req.user.schoolId.toString() === schoolId.toString()
+            );
+        } else {
+            // admin / super_admin / school_admin handled by canAccessSchool.
+            authorized = await canAccessSchool(req, schoolId);
+        }
+
+        if (!authorized) {
+            return res.status(403).json({ message: 'Not authorized to view this cohort leaderboard' });
+        }
+
+        const school = await School.findById(schoolId).select('name district sector status');
+        if (!school) {
+            return res.status(404).json({ message: 'School not found' });
+        }
+
+        const parsedLimit = Math.min(Math.max(parseInt(req.query.limit, 10) || 50, 1), 200);
+
+        const students = await User.find({ role: 'student', schoolId })
+            .select('name avatar xp level')
+            .sort({ xp: -1, name: 1 })
+            .limit(parsedLimit)
+            .lean();
+
+        const leaderboard = students.map((student, index) => ({
+            rank: index + 1,
+            ...student,
+        }));
+
+        const cohortTotalXp = leaderboard.reduce((sum, s) => sum + (s.xp || 0), 0);
+
+        return res.json({
+            schoolId,
+            schoolName: school.name,
+            district: school.district,
+            sector: school.sector,
+            studentCount: leaderboard.length,
+            cohortTotalXp,
+            generatedAt: new Date().toISOString(),
+            leaderboard,
+        });
+    } catch (error) {
+        console.error('[getSchoolLeaderboard] Error:', error);
+        return res.status(500).json({ message: 'Server error while building school leaderboard' });
+    }
+};
+
 module.exports = {
     createSchool,
     getAllSchools,
@@ -408,4 +562,6 @@ module.exports = {
     getStudentsBySchool,
     rosterUpload,
     getSchoolMetrics,
+    getCohortLeaderboards,
+    getSchoolLeaderboard,
 };

@@ -173,6 +173,7 @@ app.use('/api/schools', require('./routes/schoolRoutes'));
 app.use('/api/memberships', require('./routes/MembershipRoutes'));
 app.use('/api/bookings', require('./routes/bookingRoutes'));
 app.use('/api/challenges', require('./routes/challengeRoutes'));
+app.use('/api/visualizers', require('./routes/visualizerRoutes'));
 app.use('/api/tutors', require('./routes/tutorRoutes'));
 app.use('/api/analytics', require('./routes/analyticsRoutes'));
 app.use('/api/announcements', require('./routes/announcementRoutes'));

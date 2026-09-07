@@ -82,6 +82,42 @@ export const loginUser = async (email, password) => {
 };
 
 /**
+ * Completes a 2FA-gated login by exchanging the short-lived challenge token
+ * (returned by loginUser when `twoFactorRequired` is true) plus the current
+ * authenticator code for real session tokens.
+ * Public endpoint — the challenge token itself is the proof of credential check.
+ * @param {string} challengeToken - The token returned from /login.
+ * @param {string} token - The 6-digit code from the authenticator app.
+ * @returns {Promise<object>} Server response: { token, refreshToken, user }.
+ * @throws {Error} If the API call fails or the code is invalid.
+ */
+export const verifyTwoFactorLogin = async (challengeToken, token) => {
+    try {
+        const response = await fetch('/api/auth/2fa/verify', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ challengeToken, token: String(token || '').trim() }),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({
+                message: 'Verification failed. Please try again.',
+            }));
+            const err = new Error(errorData.message || 'Verification failed');
+            err.status = response.status;
+            throw err;
+        }
+
+        return response.json();
+    } catch (error) {
+        if (error instanceof Error) {
+            throw error;
+        }
+        throw new Error('Network error. Please check your connection.');
+    }
+};
+
+/**
  * Sends a "register with school registration code" request.
  * Public endpoint. Returns the newly-created student plus a JWT.
  * @param {object} userData - { name, email, password, registrationCode }

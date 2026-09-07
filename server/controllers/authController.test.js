@@ -44,12 +44,19 @@ const parentLinkMock = {
   createParentLinkRequestFromSignup: vi.fn().mockResolvedValue({ success: false }),
 };
 
+// Mock the TOTP helper so the 2FA login flow is deterministic (no real codes).
+const twoFactorMock = {
+  verifyToken: vi.fn(),
+};
+
 mock('bcryptjs', bcryptMock);
 mock('jsonwebtoken', jwtMock);
 mock('../models/User', MockUser);
 mock('./parentLinkController', parentLinkMock);
+mock('../utils/twoFactor', twoFactorMock);
 mock('../services/telemetryService', {
-  trackEvent: vi.fn(),
+  // Must return a promise: controllers call trackEvent(...).catch(...).
+  trackEvent: vi.fn().mockResolvedValue(undefined),
 });
 
 const User = require('../models/User');
@@ -58,6 +65,7 @@ const {
   loginUser,
   registerEmployee,
   refreshToken,
+  verifyTwoFactorLogin,
 } = require('./authController');
 
 describe('AuthController', () => {
@@ -229,6 +237,144 @@ describe('AuthController', () => {
 
       expect(res.status).toHaveBeenCalledWith(400);
       expect(res.json).toHaveBeenCalledWith({ message: 'Invalid credentials' });
+    });
+
+    it('rejects when account is suspended/disabled', async () => {
+      req.body = { email: 'user@example.com', password: 'Password123' };
+      User.findOne.mockResolvedValue({
+        _id: 'user123',
+        email: 'user@example.com',
+        password: 'hashed',
+        authMethod: 'password',
+        role: 'student',
+        accountStatus: 'suspended',
+        save: vi.fn(),
+      });
+
+      await loginUser(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(403);
+      expect(res.json).toHaveBeenCalledWith(
+        expect.objectContaining({ message: expect.stringContaining('not active') })
+      );
+    });
+
+    it('issues tokens directly when 2FA is not enabled', async () => {
+      req.body = { email: 'user@example.com', password: 'Password123' };
+      const save = vi.fn().mockResolvedValue(true);
+      User.findOne.mockResolvedValue({
+        _id: 'user123',
+        id: 'user123',
+        name: 'User',
+        email: 'user@example.com',
+        password: 'hashed',
+        authMethod: 'password',
+        role: 'student',
+        save,
+      });
+      bcryptMock.compare.mockResolvedValue(true);
+
+      await loginUser(req, res);
+
+      expect(res.json).toHaveBeenCalledWith(
+        expect.objectContaining({ token: 'mock-token' })
+      );
+      // No 2FA challenge in the response.
+      expect(res.json).not.toHaveBeenCalledWith(
+        expect.objectContaining({ twoFactorRequired: true })
+      );
+    });
+
+    it('returns a 2FA challenge (no tokens) when 2FA is active', async () => {
+      req.body = { email: 'user@example.com', password: 'Password123' };
+      User.findOne.mockResolvedValue({
+        _id: 'user123',
+        id: 'user123',
+        email: 'user@example.com',
+        password: 'hashed',
+        authMethod: 'password',
+        role: 'student',
+        twoFactorEnabled: true,
+        twoFactorSecret: 'SECRET',
+        save: vi.fn(),
+      });
+      bcryptMock.compare.mockResolvedValue(true);
+
+      await loginUser(req, res);
+
+      expect(res.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          twoFactorRequired: true,
+          challengeToken: 'mock-token',
+        })
+      );
+      // The access token must NOT be present yet.
+      const payload = res.json.mock.calls[0][0];
+      expect(payload.token).toBeUndefined();
+    });
+  });
+
+  describe('verifyTwoFactorLogin - 2FA challenge exchange', () => {
+    it('rejects when challengeToken or token is missing', async () => {
+      req.body = { challengeToken: 'abc' };
+
+      await verifyTwoFactorLogin(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res.json).toHaveBeenCalledWith({
+        message: 'challengeToken and token are required',
+      });
+    });
+
+    it('rejects an invalid/expired challenge token', async () => {
+      req.body = { challengeToken: 'bad', token: '123456' };
+      jwtMock.verify.mockImplementation(() => {
+        throw new Error('jwt expired');
+      });
+
+      await verifyTwoFactorLogin(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(401);
+    });
+
+    it('rejects when the TOTP code is invalid', async () => {
+      req.body = { challengeToken: 'good', token: '000000' };
+      jwtMock.verify.mockReturnValue({ twoFactorPending: true, userId: 'user123' });
+      User.findById.mockResolvedValue({
+        _id: 'user123',
+        id: 'user123',
+        twoFactorEnabled: true,
+        twoFactorSecret: 'SECRET',
+        save: vi.fn(),
+      });
+      twoFactorMock.verifyToken.mockReturnValue(false);
+
+      await verifyTwoFactorLogin(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res.json).toHaveBeenCalledWith({ message: 'Invalid verification code' });
+    });
+
+    it('issues tokens when the TOTP code is valid', async () => {
+      req.body = { challengeToken: 'good', token: '123456' };
+      jwtMock.verify.mockReturnValue({ twoFactorPending: true, userId: 'user123' });
+      User.findById.mockResolvedValue({
+        _id: 'user123',
+        id: 'user123',
+        name: 'User',
+        email: 'user@example.com',
+        role: 'student',
+        twoFactorEnabled: true,
+        twoFactorSecret: 'SECRET',
+        save: vi.fn().mockResolvedValue(true),
+      });
+      twoFactorMock.verifyToken.mockReturnValue(true);
+
+      await verifyTwoFactorLogin(req, res);
+
+      expect(res.json).toHaveBeenCalledWith(
+        expect.objectContaining({ token: 'mock-token' })
+      );
     });
   });
 

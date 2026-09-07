@@ -9,6 +9,7 @@ const {
     logoutUser,
     getLoggedInUser,
     refreshToken,
+    verifyTwoFactorLogin,
 } = require('../controllers/authController');
 const { authMiddleware } = require('../middleware/AuthMiddleware');
 const { validateRequest } = require('../middleware/validate');
@@ -27,6 +28,13 @@ router.post('/register', authValidators.register, validateRequest, registerUser)
  * @access  Public
  */
 router.post('/login', authValidators.login, validateRequest, loginUser);
+
+/**
+ * @route   POST /api/auth/2fa/verify
+ * @desc    Complete login by verifying a TOTP code against a 2FA challenge
+ * @access  Public (requires a valid challenge token issued by /login)
+ */
+router.post('/2fa/verify', verifyTwoFactorLogin);
 
 /**
  * @route   POST /api/auth/register-employee
